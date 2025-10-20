@@ -132,8 +132,7 @@ Future<void> initializeDependencies() async {
 
   // Initialize OpenAI API key
   // Replace with your actual API key or load from secure storage
-  var apiKey =
-      "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";
+  var apiKey = "";
   OpenAIService.setApiKey(apiKey);
 
   // Services
