@@ -3,9 +3,9 @@ import 'package:hexcolor/hexcolor.dart';
 
 class AppColors {
   // Main colors
-  static var primaryColor = HexColor('#7755FF');
+  static var primaryColor = HexColor('#136FD4');
   static const textColor = Color(0xFF1A1A1A);
-  static var appButtonColor = HexColor('#000000');
+  static var appButtonColor = HexColor('#02274D');
   static var cardColor = HexColor('#F9FBFF');
   static const backgroundColor = Colors.white;
 

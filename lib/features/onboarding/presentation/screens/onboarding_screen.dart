@@ -22,23 +22,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPage> _pages = [
     const OnboardingPage(
-      title: 'Onboarding Operations',
+      title: 'Enhancing Operations Through AI-Driven Insights',
       description:
-          "At Convoso, Our onboarding experts deliver a tailored approach to help customers get the most out of our powerful platform.",
-      image: 'assets/images/Convoso.svg',
+          "At VoiceAlerts, we're committed to amplifying your telecom security with cutting-edge AI tools, seamless integration, and unparalleled support",
+      image: 'assets/images/onboard_1.svg',
     ),
     const OnboardingPage(
-      title: 'On demand troubleshooting',
+      title: 'Advanced Communication',
       description:
-          "Keeping your operations and campaigns up and running is critical to business. Our knowledgeable support staff is available",
-      image: 'assets/images/Convoso.svg',
+          "At VoiceAlerts, we're committed to amplifying your telecom security with cutting-edge AI tools, seamless integration, and unparalleled support",
+      image: 'assets/images/onboard_1.svg',
     ),
 
     const OnboardingPage(
-      title: 'Ongoing support and coaching',
+      title: 'Powerful Analytics',
       description:
-          "Your Convoso solution comes with a dedicated Customer Success Manager committed to seeing you thrive on the Convoso platform—whether it’s getting the most from the dialers, automating your workflows, being compliant, or customizing your reporting. ",
-      image: 'assets/images/Convoso.svg',
+          "At VoiceAlerts, we're committed to amplifying your telecom security with cutting-edge AI tools, seamless integration, and unparalleled support",
+      image: 'assets/images/onboard_1.svg',
     ),
   ];
 

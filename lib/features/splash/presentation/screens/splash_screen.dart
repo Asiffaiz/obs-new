@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
+import 'package:voicealerts_obs/core/widgets/voice_alerts_logo.dart';
 import '../../../../config/routes.dart';
 
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -141,6 +142,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+      final screenSize = MediaQuery.of(context).size;
+    final logoSize =
+        screenSize.width * 0.65 > 280 ? 280.0 : screenSize.width * 0.65;
     return BlocListener<AuthBloc, AuthState>(
       listenWhen: (previous, current) {
         // Only proceed when animation is complete and auth state has changed
@@ -153,35 +157,85 @@ class _SplashScreenState extends State<SplashScreen>
         _proceedWithNavigation(context, state);
       },
       child: Scaffold(
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Background SVG
-            SvgPicture.asset(
-              'assets/images/splash_background.svg',
-              fit: BoxFit.cover,
-            ),
-            // Logo with animations
-            Center(
-              child: AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return Opacity(
+        body:  AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo with animations
+                  Opacity(
                     opacity: _fadeAnimation.value,
                     child: Transform.scale(
                       scale: _scaleAnimation.value,
-                      child: Image.asset(
-                        'assets/images/splash_logo.png',
-                        width: 220,
-                        height: 220,
+                      child: VoiceAlertsLogo(
+                        size: logoSize,
+                        backgroundColor: Colors.transparent,
                       ),
                     ),
-                  );
-                },
+                  ),
+                  // const SizedBox(height: 20),
+                  // App name with fade animation
+                  Opacity(
+                    opacity: _fadeAnimation.value,
+                    child: Column(
+                      children: [
+                        Text(
+                          "Fraud Prevention",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenSize.width < 400 ? 22 : 28,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        // const SizedBox(height: 8),
+                        // Text(
+                        //   "CLEAN CALLS",
+                        //   style: TextStyle(
+                        //     color: Colors.white,
+                        //     fontSize: screenSize.width < 400 ? 14 : 18,
+                        //     fontWeight: FontWeight.w600,
+                        //     letterSpacing: 1.2,
+                        //   ),
+                        // ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Tagline with delayed fade
+                  Opacity(
+                    opacity: _animationController.value,
+                    child: Text(
+                      "Intelligent AI-Driven Solutions for Carriers and Enterprises",
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: screenSize.width < 400 ? 14 : 16,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  // const SizedBox(height: 80),
+                  // Loading indicator - commented out
+                  // if (_animationController.value > 0.7)
+                  //   const SizedBox(
+                  //     width: 40,
+                  //     height: 40,
+                  //     child: CircularProgressIndicator(
+                  //       color: Colors.white,
+                  //       strokeWidth: 3,
+                  //     ),
+                  //   ),
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
+      ),
       ),
     );
   }
