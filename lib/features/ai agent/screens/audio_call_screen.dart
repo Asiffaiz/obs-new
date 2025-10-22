@@ -21,6 +21,9 @@ class AudioCallScreen extends StatefulWidget {
 class _AudioCallScreenState extends State<AudioCallScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
   bool isCallActive = false;
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -94,7 +97,7 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Enter your phone number',
+                    'Enter your information',
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 14,
@@ -102,6 +105,56 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                     ),
                   ),
                   const SizedBox(height: 20),
+                  TextField(
+                    controller: _nameController,
+                    keyboardType: TextInputType.name,
+                    style: const TextStyle(color: Colors.black87, fontSize: 16),
+                    decoration: InputDecoration(
+                      hintText: 'Full Name',
+                      hintStyle: TextStyle(color: Colors.grey.shade500),
+                      prefixIcon: Icon(Icons.phone, color: HexColor("#0033A0")),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 198, 196, 232),
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: Colors.black87, fontSize: 16),
+                    decoration: InputDecoration(
+                      hintText: 'Email Address',
+                      hintStyle: TextStyle(color: Colors.grey.shade500),
+                      prefixIcon: Icon(Icons.phone, color: HexColor("#0033A0")),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 198, 196, 232),
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
@@ -342,192 +395,197 @@ class _AudioCallScreenState extends State<AudioCallScreen>
         //   iconTheme: const IconThemeData(color: Colors.white),
         // ),
         body: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    IconButton(
-                      icon:
-                          Platform.isAndroid
-                              ? const Icon(Icons.arrow_back)
-                              : const Icon(Icons.arrow_back_ios_new_rounded),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    // IconButton(
-                    //   icon: const Icon(Icons.settings),
-                    //   onPressed: () {},
-                    // ),
-                  ],
-                ),
-              ),
-              // const Spacer(),
-              const Text(
-                'Hello, Asif!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo,
-                ),
-              ),
-              const Text(
-                'How can I help you today?',
-                style: TextStyle(fontSize: 18, color: Colors.indigo),
-              ),
-              const SizedBox(height: 40),
-              // Audio Visualizer
-              Container(
-                height: 180,
-                width: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [Colors.purple.shade300, Colors.purple.shade500],
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      IconButton(
+                        icon:
+                            Platform.isAndroid
+                                ? const Icon(Icons.arrow_back)
+                                : const Icon(Icons.arrow_back_ios_new_rounded),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      // IconButton(
+                      //   icon: const Icon(Icons.settings),
+                      //   onPressed: () {},
+                      // ),
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.purple.shade200.withOpacity(0.5),
-                      blurRadius: 30,
-                      spreadRadius: 10,
-                    ),
-                  ],
                 ),
-                child: Center(
-                  child: AnimatedBuilder(
-                    animation: _animationController,
-                    builder: (context, child) {
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Animated circles for audio visualization
-                          if (isCallActive)
-                            ...List.generate(3, (index) {
-                              return AnimatedOpacity(
-                                opacity: isCallActive ? 1.0 : 0.0,
-                                duration: const Duration(milliseconds: 500),
-                                child: Container(
-                                  width: 120 + (index * 30 * _animation.value),
-                                  height: 120 + (index * 30 * _animation.value),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white.withOpacity(
-                                      0.1 - (index * 0.03),
+                // const Spacer(),
+                const Text(
+                  'Hello, Asif!',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.indigo,
+                  ),
+                ),
+                const Text(
+                  'How can I help you today?',
+                  style: TextStyle(fontSize: 18, color: Colors.indigo),
+                ),
+                const SizedBox(height: 40),
+                // Audio Visualizer
+                Container(
+                  height: 180,
+                  width: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [Colors.purple.shade300, Colors.purple.shade500],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.shade200.withOpacity(0.5),
+                        blurRadius: 30,
+                        spreadRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: AnimatedBuilder(
+                      animation: _animationController,
+                      builder: (context, child) {
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Animated circles for audio visualization
+                            if (isCallActive)
+                              ...List.generate(3, (index) {
+                                return AnimatedOpacity(
+                                  opacity: isCallActive ? 1.0 : 0.0,
+                                  duration: const Duration(milliseconds: 500),
+                                  child: Container(
+                                    width:
+                                        120 + (index * 30 * _animation.value),
+                                    height:
+                                        120 + (index * 30 * _animation.value),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white.withOpacity(
+                                        0.1 - (index * 0.03),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }),
-                          // Mic icon
-                          Icon(
-                            isCallActive ? Icons.mic : Icons.mic_none,
-                            size: 80,
-                            color: Colors.white,
-                          ),
-                        ],
-                      );
-                    },
+                                );
+                              }),
+                            // Mic icon
+                            Icon(
+                              isCallActive ? Icons.mic : Icons.mic_none,
+                              size: 80,
+                              color: Colors.white,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 40),
-              // Talk Now / Cancel Button
-              Builder(
-                builder: (context) {
-                  // Listen for connection state changes
-                  final connectionState =
-                      context.watch<app_ctrl.AppCtrl>().connectionState;
+                const SizedBox(height: 40),
+                // Talk Now / Cancel Button
+                Builder(
+                  builder: (context) {
+                    // Listen for connection state changes
+                    final connectionState =
+                        context.watch<app_ctrl.AppCtrl>().connectionState;
 
-                  // Update UI based on connection state
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _updateUIBasedOnConnectionState(connectionState);
-                  });
+                    // Update UI based on connection state
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _updateUIBasedOnConnectionState(connectionState);
+                    });
 
-                  return Button(
-                    text:
-                        isCallActive
-                            ? connectionState ==
-                                    app_ctrl.ConnectionState.connecting
-                                ? 'Connecting'
-                                : 'Disconnect'
-                            : 'Talk Now',
-                    onPressed: _toggleCall,
-                    isProgressing:
-                        connectionState == app_ctrl.ConnectionState.connecting,
-                  );
-                },
-              ),
-              const Spacer(),
-              // Glassmorphic Dial In and Call Me buttons
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildGlassmorphicButton(
-                        icon: const Icon(
-                          Icons.dialpad_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        label: 'Dial In',
-                        onPressed: _dialIn,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildGlassmorphicButton(
-                        icon: const Icon(
-                          Icons.call,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        label: 'Call Me',
-                        onPressed: () => _showCallMeDialog(context),
-                      ),
-                    ),
-                  ],
+                    return Button(
+                      text:
+                          isCallActive
+                              ? connectionState ==
+                                      app_ctrl.ConnectionState.connecting
+                                  ? 'Connecting'
+                                  : 'Disconnect'
+                              : 'Talk Now',
+                      onPressed: _toggleCall,
+                      isProgressing:
+                          connectionState ==
+                          app_ctrl.ConnectionState.connecting,
+                    );
+                  },
                 ),
-              ),
-              const SizedBox(height: 24),
-              // Terms and Privacy
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        launchUrl(Uri.parse(ApiEndpoints.termsAndConditions));
-                      },
-                      child: const Text(
-                        'Terms & Conditions',
-                        style: TextStyle(
-                          color: Colors.indigo,
-                          decoration: TextDecoration.underline,
+                const Spacer(),
+                // Glassmorphic Dial In and Call Me buttons
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildGlassmorphicButton(
+                          icon: const Icon(
+                            Icons.dialpad_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          label: 'Dial In',
+                          onPressed: _dialIn,
                         ),
                       ),
-                    ),
-                    const Text('|', style: TextStyle(color: Colors.indigo)),
-                    TextButton(
-                      onPressed: () {
-                        launchUrl(Uri.parse(ApiEndpoints.privacyPolicy));
-                      },
-                      child: const Text(
-                        'Privacy Policy',
-                        style: TextStyle(
-                          color: Colors.indigo,
-                          decoration: TextDecoration.underline,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildGlassmorphicButton(
+                          icon: const Icon(
+                            Icons.call,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          label: 'Call Me',
+                          onPressed: () => _showCallMeDialog(context),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                // Terms and Privacy
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          launchUrl(Uri.parse(ApiEndpoints.termsAndConditions));
+                        },
+                        child: const Text(
+                          'Terms & Conditions',
+                          style: TextStyle(
+                            color: Colors.indigo,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const Text('|', style: TextStyle(color: Colors.indigo)),
+                      TextButton(
+                        onPressed: () {
+                          launchUrl(Uri.parse(ApiEndpoints.privacyPolicy));
+                        },
+                        child: const Text(
+                          'Privacy Policy',
+                          style: TextStyle(
+                            color: Colors.indigo,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
