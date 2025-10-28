@@ -296,7 +296,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                       ),
 
                       const SizedBox(height: 16),
-                      formLabel(AppStrings.companyName, isRequired: true),
+                      formLabel(
+                        AppStrings.companyName,
+                        isRequired: true,
+                        tooltipMessage:
+                            'Company Name is the name of the company you work for.',
+                      ),
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _companyNameController,
@@ -304,17 +309,18 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                           hintText: AppStrings.companyName,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      formLabel(AppStrings.emailAddress, isRequired: true),
-                      SizedBox(height: 10),
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          hintText: AppStrings.emailAddress,
-                        ),
-                        validator: Validators.validateEmail,
-                      ),
+                      // const SizedBox(height: 16),
+                      // formLabel(AppStrings.emailAddress, isRequired: true),
+                      // SizedBox(height: 10),
+                      // TextFormField(
+                      //   readOnly: true,
+                      //   controller: _emailController,
+                      //   keyboardType: TextInputType.emailAddress,
+                      //   decoration: const InputDecoration(
+                      //     hintText: AppStrings.emailAddress,
+                      //   ),
+                      //   validator: Validators.validateEmail,
+                      // ),
                       const SizedBox(height: 16),
                       formLabel(AppStrings.phoneNumber, isRequired: true),
                       SizedBox(height: 10),
@@ -332,7 +338,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                           )
                           : const SizedBox.shrink(),
                       const SizedBox(height: 24),
-                      formLabel(AppStrings.address, isRequired: true),
+                      formLabel(
+                        AppStrings.address,
+                        isRequired: true,
+                        tooltipMessage:
+                            'Address is the address of the company you work for.',
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -402,7 +413,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      formLabel(AppStrings.state, isRequired: true),
+                      formLabel(
+                        AppStrings.state,
+                        isRequired: true,
+                        tooltipMessage:
+                            'State/Province is the state or province of the company you work for.',
+                      ),
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _stateController,

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voicealerts_obs/core/constants/network_urls.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
+import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/screens/webview_content_screen.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/widgets/common_webview.dart';
 import 'package:voicealerts_obs/features/profile/presentation/screens/client_profile_screen.dart';
@@ -13,7 +15,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final String userName;
   final String userEmail;
 
@@ -22,6 +24,20 @@ class ProfileScreen extends StatelessWidget {
     required this.userName,
     required this.userEmail,
   });
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String _userName = '';
+  String _userEmail = '';
+
+  initState() {
+    super.initState();
+    _userName = widget.userName;
+    _userEmail = widget.userEmail;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +62,7 @@ class ProfileScreen extends StatelessWidget {
                 radius: 40,
                 backgroundColor: Colors.grey.shade200,
                 child: Text(
-                  userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                  _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -60,7 +76,7 @@ class ProfileScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      userName,
+                      _userName,
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -68,7 +84,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      userEmail,
+                      _userEmail,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey.shade600,
@@ -193,10 +209,16 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToMyProfile(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => ClientProfileScreen()));
+  void _navigateToMyProfile(BuildContext context) async {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => ClientProfileScreen()))
+        .then((_) async {
+          final updatedUser = await GetIt.I<AuthService>().getUserData();
+          setState(() {
+            _userName = updatedUser['name'] ?? '';
+            _userEmail = updatedUser['email'] ?? '';
+          });
+        });
   }
 
   void _showLogoutConfirmation(BuildContext context) {

@@ -1384,24 +1384,43 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        RichText(
-                          text: TextSpan(
-                            text: 'Full Name ',
-                            style: TextStyle(
-                              fontFamily: 'montserrat',
-                              fontSize: 14,
-                              color: AppColors.welcomeMenuTextColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: ' *',
+                        Row(
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                text: 'Full Name ',
                                 style: TextStyle(
+                                  fontFamily: 'montserrat',
+                                  fontSize: 14,
                                   color: AppColors.welcomeMenuTextColor,
+                                  fontWeight: FontWeight.bold,
                                 ),
+                                children: [
+                                  TextSpan(
+                                    text: ' *',
+                                    style: TextStyle(
+                                      color: AppColors.welcomeMenuTextColor,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 8),
+                            Tooltip(
+                              message:
+                                  'Full Name is the full name of the signee.',
+
+                              padding: EdgeInsets.all(10),
+                              margin: EdgeInsets.all(10),
+                              triggerMode: TooltipTriggerMode.tap,
+                              showDuration: Duration(seconds: 60),
+                              child: Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: AppColors.welcomeMenuTextColor,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 10),
                         TextFormField(
@@ -1431,14 +1450,32 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Title',
-                          style: TextStyle(
-                            fontFamily: 'montserrat',
-                            fontSize: 14,
-                            color: AppColors.welcomeMenuTextColor,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Title',
+                              style: TextStyle(
+                                fontFamily: 'montserrat',
+                                fontSize: 14,
+                                color: AppColors.welcomeMenuTextColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(width: 8),
+                            Tooltip(
+                              message: 'Title is the title of the signee.',
+                              padding: EdgeInsets.all(10),
+                              margin: EdgeInsets.all(10),
+                              triggerMode: TooltipTriggerMode.tap,
+                              showDuration: Duration(seconds: 60),
+                              child: Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: AppColors.welcomeMenuTextColor,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         TextFormField(
@@ -1460,22 +1497,42 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                 ],
               ),
               const SizedBox(height: 16),
-              RichText(
-                text: TextSpan(
-                  text: 'Email Address ',
-                  style: TextStyle(
-                    fontFamily: 'montserrat',
-                    fontSize: 14,
-                    color: AppColors.welcomeMenuTextColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: ' *',
-                      style: TextStyle(color: AppColors.welcomeMenuTextColor),
+              Row(
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      text: 'Email Address ',
+                      style: TextStyle(
+                        fontFamily: 'montserrat',
+                        fontSize: 14,
+                        color: AppColors.welcomeMenuTextColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: ' *',
+                          style: TextStyle(
+                            color: AppColors.welcomeMenuTextColor,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message:
+                        'Email Address is the email address of the signee.',
+                    padding: EdgeInsets.all(10),
+                    margin: EdgeInsets.all(10),
+                    showDuration: Duration(seconds: 60),
+                    triggerMode: TooltipTriggerMode.tap,
+                    child: Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: AppColors.welcomeMenuTextColor,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -1502,22 +1559,41 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                 },
               ),
               const SizedBox(height: 16),
-              RichText(
-                text: TextSpan(
-                  text: 'Message ',
-                  style: TextStyle(
-                    fontFamily: 'montserrat',
-                    fontSize: 14,
-                    color: AppColors.welcomeMenuTextColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: ' *',
-                      style: TextStyle(color: AppColors.welcomeMenuTextColor),
+              Row(
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      text: 'Message ',
+                      style: TextStyle(
+                        fontFamily: 'montserrat',
+                        fontSize: 14,
+                        color: AppColors.welcomeMenuTextColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: ' *',
+                          style: TextStyle(
+                            color: AppColors.welcomeMenuTextColor,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: 'Message',
+                    padding: EdgeInsets.all(10),
+                    margin: EdgeInsets.all(10),
+                    triggerMode: TooltipTriggerMode.tap,
+                    showDuration: Duration(seconds: 60),
+                    child: Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: AppColors.welcomeMenuTextColor,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               TextFormField(
