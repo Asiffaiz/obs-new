@@ -226,6 +226,13 @@ class _ClientAssignedFormsScreenState extends State<ClientAssignedFormsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    _buildActionButton(
+                      icon: Icons.visibility,
+                      label: 'Submissions',
+                      color: AppColors.agreementCardViewBtnColor,
+                      onPressed: onSubmissionsPressed,
+                    ),
+                    const SizedBox(width: 30),
                     Expanded(
                       child: SizedBox(
                         height: 36,
@@ -250,13 +257,6 @@ class _ClientAssignedFormsScreenState extends State<ClientAssignedFormsScreen> {
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 30),
-                    _buildActionButton(
-                      icon: Icons.visibility,
-                      label: 'Submissions',
-                      color: AppColors.agreementCardViewBtnColor,
-                      onPressed: onSubmissionsPressed,
                     ),
                   ],
                 ),

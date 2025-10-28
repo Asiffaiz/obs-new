@@ -66,7 +66,8 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
           isDesktop
               ? null
               : IconButton(
-                icon: const Icon(Icons.grid_view_rounded, color: Colors.white),
+                // icon: const Icon(Icons.grid_view_rounded, color: Colors.white),
+                icon: const Icon(Icons.menu_rounded, color: Colors.white),
                 onPressed: onMenuTap,
               ),
       actions: [

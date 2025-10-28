@@ -69,13 +69,13 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: _buildStatisticsCards(dashboardData),
-                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(
+                  //     horizontal: 16,
+                  //     vertical: 8,
+                  //   ),
+                  //   child: _buildStatisticsCards(dashboardData),
+                  // ),
                   _buildAssignedFormsList(dashboardData),
 
                   // _buildCleanNumberRequestCard(),
@@ -451,6 +451,18 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    _buildActionButton(
+                      icon: Icons.visibility,
+                      label: 'Submissions',
+                      color: AppColors.agreementCardViewBtnColor,
+                      onPressed: _handleSubmissionsNavigation(
+                        formAccountNo,
+                        title,
+                        form,
+                        context,
+                      ),
+                    ),
+                    const SizedBox(width: 30),
                     Expanded(
                       child: SizedBox(
                         height: 36,
@@ -474,18 +486,6 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 30),
-                    _buildActionButton(
-                      icon: Icons.visibility,
-                      label: 'Submissions',
-                      color: AppColors.agreementCardViewBtnColor,
-                      onPressed: _handleSubmissionsNavigation(
-                        formAccountNo,
-                        title,
-                        form,
-                        context,
                       ),
                     ),
                   ],

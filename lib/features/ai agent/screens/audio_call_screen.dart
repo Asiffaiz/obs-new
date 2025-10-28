@@ -7,6 +7,7 @@ import 'package:hexcolor/hexcolor.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
+import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/ai%20agent/widgets/control_bar.dart';
 
 import '../controllers/app_ctrl.dart' as app_ctrl;
@@ -465,11 +466,12 @@ class _AudioCallScreenState extends State<AudioCallScreen>
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.blue.shade50, Colors.blue.shade300],
-        ),
+        color: AppColors.primaryColor,
+        // gradient: LinearGradient(
+        //   begin: Alignment.topLeft,
+        //   end: Alignment.bottomRight,
+        //   colors: [Colors.blue.shade50, Colors.blue.shade300],
+        // ),
       ),
       child: Scaffold(
         resizeToAvoidBottomInset: true,
@@ -493,8 +495,14 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                     IconButton(
                       icon:
                           Platform.isAndroid
-                              ? const Icon(Icons.arrow_back)
-                              : const Icon(Icons.arrow_back_ios_new_rounded),
+                              ? const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                              )
+                              : const Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                color: Colors.white,
+                              ),
                       onPressed: () {
                         Navigator.pop(context);
                       },
@@ -512,12 +520,12 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.indigo,
+                  color: Colors.white,
                 ),
               ),
               const Text(
                 'How can I help you today?',
-                style: TextStyle(fontSize: 18, color: Colors.indigo),
+                style: TextStyle(fontSize: 18, color: Colors.white),
               ),
               const SizedBox(height: 40),
               // Audio Visualizer
@@ -527,15 +535,15 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [Colors.purple.shade300, Colors.purple.shade500],
+                    colors: [HexColor("#ade8f4"), HexColor("#48cae4")],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.purple.shade200.withOpacity(0.5),
-                      blurRadius: 30,
-                      spreadRadius: 10,
-                    ),
-                  ],
+                  // boxShadow: [
+                  //   BoxShadow(
+                  //     color: Colors.purple.shade200.withOpacity(0.5),
+                  //     blurRadius: 30,
+                  //     spreadRadius: 10,
+                  //   ),
+                  // ],
                 ),
                 child: Center(
                   child: AnimatedBuilder(
@@ -587,17 +595,25 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                     _updateUIBasedOnConnectionState(connectionState);
                   });
 
-                  return Button(
-                    text:
-                        isCallActive
-                            ? connectionState ==
-                                    app_ctrl.ConnectionState.connecting
-                                ? 'Connecting'
-                                : 'Disconnect'
-                            : 'Talk Now',
-                    onPressed: _toggleCall,
-                    isProgressing:
-                        connectionState == app_ctrl.ConnectionState.connecting,
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: 250),
+                    child: Button(
+                      text:
+                          isCallActive
+                              ? connectionState ==
+                                      app_ctrl.ConnectionState.connecting
+                                  ? 'Connecting'
+                                  : 'Disconnect'
+                              : 'Talk Now',
+                      onPressed: _toggleCall,
+                      color:
+                          connectionState == app_ctrl.ConnectionState.connecting
+                              ? HexColor("#ef4444")
+                              : HexColor("#06bf81"),
+                      isProgressing:
+                          connectionState ==
+                          app_ctrl.ConnectionState.connecting,
+                    ),
                   );
                 },
               ),
@@ -679,12 +695,12 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                       child: const Text(
                         'Terms & Conditions',
                         style: TextStyle(
-                          color: Colors.indigo,
+                          color: Colors.white,
                           decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
-                    const Text('|', style: TextStyle(color: Colors.indigo)),
+                    const Text('|', style: TextStyle(color: Colors.white)),
                     TextButton(
                       onPressed: () {
                         launchUrl(Uri.parse(ApiEndpoints.privacyPolicy));
@@ -692,7 +708,7 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                       child: const Text(
                         'Privacy Policy',
                         style: TextStyle(
-                          color: Colors.indigo,
+                          color: Colors.white,
                           decoration: TextDecoration.underline,
                         ),
                       ),

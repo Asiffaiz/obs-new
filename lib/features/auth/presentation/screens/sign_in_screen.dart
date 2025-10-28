@@ -97,10 +97,17 @@ class _SignInScreenState extends State<SignInScreen> {
             ),
           );
         } else if (state.status == AuthStatus.error) {
-          setState(() {
-            _errorMessage = 'Something went wrong please try again later';
-            _isLoading = false;
-          });
+          if (state.errorMessage == "Invalid Email OR Password") {
+            setState(() {
+              _errorMessage = 'Invalid Email OR Password';
+              _isLoading = false;
+            });
+          } else {
+            setState(() {
+              _errorMessage = 'Something went wrong please try again later';
+              _isLoading = false;
+            });
+          }
         } else if (state.status == AuthStatus.loading) {
           setState(() {
             _isLoading = true;

@@ -39,6 +39,7 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   // HttpInterceptor.navigatorKey = rootNavigatorKey;
   // Set preferred orientations
   // await SystemChrome.setPreferredOrientations([

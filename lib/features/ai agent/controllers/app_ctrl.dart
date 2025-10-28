@@ -30,12 +30,13 @@ class AppCtrl extends ChangeNotifier {
   //Test
   bool isUserCameEnabled = false;
   bool isScreenshareEnabled = false;
-
+  bool isHoldEnabled = false;
   final messageCtrl = TextEditingController();
   final messageFocusNode = FocusNode();
 
-  late final sdk.Room room =
-      sdk.Room(roomOptions: const sdk.RoomOptions(enableVisualizer: true));
+  late final sdk.Room room = sdk.Room(
+    roomOptions: const sdk.RoomOptions(enableVisualizer: true),
+  );
   late final roomContext = components.RoomContext(room: room);
 
   // Add event listeners for debugging
@@ -84,14 +85,16 @@ class AppCtrl extends ChangeNotifier {
 
     final nowUtc = DateTime.now().toUtc();
     final segment = sdk.TranscriptionSegment(
-        id: uuid.v4(),
-        text: text,
-        firstReceivedTime: nowUtc,
-        lastReceivedTime: nowUtc,
-        isFinal: true,
-        language: 'en');
+      id: uuid.v4(),
+      text: text,
+      firstReceivedTime: nowUtc,
+      lastReceivedTime: nowUtc,
+      isFinal: true,
+      language: 'en',
+    );
     roomContext.insertTranscription(
-        components.TranscriptionForParticipant(segment, lp));
+      components.TranscriptionForParticipant(segment, lp),
+    );
 
     await lp.sendText(text, options: sdk.SendTextOptions(topic: 'lk.chat'));
   }
@@ -108,9 +111,10 @@ class AppCtrl extends ChangeNotifier {
   }
 
   void toggleAgentScreenMode() {
-    agentScreenState = agentScreenState == AgentScreenState.visualizer
-        ? AgentScreenState.transcription
-        : AgentScreenState.visualizer;
+    agentScreenState =
+        agentScreenState == AgentScreenState.visualizer
+            ? AgentScreenState.transcription
+            : AgentScreenState.visualizer;
     notifyListeners();
   }
 
@@ -124,12 +128,14 @@ class AppCtrl extends ChangeNotifier {
       _logger.info("Room state changed: ${room.connectionState}");
 
       // Log remote participants whenever the room state changes
-      _logger
-          .info("Remote participants count: ${room.remoteParticipants.length}");
+      _logger.info(
+        "Remote participants count: ${room.remoteParticipants.length}",
+      );
       if (room.remoteParticipants.isNotEmpty) {
         room.remoteParticipants.forEach((sid, participant) {
           _logger.info(
-              "Remote participant: ${participant.identity} (${participant.sid})");
+            "Remote participant: ${participant.identity} (${participant.sid})",
+          );
           _logger.info("Participant kind: ${participant.kind}");
         });
       }
@@ -190,7 +196,7 @@ class AppCtrl extends ChangeNotifier {
       // Direct connection with hardcoded credentials from portal
       const serverUrl = "wss://obs-v760rz4i.livekit.cloud";
       const token =
-          "eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoidXNlciIsInZpZGVvIjp7InJvb20iOiJ2b2ljZV9hc3Npc3RhbnRfcm9vbV8yNDcyIiwicm9vbUpvaW4iOnRydWUsImNhblB1Ymxpc2giOnRydWUsImNhblB1Ymxpc2hEYXRhIjp0cnVlLCJjYW5TdWJzY3JpYmUiOnRydWV9LCJpc3MiOiJBUEk4Ymhvblg3RUhvenAiLCJleHAiOjE3NjA3NDU3MTgsIm5iZiI6MCwic3ViIjoidm9pY2VfYXNzaXN0YW50X3VzZXJfMzczMyJ9.ALWZJSrb0BOc657xusQiuqs12XPPZ60e_-HN_9JXoMo";
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiTWF5YSIsInZpZGVvIjp7InJvb21Kb2luIjp0cnVlLCJyb29tIjoibW9pbmNfcm9vbSIsImNhblB1Ymxpc2giOnRydWUsImNhblN1YnNjcmliZSI6dHJ1ZSwiY2FuUHVibGlzaERhdGEiOnRydWV9LCJzdWIiOiI2ZTM5OTg3YS1kODFmLTQ3ZTUtYmQ0MC0yOGY0MGU5ZDExNDgiLCJpc3MiOiJBUEk4Ymhvblg3RUhvenAiLCJuYmYiOjE3NjEzMzM2NDEsImV4cCI6MTc2MTM1NTI0MX0.1gSWxqem92FvqucQ8HMsHAESRmB1v9OcS6oJrZ0VbHA";
 
       // From your logs, I can see that the connection is initially successful
       // but then disconnects with a timeout error. This could be due to:
@@ -213,7 +219,8 @@ class AppCtrl extends ChangeNotifier {
 
       // Log the current state of remote participants before connecting
       _logger.info(
-          "Remote participants before connect: ${room.remoteParticipants.length}");
+        "Remote participants before connect: ${room.remoteParticipants.length}",
+      );
 
       // Connect to the room with direct credentials
       await room.connect(serverUrl, token);
@@ -228,11 +235,13 @@ class AppCtrl extends ChangeNotifier {
 
       // Log the current state of remote participants after connecting
       _logger.info(
-          "Remote participants after connect: ${room.remoteParticipants.length}");
+        "Remote participants after connect: ${room.remoteParticipants.length}",
+      );
       if (room.remoteParticipants.isNotEmpty) {
         room.remoteParticipants.forEach((sid, participant) {
           _logger.info(
-              "Remote participant: ${participant.identity} (${participant.sid})");
+            "Remote participant: ${participant.identity} (${participant.sid})",
+          );
           _logger.info("Participant kind: ${participant.kind}");
           _logger.info("Participant state: ${participant.connectionQuality}");
         });
@@ -284,8 +293,9 @@ class AppCtrl extends ChangeNotifier {
     _agentConnectionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       // First check if room is still connected
       if (room.connectionState == sdk.ConnectionState.disconnected) {
-        _logger
-            .warning("Room disconnected during agent check, cancelling timer");
+        _logger.warning(
+          "Room disconnected during agent check, cancelling timer",
+        );
         _cancelAgentTimer();
         connectionState = ConnectionState.disconnected;
 
@@ -305,30 +315,35 @@ class AppCtrl extends ChangeNotifier {
 
       // Log detailed information about remote participants every 5 seconds
       if (timer.tick % 5 == 0) {
-        _logger
-            .info("Timer tick: ${timer.tick}, checking remote participants...");
+        _logger.info(
+          "Timer tick: ${timer.tick}, checking remote participants...",
+        );
         _logger.info("Room state: ${room.connectionState}");
         _logger.info(
-            "Remote participants count: ${room.remoteParticipants.length}");
+          "Remote participants count: ${room.remoteParticipants.length}",
+        );
 
         if (room.remoteParticipants.isEmpty) {
           _logger.warning("No remote participants found");
         } else {
           room.remoteParticipants.forEach((sid, participant) {
             _logger.info(
-                "Remote participant: ${participant.identity} (${participant.sid})");
+              "Remote participant: ${participant.identity} (${participant.sid})",
+            );
             _logger.info("Participant kind: ${participant.kind}");
             _logger.info("Participant metadata: ${participant.metadata}");
             _logger.info("Participant attributes: ${participant.attributes}");
             _logger.info(
-                "Participant tracks: ${participant.trackPublications.length}");
+              "Participant tracks: ${participant.trackPublications.length}",
+            );
           });
         }
       }
 
       // Check if there's an agent participant
-      final hasAgent = room.remoteParticipants.values
-          .any((participant) => participant.isAgent);
+      final hasAgent = room.remoteParticipants.values.any(
+        (participant) => participant.isAgent,
+      );
 
       if (hasAgent) {
         _logger.info("AGENT participant found, cancelling timer");
@@ -339,7 +354,8 @@ class AppCtrl extends ChangeNotifier {
       // If 60 seconds have elapsed and no agent found, disconnect
       if (timer.tick >= 60) {
         _logger.warning(
-            "No AGENT participant found after 60 seconds, disconnecting...");
+          "No AGENT participant found after 60 seconds, disconnecting...",
+        );
         _cancelAgentTimer();
 
         // Show toast message to inform the user about the timeout
@@ -361,5 +377,10 @@ class AppCtrl extends ChangeNotifier {
   void _cancelAgentTimer() {
     _agentConnectionTimer?.cancel();
     _agentConnectionTimer = null;
+  }
+
+  void toggleHold() {
+    isHoldEnabled = !isHoldEnabled;
+    notifyListeners();
   }
 }

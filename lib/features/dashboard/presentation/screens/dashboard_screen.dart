@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/ai%20agent/app.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/bloc/bloc/dashboard_bloc.dart';
 import 'package:voicealerts_obs/features/documents/presentation/screens/documents_screen.dart';
@@ -413,7 +414,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
-    return "Convoso";
+    return "VoiceAlerts";
   }
 
   @override
@@ -501,11 +502,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           height: 45,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], // Purple → Blue
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: AppColors.primaryColor,
             boxShadow: [
               BoxShadow(
                 color: Colors.black26,

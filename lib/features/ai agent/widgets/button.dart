@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class Button extends StatelessWidget {
   final VoidCallback onPressed;
   final bool isProgressing;
+  final Color color;
   final String text;
 
   const Button({
@@ -11,6 +12,7 @@ class Button extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.isProgressing = false,
+    this.color = Colors.indigo,
   });
 
   @override
@@ -18,7 +20,7 @@ class Button extends StatelessWidget {
         onPressed: isProgressing ? null : onPressed,
         style: TextButton.styleFrom(
           // backgroundColor: Theme.of(ctx).buttonTheme.colorScheme?.surface,
-          backgroundColor: Colors.indigo,
+          backgroundColor: color,
           foregroundColor: Colors.white,
           // surfaceTintColor: Colors.white,
           disabledForegroundColor: Colors.white,
