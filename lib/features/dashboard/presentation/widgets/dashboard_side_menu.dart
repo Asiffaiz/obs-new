@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:voicealerts_obs/features/auth/presentation/bloc/user_cubit.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -55,23 +57,33 @@ class DashboardSideMenu extends StatelessWidget {
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: Colors.white.withOpacity(0.9),
-                  child: Text(
-                    userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                    ),
+                  child: BlocBuilder<UserCubit, UserState>(
+                    builder: (context, state) {
+                      return Text(
+                        state.name.isNotEmpty
+                            ? state.name[0].toUpperCase()
+                            : 'U',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  userName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                BlocBuilder<UserCubit, UserState>(
+                  builder: (context, state) {
+                    return Text(
+                      state.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 4),
                 Text(

@@ -11,6 +11,7 @@ import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/widgets/form_label.dart';
 import 'package:voicealerts_obs/features/auth/domain/models/address_model.dart';
 import 'package:voicealerts_obs/features/auth/domain/models/country_model.dart';
+import 'package:voicealerts_obs/features/auth/presentation/bloc/user_cubit.dart';
 import 'package:voicealerts_obs/features/auth/presentation/screens/register_verification_screen.dart';
 import 'package:voicealerts_obs/features/auth/presentation/widgets/address_autocomplete.dart';
 import 'package:voicealerts_obs/features/auth/presentation/widgets/country_dropdown.dart';
@@ -190,6 +191,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile updated successfully')),
           );
+          context.read<UserCubit>().updateName(state.profile!['name'] ?? '');
         } else if (state.status == ProfileStatus.error) {
           setState(() {
             _isLoading = false;

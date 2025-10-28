@@ -39,6 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<MenuItemModel> _menuItems = [];
   int _selectedIndex = 0;
   bool _isLoadingMenu = true;
+  Map<String, String> userData = {};
 
   @override
   void initState() {
@@ -68,7 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadUserData() async {
     final authService = AuthService();
-    final userData = await authService.getUserData();
+    userData = await authService.getUserData();
 
     if (mounted) {
       setState(() {
@@ -432,13 +433,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _userEmail = userData['email'] ?? '';
           });
         }
-        
       },
       child: Scaffold(
         key: _scaffoldKey,
         backgroundColor: Colors.white,
         appBar: DashboardAppBar(
           userName: _userName,
+
           isMainDashboard: isMainDashboard,
           isDesktop: isDesktop,
           pageTitle: _getPageTitle(),

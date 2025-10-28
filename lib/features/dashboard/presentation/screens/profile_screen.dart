@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voicealerts_obs/core/constants/network_urls.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
-import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
+import 'package:voicealerts_obs/features/auth/presentation/bloc/user_cubit.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/screens/webview_content_screen.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/widgets/common_webview.dart';
 import 'package:voicealerts_obs/features/profile/presentation/screens/client_profile_screen.dart';
@@ -15,7 +14,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   final String userName;
   final String userEmail;
 
@@ -24,20 +23,6 @@ class ProfileScreen extends StatefulWidget {
     required this.userName,
     required this.userEmail,
   });
-
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  String _userName = '';
-  String _userEmail = '';
-
-  initState() {
-    super.initState();
-    _userName = widget.userName;
-    _userEmail = widget.userEmail;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,13 +46,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: Colors.grey.shade200,
-                child: Text(
-                  _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
+                child: BlocBuilder<UserCubit, UserState>(
+                  builder: (context, state) {
+                    return Text(
+                      state.name.isNotEmpty ? state.name[0].toUpperCase() : 'U',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 16),
@@ -75,16 +64,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _userName,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    BlocBuilder<UserCubit, UserState>(
+                      builder: (context, state) {
+                        return Text(
+                          state.name,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      _userEmail,
+                      userEmail,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey.shade600,
@@ -209,16 +202,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _navigateToMyProfile(BuildContext context) async {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (context) => ClientProfileScreen()))
-        .then((_) async {
-          final updatedUser = await GetIt.I<AuthService>().getUserData();
-          setState(() {
-            _userName = updatedUser['name'] ?? '';
-            _userEmail = updatedUser['email'] ?? '';
-          });
-        });
+  void _navigateToMyProfile(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => ClientProfileScreen()));
   }
 
   void _showLogoutConfirmation(BuildContext context) {

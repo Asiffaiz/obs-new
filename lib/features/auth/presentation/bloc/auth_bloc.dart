@@ -15,6 +15,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }) : _agreementsRepository = agreementsRepository,
        _authRepository = authRepository,
        super(const AuthState()) {
+
+
+        String userName = '';
+        String userEmail = '';
     on<CheckMandatoryAgreements>(_onCheckMandatoryAgreements);
     on<CheckMandatoryAgreementsBeforeLogin>(
       _onCheckMandatoryAgreementsBeforeLogin,

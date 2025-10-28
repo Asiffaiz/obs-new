@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voicealerts_obs/features/auth/presentation/bloc/user_cubit.dart';
 
 import '../../../../config/routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -55,9 +57,13 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            userName,
-            style: const TextStyle(fontSize: 14, color: Colors.white70),
+          BlocBuilder<UserCubit, UserState>(
+            builder: (context, state) {
+              return Text(
+                state.name,
+                style: const TextStyle(fontSize: 14, color: Colors.white70),
+              );
+            },
           ),
         ],
       ),

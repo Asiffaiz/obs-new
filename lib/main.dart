@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:voicealerts_obs/features/agreements/data/services/agreements_service.dart';
 import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
 import 'package:voicealerts_obs/features/auth/domain/repositories/auth_repository.dart';
+import 'package:voicealerts_obs/features/auth/presentation/bloc/user_cubit.dart';
 import 'package:voicealerts_obs/features/bussiness%20card/domain/repositories/business_card_repository.dart';
 import 'package:voicealerts_obs/features/bussiness%20card/presentation/bloc/business_card_bloc.dart';
 import 'package:voicealerts_obs/features/dashboard/domain/Repositories/dashboard_repository.dart';
@@ -112,6 +113,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(create: (context) => authBloc),
+          BlocProvider(create: (_) => UserCubit()..loadUser()),
         BlocProvider<BusinessCardBloc>(create: (context) => businessCardBloc),
         BlocProvider<AgreementsBloc>(
           create:
