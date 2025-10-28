@@ -432,6 +432,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _userEmail = userData['email'] ?? '';
           });
         }
+        
       },
       child: Scaffold(
         key: _scaffoldKey,
