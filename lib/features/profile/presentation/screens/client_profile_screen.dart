@@ -21,6 +21,8 @@ import 'package:voicealerts_obs/features/auth/presentation/widgets/social_auth_b
 import 'package:voicealerts_obs/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:voicealerts_obs/features/profile/presentation/bloc/profile_event.dart';
 import 'package:voicealerts_obs/features/profile/presentation/bloc/profile_state.dart';
+import 'package:phone_numbers_parser/phone_numbers_parser.dart'
+    as phone_numbers_parser;
 
 import '../../../../config/routes.dart';
 import '../../../../core/constants/strings.dart';
@@ -54,6 +56,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
   String _phoneNumber = '';
   //////////
   String initialCountryCode = '+1';
+  String initialRegion = 'US';
   String initialNumber = '';
   //////////
   bool _isLoading = false;
@@ -170,6 +173,19 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     }
   }
 
+  parsePhoneNumber(String input) {
+    try {
+      final parsed = phone_numbers_parser.PhoneNumber.parse(input);
+      return {
+        'countryCode': '+${parsed.countryCode}',
+        'nationalNumber': parsed.nsn,
+        'region': parsed.isoCode.name,
+      };
+    } catch (e) {
+      return {'countryCode': '', 'nationalNumber': input, 'region': 'US'};
+    }
+  }
+
   @override
   void initState() {
     context.read<ProfileBloc>().add(const LoadProfile());
@@ -228,29 +244,40 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           String countryCode = '+1'; // Default
           String number = '';
 
-          var countryCodes = CountryCodes.countryCodes;
-          // Find the matching country code
-          for (String code in countryCodes) {
-            if (initialValue.startsWith(code)) {
-              countryCode = code;
-              number = initialValue.substring(code.length);
-              break;
-            }
-          }
+          // Parse the phone number without using phone_numbers_parser
 
-          // If no match found, try a simple regex as fallback
-          if (number.isEmpty && initialValue.startsWith('+')) {
-            RegExp regex = RegExp(r'^\+(\d{1,3})(.*)$');
-            var match = regex.firstMatch(initialValue);
-            if (match != null && match.groupCount >= 2) {
-              countryCode = '+${match.group(1)}';
-              number = match.group(2) ?? '';
-            } else {
-              // If still no match, just use the whole string as number
-              number = initialValue;
-            }
-          }
+          // var countryCodes = CountryCodes.countryCodes;
+          // // Find the matching country code
+          // for (String code in countryCodes) {
+          //   if (initialValue.startsWith(code)) {
+          //     countryCode = code;
+          //     number = initialValue.substring(code.length);
+          //     break;
+          //   }
+          // }
 
+          // // If no match found, try a simple regex as fallback
+          // if (number.isEmpty && initialValue.startsWith('+')) {
+          //   RegExp regex = RegExp(r'^\+(\d{1,3})(.*)$');
+          //   var match = regex.firstMatch(initialValue);
+          //   if (match != null && match.groupCount >= 2) {
+          //     countryCode = '+${match.group(1)}';
+          //     number = match.group(2) ?? '';
+          //   } else {
+          //     // If still no match, just use the whole string as number
+          //     number = initialValue;
+          //   }
+          // }
+
+          // initialCountryCode = countryCode;
+          // initialNumber = number;
+
+          ///////////////END OF PARSING THE PHONE NUMBER WITHOUT USING phone_numbers_parser////////////////////
+          // Parse the phone number using phone_numbers_parser
+          var phoneNumber = parsePhoneNumber(initialValue);
+          countryCode = phoneNumber['countryCode'];
+          number = phoneNumber['nationalNumber'];
+          initialRegion = phoneNumber['region'];
           initialCountryCode = countryCode;
           initialNumber = number;
         }
@@ -331,6 +358,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                             onPhoneNumberChanged: _handlePhoneNumberChange,
                             initialCountryCode: initialCountryCode,
                             initialNumber: initialNumber,
+                            initialRegion: initialRegion,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter a phone number';
@@ -543,13 +571,14 @@ class _PhoneNumberField extends StatefulWidget {
   final String? Function(String?)? validator;
   final String initialCountryCode;
   final String initialNumber;
-
+  final String initialRegion;
   const _PhoneNumberField({
     super.key,
     required this.onPhoneNumberChanged,
     this.validator,
     required this.initialCountryCode,
     required this.initialNumber,
+    required this.initialRegion,
   });
 
   @override
@@ -593,13 +622,17 @@ class _PhoneNumberFieldState extends State<_PhoneNumberField> {
 
     // Find the country code that matches our initial country code
     String initialCountryCode = 'US'; // Default fallback
-    for (var country in countries) {
-      if ('+${country.dialCode}' == _countryCode) {
-        initialCountryCode = country.code;
-        break;
-      }
-    }
+    initialCountryCode = widget.initialRegion;
+    ////Removing This Code Because We Are Using phone_numbers_parser to parse the phone number
 
+    // for (var country in countries) {
+    //   if ('+${country.dialCode}' == _countryCode) {
+    //     initialCountryCode = country.code;
+    //     break;
+    //   }
+    // }
+
+    // ////////END OF REMOVING THIS CODE ////////
     print(_controller);
 
     return IntlPhoneField(

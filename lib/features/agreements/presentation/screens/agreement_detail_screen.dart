@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hexcolor/hexcolor.dart';
 import 'package:voicealerts_obs/core/constants/global_veriables_state.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
@@ -818,6 +819,17 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                       onPressed: _goBack,
                     )
                     : null,
+            actions: [
+              IconButton(
+                icon: SvgPicture.asset(
+                  'assets/icons/ic_download.svg',
+                  height: 20,
+                  width: 20,
+                  colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                ),
+                onPressed: () {},
+              ),
+            ],
           ),
           body: SafeArea(
             child: Padding(
@@ -1653,59 +1665,65 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
 
     if (_isSignatureMode) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildIconWithLabel(
-              icon: SvgPicture.asset(
-                'assets/icons/ic_go_back.svg',
-                height: 24,
-                width: 24,
-                colorFilter: ColorFilter.mode(
-                  Colors.grey.shade600,
-                  BlendMode.srcIn,
+            Expanded(
+              child: _buildButtons(
+                icon: SvgPicture.asset(
+                  'assets/icons/ic_go_back.svg',
+                  height: 24,
+                  width: 24,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey.shade600,
+                    BlendMode.srcIn,
+                  ),
                 ),
+                label: 'Back',
+                backgroundColor: HexColor('#02274D'),
+                onPressed: _hideSignaturePad,
               ),
-              label: 'Back',
-              onPressed: _hideSignaturePad,
             ),
-            _buildIconWithLabel(
-              icon: SvgPicture.asset(
-                'assets/icons/ic_download.svg',
-                height: 24,
-                width: 24,
-                colorFilter: ColorFilter.mode(
-                  Colors.grey.shade600,
-                  BlendMode.srcIn,
+            // _buildIconWithLabel(
+            //   icon: SvgPicture.asset(
+            //     'assets/icons/ic_download.svg',
+            //     height: 24,
+            //     width: 24,
+            //     colorFilter: ColorFilter.mode(
+            //       Colors.grey.shade600,
+            //       BlendMode.srcIn,
+            //     ),
+            //   ),
+            //   label: 'Download',
+            //   onPressed: () {
+            //     // Download document functionality
+            //   },
+            // ),
+            Expanded(
+              child: _buildButtons(
+                icon: SvgPicture.asset(
+                  'assets/icons/ic_clear.svg',
+                  height: 22,
+                  width: 22,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey.shade600,
+                    BlendMode.srcIn,
+                  ),
                 ),
+                backgroundColor: HexColor('#D43B36'),
+                label: 'Clear',
+                onPressed: () {
+                  _signatureController?.clear();
+                  _handleSignatureClear();
+                  setState(() {
+                    _selectedImageBytes = null;
+                    if (_isTextMode) {
+                      _signatureTextController.clear();
+                    }
+                  });
+                },
               ),
-              label: 'Download',
-              onPressed: () {
-                // Download document functionality
-              },
-            ),
-            _buildIconWithLabel(
-              icon: SvgPicture.asset(
-                'assets/icons/ic_clear.svg',
-                height: 22,
-                width: 22,
-                colorFilter: ColorFilter.mode(
-                  Colors.grey.shade600,
-                  BlendMode.srcIn,
-                ),
-              ),
-              label: 'Clear',
-              onPressed: () {
-                _signatureController?.clear();
-                _handleSignatureClear();
-                setState(() {
-                  _selectedImageBytes = null;
-                  if (_isTextMode) {
-                    _signatureTextController.clear();
-                  }
-                });
-              },
             ),
             // _buildIconWithLabel(
             //   icon: SvgPicture.asset(
@@ -1722,16 +1740,20 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
             //     // Preview functionality
             //   },
             // ),
-            _buildIconWithLabel(
-              icon: SvgPicture.asset(
-                'assets/icons/ic_save.svg',
-                height: 20,
-                width: 20,
-                colorFilter: ColorFilter.mode(Colors.blue, BlendMode.srcIn),
+            Expanded(
+              child: _buildButtons(
+                icon: SvgPicture.asset(
+                  'assets/icons/ic_save.svg',
+                  height: 20,
+                  width: 20,
+                  colorFilter: ColorFilter.mode(Colors.blue, BlendMode.srcIn),
+                ),
+
+                backgroundColor: HexColor('#479892'),
+                label: 'Save',
+                onPressed: _acceptAgreement,
+                isActive: true,
               ),
-              label: 'Save',
-              onPressed: _acceptAgreement,
-              isActive: true,
             ),
           ],
         ),
@@ -1947,6 +1969,30 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildButtons({
+    required Widget icon,
+    required String label,
+    required Color backgroundColor,
+    required VoidCallback onPressed,
+    bool isActive = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      child: SizedBox(
+        height: 35,
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            backgroundColor: backgroundColor,
+            // foregroundColor: isActive ? Colors.white : Colors.grey.shade800,
+          ),
+          child: Text(label),
+        ),
+      ),
     );
   }
 }

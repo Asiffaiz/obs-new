@@ -122,7 +122,7 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                         hintText: 'Full Name',
                         hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(
-                          Icons.phone,
+                          Icons.person,
                           color: HexColor("#0033A0"),
                         ),
                         filled: true,
@@ -155,7 +155,7 @@ class _AudioCallScreenState extends State<AudioCallScreen>
                         hintText: 'Email Address',
                         hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(
-                          Icons.phone,
+                          Icons.email,
                           color: HexColor("#0033A0"),
                         ),
                         filled: true,

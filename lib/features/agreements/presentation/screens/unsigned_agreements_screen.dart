@@ -5,6 +5,7 @@ import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/constants/global_veriables_state.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/widgets/custom_error_dialog.dart';
+import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
 import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_event.dart';
 import 'package:voicealerts_obs/features/auth/presentation/screens/sign_in_screen.dart';
@@ -27,19 +28,26 @@ class UnsignedAgreementsScreen extends StatefulWidget {
 class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
   bool _hasShownDialog = false;
   bool _isDataLoaded = false;
-
+  bool isMandatoryDialogShown = false;
   @override
   void initState() {
     super.initState();
     context.read<AgreementsBloc>().add(const LoadAgreements());
+    _loadIsShowMandatoryDialog();
 
     // Schedule the popup to show after the screen is built
+  }
+
+  Future<void> _loadIsShowMandatoryDialog() async {
+    isMandatoryDialogShown = await AuthService().getIsShowMandatoryDialog();
   }
 
   @override
   void dispose() {
     super.dispose();
   }
+
+
 
   _handleShowDialog() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -359,7 +367,11 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
                       mandatoryAgreements.length;
 
           if (mandatoryAgreements.isNotEmpty) {
-            _handleShowDialog();
+            if (isMandatoryDialogShown==false) {
+            
+              _handleShowDialog();
+                AuthService().saveIsShowMandatoryDialog(true);
+            }
           }
 
           return RefreshIndicator(

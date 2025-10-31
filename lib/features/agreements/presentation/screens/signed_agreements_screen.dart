@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/widgets/custom_error_dialog.dart';
@@ -117,123 +118,131 @@ class _SignedAgreementsScreenState extends State<SignedAgreementsScreen> {
     String formattedDate = DateFormat(
       'MMM d, yyyy',
     ).format(agreement.signedDate);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppColors.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.agreementCardBorderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.description_outlined,
-                      color: Colors.black,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        agreement.title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                        softWrap: true,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2, // or more if you want
+    return GestureDetector(
+      onTap: () => _navigateToAgreementDetail(agreement),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: AppColors.cardColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.agreementCardBorderColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.description_outlined,
+                        color: Colors.black,
+                        size: 20,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildInfoRow(
-                      'Signee:',
-                      agreement.signeeName,
-                      AppColors.primaryColor,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildInfoRow(
-                      'Date:',
-                      formattedDate,
-                      AppColors.primaryColor,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                _buildInfoRow(
-                  'Email:',
-                  agreement.signeeEmail,
-                  AppColors.primaryColor,
-                ),
-              ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          agreement.title,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2, // or more if you want
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildInfoRow(
+                        'Signee:',
+                        agreement.signeeName,
+                        AppColors.primaryColor,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoRow(
+                        'Date:',
+                        formattedDate,
+                        AppColors.primaryColor,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _buildInfoRow(
+                    'Email:',
+                    agreement.signeeEmail,
+                    AppColors.primaryColor,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildStatusColumn(
-                      title: 'Status',
-                      value: agreement.isSigned ? 'Signed' : 'Pending',
-                      icon: Icons.check_circle_outline,
-                      color: agreement.isSigned ? Colors.green : Colors.orange,
-                    ),
-                    _buildStatusColumn(
-                      title: 'Approved',
-                      value: agreement.isApproved ? 'Yes' : 'No',
-                      icon: agreement.isApproved ? Icons.check : Icons.close,
-                      color:
-                          agreement.isApproved ? Colors.orange : Colors.orange,
-                    ),
-                    _buildStatusColumn(
-                      title: 'Mandatory',
-                      value: agreement.isMandatory ? 'Yes' : 'No',
-                      icon:
-                          agreement.isMandatory
-                              ? Icons.priority_high
-                              : Icons.check_circle_outline,
-                      color:
-                          agreement.isMandatory ? Colors.orange : Colors.orange,
-                    ),
-                    _buildActionButton(
-                      icon: Icons.visibility,
-                      label: 'View',
-                      color: AppColors.agreementCardViewBtnColor,
-                      onPressed: () => _navigateToAgreementDetail(agreement),
-                    ),
-                  ],
-                ),
-              ],
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildStatusColumn(
+                        title: 'Status',
+                        value: agreement.isSigned ? 'Signed' : 'Pending',
+                        icon: Icons.check_circle_outline,
+                        color:
+                            agreement.isSigned ? Colors.green : Colors.orange,
+                      ),
+                      _buildStatusColumn(
+                        title: 'Approved',
+                        value: agreement.isApproved ? 'Yes' : 'No',
+                        icon: agreement.isApproved ? Icons.check : Icons.close,
+                        color:
+                            agreement.isApproved
+                                ? Colors.orange
+                                : Colors.orange,
+                      ),
+                      _buildStatusColumn(
+                        title: 'Mandatory',
+                        value: agreement.isMandatory ? 'Yes' : 'No',
+                        icon:
+                            agreement.isMandatory
+                                ? Icons.priority_high
+                                : Icons.check_circle_outline,
+                        color:
+                            agreement.isMandatory
+                                ? Colors.orange
+                                : Colors.orange,
+                      ),
+                      // _buildActionButton(
+                      //   icon: Icons.visibility,
+                      //   label: 'View',
+                      //   color: AppColors.agreementCardViewBtnColor,
+                      //   onPressed: () => _navigateToAgreementDetail(agreement),
+                      // ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

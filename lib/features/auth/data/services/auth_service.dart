@@ -8,6 +8,16 @@ import '../../../../core/network/api_endpoints.dart';
 class AuthService {
   final ApiClient _apiClient = ApiClient();
 
+  Future<void> saveIsShowMandatoryDialog(bool isShowMandatoryDialog) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('is_show_mandatory_dialog', isShowMandatoryDialog);
+  }
+
+  Future<bool> getIsShowMandatoryDialog() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('is_show_mandatory_dialog') ?? true;
+  }
+
   // Save user data to shared preferences
   Future<void> _saveUserData(Map<String, dynamic> userData) async {
     final prefs = await SharedPreferences.getInstance();

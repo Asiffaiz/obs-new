@@ -29,6 +29,9 @@ class DocumentService {
               .map((data) => DocumentModel.fromJson(data))
               .toList();
         }
+        if (response.data['status'] == 404) {
+          return [];
+        }
       }
 
       throw Exception('Failed to load documents');

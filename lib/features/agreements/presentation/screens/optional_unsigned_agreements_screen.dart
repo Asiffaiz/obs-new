@@ -78,14 +78,16 @@ class _OptionalUnsignedAgreementsScreenState
           if (state.allMandatoryAgreementsSigned && widget.onComplete != null) {
             widget.onComplete!();
           }
-               if (state.status == AgreementsStatus.error) {
+          if (state.status == AgreementsStatus.error) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               CustomErrorDialog.show(
                 context: context,
                 onRetry: () {
                   // Your retry logic here
                   Navigator.pop(context);
-                  context.read<AgreementsBloc>().add(const LoadOptionalAgreements());
+                  context.read<AgreementsBloc>().add(
+                    const LoadOptionalAgreements(),
+                  );
                 },
               );
             });
@@ -97,7 +99,7 @@ class _OptionalUnsignedAgreementsScreenState
           }
 
           if (state.status == AgreementsStatus.error) {
-                 return Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -114,7 +116,9 @@ class _OptionalUnsignedAgreementsScreenState
                       height: 40,
                       child: ElevatedButton(
                         onPressed: () {
-                         context.read<AgreementsBloc>().add(const LoadOptionalAgreements());
+                          context.read<AgreementsBloc>().add(
+                            const LoadOptionalAgreements(),
+                          );
                         },
                         child: const Text('Retry'),
                       ),
@@ -396,9 +400,9 @@ class _OptionalUnsignedAgreementsScreenState
                       _buildActionButton(
                         icon: Icons.visibility,
                         label: agreement.type.toUpperCase(),
-                        color: AppColors.primaryColor,
-                        onPressed:
-                            () => _navigateToAgreementDetail(agreement, index),
+                        color: Colors.transparent,
+                        onPressed: null,
+                        // () => _navigateToAgreementDetail(agreement, index),
                       ),
                     ],
                   ),

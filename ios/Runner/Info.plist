@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.convoso.processing</string>
+		<string>com.convoso.refresh</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -56,7 +61,7 @@
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
-	    <string>audio</string>
+		<string>audio</string>
 		<string>fetch</string>
 		<string>processing</string>
 		<string>remote-notification</string>
@@ -86,12 +91,5 @@
 	<array>
 		<string>dev-agents.onboardsoft.me</string>
 	</array>
-
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>com.convoso.processing</string>
-		<string>com.convoso.refresh</string>
-	</array>
-
 </dict>
 </plist>
