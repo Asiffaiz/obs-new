@@ -213,15 +213,23 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     );
   }
 
+  steperTitleStyle() {
+    return TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      color: Colors.black87,
+    );
+  }
+
   List<Step> _stepper() {
     List<Step> _steps = [
       Step(
-        title: const Text('Basic Details'),
+        title: Text('Basic Details', style: steperTitleStyle()),
         subtitle: _stepCompleted[0] ? const Text('Completed') : null,
         isActive: _currentStep >= 0,
         state: _getStepState(0),
         content: SizedBox(
-          height: 400,
+          // height: 400,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +357,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         ),
       ),
       Step(
-        title: const Text('Agreements'),
+        title: Text('Agreements', style: steperTitleStyle()),
         subtitle:
             _stepCompleted[1]
                 ? const Text('Completed')
@@ -361,14 +369,14 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         state: _getStepState(1),
       ),
       Step(
-        title: const Text('Kyc'),
+        title: Text('Kyc', style: steperTitleStyle()),
         subtitle: _stepCompleted[2] ? const Text('Completed') : null,
         content: _buildKycStep(),
         isActive: _currentStep >= 2,
         state: _getStepState(2),
       ),
       Step(
-        title: const Text('Interop'),
+        title: Text('Interop', style: steperTitleStyle()),
         subtitle: _stepCompleted[3] ? const Text('Completed') : null,
         content: _buildInteropStep(),
         isActive: _currentStep >= 3,
@@ -379,48 +387,45 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildAgreementsStep() {
-    return SizedBox(
-      height: 300, // Fixed height to prevent infinite constraints
-      child: BlocConsumer<AgreementsBloc, AgreementsState>(
-        listener: (context, state) {
-          if (state.status == AgreementsStatus.loadedSignedAgreements) {
-            setState(() {
-              _signedAgreements = state.signedAgreements;
-              _isLoading = false;
-            });
-          } else if (state.status == AgreementsStatus.loadingSignedAgreements) {
-            setState(() {
-              _isLoading = true;
-            });
-          } else if (state.status == AgreementsStatus.error) {
-            setState(() {
-              _isLoading = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to load agreements')),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (_isLoading) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32.0),
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
+    return BlocConsumer<AgreementsBloc, AgreementsState>(
+      listener: (context, state) {
+        if (state.status == AgreementsStatus.loadedSignedAgreements) {
+          setState(() {
+            _signedAgreements = state.signedAgreements;
+            _isLoading = false;
+          });
+        } else if (state.status == AgreementsStatus.loadingSignedAgreements) {
+          setState(() {
+            _isLoading = true;
+          });
+        } else if (state.status == AgreementsStatus.error) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to load agreements')),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (_isLoading) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
 
-          if (_signedAgreements.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(child: Text('No signed agreements found')),
-            );
-          }
+        if (_signedAgreements.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: Text('No signed agreements found')),
+          );
+        }
 
-          return _buildSignedAgreementsList(_signedAgreements);
-        },
-      ),
+        return _buildSignedAgreementsList(_signedAgreements);
+      },
     );
   }
 
@@ -466,11 +471,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
     final signedCount =
         dummyAgreements.where((a) => a['isSigned'] == true).length;
-    final unsignedCount =
-        dummyAgreements.where((a) => a['isSigned'] == false).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+
       children: [
         // Header with counts and arrow
         Row(
@@ -521,7 +525,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         ),
         const SizedBox(height: 8),
         // Horizontal scrollable list of cards
-        Expanded(
+        SizedBox(
+          height: 200, // Fixed height for the horizontal scrollable list
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.zero,
@@ -539,194 +544,198 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   Widget _buildAgreementCardHorizontal(Map<String, dynamic> agreement) {
     final isSigned = agreement['isSigned'] as bool;
 
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.768,
-      margin: const EdgeInsets.only(right: 12, left: 0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Title with check icon
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isSigned ? Colors.green : Colors.grey.shade300,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isSigned ? Icons.check : Icons.close,
-                    color: Colors.white,
-                    size: 14,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    agreement['title'] as String,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            // Signee and Date in single row
-            Row(
-              children: [
-                const Text(
-                  'Signee: ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                Flexible(
-                  child: Text(
-                    agreement['signee'] as String,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Date
-            Row(
-              children: [
-                const Text(
-                  'Date: ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                Text(
-                  agreement['date'] as String,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.blue,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Email
-            Row(
-              children: [
-                const Text(
-                  'Email: ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                Flexible(
-                  child: Text(
-                    agreement['email'] as String,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 35,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Download',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: SizedBox(
-                    height: 35,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade600,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'View',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.768,
+        margin: const EdgeInsets.only(right: 12, left: 0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // Title with check icon
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isSigned ? Colors.green : Colors.grey.shade300,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isSigned ? Icons.check : Icons.close,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      agreement['title'] as String,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              // Signee and Date in single row
+              Row(
+                children: [
+                  const Text(
+                    'Signee: ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Flexible(
+                    child: Text(
+                      agreement['signee'] as String,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Date
+              Row(
+                children: [
+                  const Text(
+                    'Date: ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    agreement['date'] as String,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Email
+              Row(
+                children: [
+                  const Text(
+                    'Email: ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Flexible(
+                    child: Text(
+                      agreement['email'] as String,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 35,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Download',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 35,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade600,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'View',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildKycStep() {
-    return SizedBox(
-      height: 300,
-      child: Center(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -765,9 +774,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildInteropStep() {
-    return SizedBox(
-      height: 300,
-      child: Center(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
