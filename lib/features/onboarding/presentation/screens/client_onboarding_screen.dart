@@ -4,9 +4,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_bloc.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_event.dart';
@@ -29,6 +26,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   List<SignedAgreementModel> _signedAgreements = [];
   Map<String, String> _userData = {};
 
+  // Track which steps are completed (first 2 steps are completed by default)
+  final List<bool> _stepCompleted = [true, true, false, false];
+
   @override
   void initState() {
     super.initState();
@@ -50,12 +50,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     }
   }
 
-  Future<void> _completeOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('client_onboarding_complete', true);
-    if (mounted) {
-      context.go(AppRoutes.home);
-    }
+  // Determine the step state - use indexed for all to let stepIconBuilder handle visuals
+  StepState _getStepState(int stepIndex) {
+    // Always return indexed so our custom stepIconBuilder has full control
+    return StepState.indexed;
   }
 
   Widget _buildInfoRow(String label, String value, IconData icon) {
@@ -95,23 +93,94 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         ],
         centerTitle: true,
       ),
-      body: Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.light(
-            primary: Colors.blue, // Current step color
-            onPrimary: Colors.white,
-            surface: Colors.white,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Expanded(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.light(
+                  primary: const Color(
+                    0xFF007BFF,
+                  ), // Blue for current uncompleted
+                  onPrimary: Colors.white,
+                  // Use secondary color for completed steps
+                  secondary: const Color(0xFF25C196), // Green for completed
+                  onSecondary: Colors.white,
+                ),
+              ),
               child: Stepper(
                 margin: const EdgeInsets.all(0),
                 steps: _stepper(),
                 type: stepperType,
                 currentStep: _currentStep,
+                // Custom connector color based on step state
+                connectorColor: MaterialStateProperty.resolveWith<Color>((
+                  Set<MaterialState> states,
+                ) {
+                  if (states.contains(MaterialState.disabled)) {
+                    return Colors.grey.shade300;
+                  }
+                  // Check if this is a completed step
+                  if (states.contains(MaterialState.selected)) {
+                    return const Color(0xFF25C196); // Green for completed
+                  }
+                  return const Color(0xFF007BFF); // Blue for current
+                }),
+                // Custom step icon builder to control individual step colors
+                stepIconBuilder: (stepIndex, stepState) {
+                  // Determine color and icon based on step completion and selection
+                  final bool isCompleted = _stepCompleted[stepIndex] == true;
+                  final bool isCurrent = _currentStep == stepIndex;
+
+                  Color bgColor;
+                  Widget iconChild;
+
+                  if (isCompleted) {
+                    // Completed step - show green checkmark (always green if completed)
+                    bgColor = const Color(0xFF25C196);
+                    iconChild = const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 18,
+                    );
+                  } else if (isCurrent) {
+                    // Current uncompleted step - show blue circle with number
+                    bgColor = const Color(0xFF007BFF);
+                    iconChild = Center(
+                      child: Text(
+                        '${stepIndex + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  } else {
+                    // Inactive uncompleted step - show grey circle with number
+                    bgColor = Colors.grey.shade400;
+                    iconChild = Center(
+                      child: Text(
+                        '${stepIndex + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: iconChild,
+                  );
+                },
                 controlsBuilder: (
                   BuildContext context,
                   ControlsDetails details,
@@ -125,8 +194,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                 },
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -135,9 +204,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     List<Step> _steps = [
       Step(
         title: const Text('Basic Details'),
-        subtitle: const Text('Completed'),
+        subtitle: _stepCompleted[0] ? const Text('Completed') : null,
         isActive: _currentStep >= 0,
-        state: StepState.complete, // Green with tick
+        state: _getStepState(0),
         content: SizedBox(
           height: 400,
           child: SingleChildScrollView(
@@ -269,40 +338,28 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       Step(
         title: const Text('Agreements'),
         subtitle:
-            _signedAgreements.isNotEmpty
-                ? Text('${_signedAgreements.length} Signed')
-                : null,
+            _stepCompleted[1]
+                ? const Text('Completed')
+                : (_signedAgreements.isNotEmpty
+                    ? Text('${_signedAgreements.length} Signed')
+                    : null),
         content: _buildAgreementsStep(),
         isActive: _currentStep >= 1,
-        state:
-            _currentStep == 1
-                ? StepState
-                    .editing // Blue for current step
-                : (_currentStep > 1 ? StepState.complete : StepState.indexed),
+        state: _getStepState(1),
       ),
       Step(
         title: const Text('Kyc'),
+        subtitle: _stepCompleted[2] ? const Text('Completed') : null,
         content: _buildKycStep(),
         isActive: _currentStep >= 2,
-        state:
-            _currentStep == 2
-                ? StepState
-                    .editing // Blue for current step
-                : (_currentStep > 2
-                    ? StepState.complete
-                    : StepState.indexed), // Grey for not done
+        state: _getStepState(2),
       ),
       Step(
         title: const Text('Interop'),
+        subtitle: _stepCompleted[3] ? const Text('Completed') : null,
         content: _buildInteropStep(),
         isActive: _currentStep >= 3,
-        state:
-            _currentStep == 3
-                ? StepState
-                    .editing // Blue for current step
-                : (_currentStep > 3
-                    ? StepState.complete
-                    : StepState.indexed), // Grey for not done
+        state: _getStepState(3),
       ),
     ];
     return _steps;
