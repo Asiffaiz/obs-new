@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hexcolor/hexcolor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
@@ -225,7 +226,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     List<Step> _steps = [
       Step(
         title: Text('Basic Details', style: steperTitleStyle()),
-        subtitle: _stepCompleted[0] ? const Text('Completed') : null,
+        subtitle: _stepCompleted[0] ? steperSubtitleStyle() : null,
         isActive: _currentStep >= 0,
         state: _getStepState(0),
         content: SizedBox(
@@ -360,7 +361,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         title: Text('Agreements', style: steperTitleStyle()),
         subtitle:
             _stepCompleted[1]
-                ? const Text('Completed')
+                ? steperSubtitleStyle()
                 : (_signedAgreements.isNotEmpty
                     ? Text('${_signedAgreements.length} Signed')
                     : null),
@@ -370,20 +371,32 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       ),
       Step(
         title: Text('Kyc', style: steperTitleStyle()),
-        subtitle: _stepCompleted[2] ? const Text('Completed') : null,
+        subtitle: _stepCompleted[2] ? steperSubtitleStyle() : null,
         content: _buildKycStep(),
         isActive: _currentStep >= 2,
         state: _getStepState(2),
       ),
       Step(
         title: Text('Interop', style: steperTitleStyle()),
-        subtitle: _stepCompleted[3] ? const Text('Completed') : null,
+        subtitle: _stepCompleted[3] ? steperSubtitleStyle() : null,
         content: _buildInteropStep(),
         isActive: _currentStep >= 3,
         state: _getStepState(3),
       ),
     ];
     return _steps;
+  }
+
+  steperSubtitleStyle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(20),
+      ),
+
+      child: const Text('Completed'),
+    );
   }
 
   Widget _buildAgreementsStep() {
@@ -478,7 +491,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       children: [
         // Header with counts and arrow
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Row(
               children: [
@@ -680,7 +693,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                       child: ElevatedButton(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
+                          backgroundColor: HexColor("#136FD4"),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           shape: RoundedRectangleBorder(
@@ -705,7 +718,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                       child: ElevatedButton(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade600,
+                          backgroundColor: HexColor("#7B7B7B"),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           shape: RoundedRectangleBorder(
@@ -733,43 +746,348 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildKycStep() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person_search, size: 60, color: Colors.blue.shade300),
-            const SizedBox(height: 20),
-            Text(
-              'KYC Verification',
-              style: Theme.of(context).textTheme.titleLarge,
+    // Dummy KYC forms data
+    final dummyKycForms = [
+      {
+        'title': 'Know Your Customers',
+        'signee': 'James Smith',
+        'date': 'June 14 2025',
+        'email': 'James@tcpaas.com',
+        'status': 'Submitted',
+        'isFilled': true,
+      },
+      {
+        'title': 'Know Your Customers',
+        'description':
+            'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown Lorem Ipsum has been the industry\'s standard dummy',
+        'isFilled': false,
+      },
+      {
+        'title': 'Know Your Customers',
+        'signee': 'Alice Johnson',
+        'date': 'June 16 2025',
+        'email': 'alice@tcpaas.com',
+        'status': 'Submitted',
+        'isFilled': true,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Horizontal scrollable list of cards
+        SizedBox(
+          height: 260,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.zero,
+            itemCount: dummyKycForms.length,
+            itemBuilder: (context, index) {
+              final form = dummyKycForms[index];
+              return _buildKycCard(form);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildKycCard(Map<String, dynamic> form) {
+    final isFilled = form['isFilled'] as bool;
+    final title = form['title'] as String;
+
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.768,
+        margin: const EdgeInsets.only(right: 12, left: 0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Complete your KYC verification to continue using all features of the platform.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Title
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Content based on filled status
+              if (isFilled) ...[
+                _buildFilledKycContent(form),
+              ] else ...[
+                _buildUnfilledKycContent(form),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilledKycContent(Map<String, dynamic> form) {
+    final signee = form['signee'] as String;
+    final date = form['date'] as String;
+    final email = form['email'] as String;
+    final status = form['status'] as String;
+
+    // Determine status color
+    Color statusColor = status == 'Completed' ? Colors.green : Colors.blue;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Signee
+        Row(
+          children: [
+            const Text(
+              'Signee: ',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.add_circle_outline),
-              label: const Text('Start KYC Process'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.appButtonColor,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+            Flexible(
+              child: Text(
+                signee,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Date
+        Row(
+          children: [
+            const Text(
+              'Date: ',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              date,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Email
+        Row(
+          children: [
+            const Text(
+              'Email: ',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.black87,
+              ),
+            ),
+            Flexible(
+              child: Text(
+                email,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Status
+        Row(
+          children: [
+            const Text(
+              'Status : ',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              status,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: statusColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        // Buttons
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 32,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HexColor("#136FD4"),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                  child: const Text(
+                    'Download',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SizedBox(
+                height: 32,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HexColor("#7B7B7B"),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                  child: const Text(
+                    'Add New',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SizedBox(
+                height: 32,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HexColor("#25C196"),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                  child: const Text(
+                    'View',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ),
           ],
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _buildUnfilledKycContent(Map<String, dynamic> form) {
+    final description = form['description'] as String;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Description with gradient fade effect
+        Stack(
+          children: [
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
+              maxLines: 5,
+              overflow: TextOverflow.clip,
+            ),
+            // Gradient overlay at bottom
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.0),
+                      Colors.white.withOpacity(0.7),
+                      Colors.white,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        // Start button
+        Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            height: 36,
+            child: ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HexColor("#136FD4"),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Start',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
