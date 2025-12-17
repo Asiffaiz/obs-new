@@ -67,7 +67,9 @@ class _AddressAutocompleteState extends State<AddressAutocomplete> {
       } else {
         // Use the Google Places API to fetch address predictions
         final predictions = await _placesService.getPlacePredictions(query);
-        setState(() => _filteredAddresses = predictions);
+        if(mounted){  // Check if the widget is still mounted
+          setState(() => _filteredAddresses = predictions);
+        }
       }
 
       if (_focusNode.hasFocus) {

@@ -17,4 +17,5 @@ class SharedPreferenceKeys {
   static const String countryKey = 'client_country__';
   static const String accessTokenKey = 'api_access_token';
   static const String tokenExpiryKey = 'api_token_expiry';
+  static const String onboardingCompleteKey = 'client_onboarding_complete';
 }

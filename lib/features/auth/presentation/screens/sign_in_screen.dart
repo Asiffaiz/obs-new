@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_bloc.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_event.dart';
@@ -66,17 +68,30 @@ class _SignInScreenState extends State<SignInScreen> {
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state.status == AuthStatus.authenticated) {
-          context.go(AppRoutes.home);
-        } else if (state.status == AuthStatus.apiAuthenticated) {
+        // if (state.status == AuthStatus.authenticated) {
+        //   context.go(AppRoutes.home);
+        // }
+        // else
+        if (state.status == AuthStatus.apiAuthenticated ||
+            state.status == AuthStatus.authenticated) {
           setState(() {
             _successMessage = "Login successful. Redirecting to dashboard...";
             _isLoading = false;
           });
 
           // Navigate to dashboard after a short delay
-          Future.delayed(const Duration(seconds: 1), () {
-            context.go(AppRoutes.home);
+          Future.delayed(const Duration(seconds: 1), () async {
+            // Check if onboarding is needed (you can add a flag in SharedPreferences)
+            final prefs = await SharedPreferences.getInstance();
+            final onboardingComplete =
+                prefs.getBool(SharedPreferenceKeys.onboardingCompleteKey) ??
+                false;
+
+            if (!onboardingComplete) {
+              context.go(AppRoutes.clientOnboarding);
+            } else {
+              context.go(AppRoutes.home);
+            }
           });
         } else if (state.status == AuthStatus.hasMandatoryAgreements) {
           context.go(AppRoutes.unsignedAgreements);

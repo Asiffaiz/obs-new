@@ -21,6 +21,7 @@ import '../features/auth/presentation/screens/webview_register_screen.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/splash/presentation/screens/splash_screen.dart';
 import '../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../features/onboarding/presentation/screens/client_onboarding_screen.dart';
 import '../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../features/onboarding/presentation/screens/welcome_menu_screen.dart';
 import '../features/onboarding/presentation/screens/book_demo_screen.dart';
@@ -34,6 +35,7 @@ class AppRoutes {
   static const String welcome = '/welcome';
   static const String welcomeMenu = '/welcome-menu';
   static const String onboarding = '/onboarding';
+  static const String clientOnboarding = '/client-onboarding';
   static const String signIn = '/sign-in';
   static const String signUp = '/sign-up';
   static const String webViewSignUp = '/webview-sign-up';
@@ -73,47 +75,9 @@ GoRouter createRouter(AuthBloc authBloc) {
         }
       }
 
-      // Yai khud comment kia hay abhi
-
-      // Handle authenticated users
-      // if (authState.isAuthenticated || authState.isApiAuthenticated) {
-      //   // Don't redirect if already on agreements screen
-      //   if (state.uri.path == AppRoutes.agreements) {
-      //     return null;
-      //   }
-
-      //   // Check for mandatory agreements first
-      // if (authState.status == AuthStatus.hasMandatoryAgreements) {
-      //   return AppRoutes.agreements;
-      // }
-
-      //   // If no mandatory agreements, don't allow access to auth pages
-      //   if (state.uri.path == AppRoutes.signIn ||
-      //       state.uri.path == AppRoutes.signUp ||
-      //       state.uri.path == AppRoutes.forgotPassword ||
-      //       state.uri.path == AppRoutes.verification ||
-      //       state.uri.path == AppRoutes.resetPassword) {
-      //     return AppRoutes.home;
-      //   }
-      // } else {
-      //   // User is not authenticated
-      //   // Only allow access to auth pages and onboarding/welcome pages
-      //   final isAuthRoute =
-      //       state.uri.path == AppRoutes.signIn ||
-      //       state.uri.path == AppRoutes.signUp ||
-      //       state.uri.path == AppRoutes.webViewSignUp ||
-      //       state.uri.path == AppRoutes.forgotPassword ||
-      //       state.uri.path == AppRoutes.verification ||
-      //       state.uri.path == AppRoutes.resetPassword ||
-      //       state.uri.path == AppRoutes.welcome ||
-      //       state.uri.path == AppRoutes.welcomeMenu ||
-      //       state.uri.path == AppRoutes.onboarding;
-
-      //   // If trying to access protected route while not authenticated, redirect to sign in
-      //   if (!isAuthRoute && state.uri.path != AppRoutes.splash) {
-      //     return AppRoutes.signIn;
-      //   }
-      // }
+      // Note: Removed aggressive redirect logic that was causing navigation issues
+      // The app flow should be handled by splash screen navigation
+      // Users can access client onboarding through normal navigation
 
       return null;
     },
@@ -136,10 +100,14 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder: (context, state) => const WelcomeMenuScreen(),
       ),
 
-      // Onboarding Route
+      // Onboarding Routes
       GoRoute(
         path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.clientOnboarding,
+        builder: (context, state) => const ClientOnboardingScreen(),
       ),
 
       // Auth Routes

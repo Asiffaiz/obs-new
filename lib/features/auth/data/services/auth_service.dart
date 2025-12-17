@@ -151,6 +151,7 @@ class AuthService {
     await prefs.remove(SharedPreferenceKeys.stateKey);
     await prefs.remove(SharedPreferenceKeys.zipKey);
     await prefs.remove(SharedPreferenceKeys.countryKey);
+    await prefs.remove(SharedPreferenceKeys.onboardingCompleteKey);
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
