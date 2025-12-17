@@ -4,6 +4,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_bloc.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_event.dart';
@@ -47,6 +50,16 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       setState(() {
         _userData = userData;
       });
+    }
+  }
+
+  // Complete onboarding and navigate to home
+  // This is used by the Skip button (currently commented out but kept for future use)
+  Future<void> _completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('client_onboarding_complete', true);
+    if (mounted) {
+      context.go(AppRoutes.home);
     }
   }
 
@@ -440,14 +453,14 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         'signee': 'Bob Wilson',
         'date': 'June 08 2025',
         'email': 'bob@tcpaas.com',
-        'isSigned': false,
+        'isSigned': true,
       },
       {
         'title': 'Data Processing Agreement',
         'signee': 'Alice Brown',
         'date': 'June 15 2025',
         'email': 'alice@tcpaas.com',
-        'isSigned': false,
+        'isSigned': true,
       },
     ];
 
@@ -484,32 +497,31 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '0$unsignedCount Unsigned',
-                    style: TextStyle(
-                      color: Colors.red.shade400,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
+                // Container(
+                //   padding: const EdgeInsets.symmetric(
+                //     horizontal: 12,
+                //     vertical: 4,
+                //   ),
+                //   decoration: BoxDecoration(
+                //     color: Colors.red.shade50,
+                //     borderRadius: BorderRadius.circular(20),
+                //   ),
+                //   child: Text(
+                //     '0$unsignedCount Unsigned',
+                //     style: TextStyle(
+                //       color: Colors.red.shade400,
+                //       fontWeight: FontWeight.w600,
+                //       fontSize: 11,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ],
         ),
         const SizedBox(height: 8),
         // Horizontal scrollable list of cards
-        SizedBox(
-          height: 220,
+        Expanded(
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.zero,
@@ -528,8 +540,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     final isSigned = agreement['isSigned'] as bool;
 
     return Container(
-      width: 275,
-      margin: const EdgeInsets.only(right: 12, left: 4),
+      width: MediaQuery.of(context).size.width * 0.768,
+      margin: const EdgeInsets.only(right: 12, left: 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -543,7 +555,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -662,7 +674,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -687,7 +699,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey.shade600,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
                         ),
