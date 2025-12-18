@@ -225,11 +225,30 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
   // Complete onboarding and navigate to home
   Future<void> _completeOnboarding() async {
+    // Show success popup with animation
+    await _showSuccessPopup();
+
+    // Save completion status
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('client_onboarding_complete', true);
+
+    // Navigate with smooth transition
     if (mounted) {
+      // Small delay for smooth transition
+      await Future.delayed(const Duration(milliseconds: 300));
       context.go(AppRoutes.home);
     }
+  }
+
+  // Show animated success popup
+  Future<void> _showSuccessPopup() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const OnboardingSuccessDialog();
+      },
+    );
   }
 
   // Determine the step state - use indexed for all to let stepIconBuilder handle visuals
@@ -1282,6 +1301,163 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Animated Success Dialog
+class OnboardingSuccessDialog extends StatefulWidget {
+  const OnboardingSuccessDialog({Key? key}) : super(key: key);
+
+  @override
+  State<OnboardingSuccessDialog> createState() =>
+      _OnboardingSuccessDialogState();
+}
+
+class _OnboardingSuccessDialogState extends State<OnboardingSuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1000), // Slower animation
+      vsync: this,
+    );
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    );
+
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+
+    _controller.forward();
+
+    // Auto close after 4 seconds (longer display time)
+    Future.delayed(const Duration(milliseconds: 4000), () {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Animated checkmark circle
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(
+                    milliseconds: 1200,
+                  ), // Slower checkmark animation
+                  curve: Curves.elasticOut,
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: HexColor("#25C196"),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 50 * value,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                // Success text
+                const Text(
+                  'Congratulations!',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'You have successfully completed the onboarding process.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Animated progress indicator
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(
+                    milliseconds: 3500,
+                  ), // Slower progress bar
+                  curve: Curves.easeInOut,
+                  builder: (context, value, child) {
+                    return Column(
+                      children: [
+                        LinearProgressIndicator(
+                          value: value,
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            HexColor("#25C196"),
+                          ),
+                          minHeight: 4,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Redirecting to dashboard...',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
