@@ -82,7 +82,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         },
         "Security": {
           "form": "336586336588",
-          "allowSkip": 1,
+          "allowSkip": 0,
           "enable": 0,
           "isFilled": 0,
           "type": "form",
@@ -310,7 +310,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   onSecondary: Colors.white,
                 ),
               ),
-              
+
               child: Stepper(
                 margin: const EdgeInsets.all(0),
                 steps: _stepper(),
