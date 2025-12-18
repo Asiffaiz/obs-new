@@ -100,10 +100,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       appBar: AppBar(
         title: const Text('Client Onboarding'),
         actions: [
-          // TextButton(
-          //   onPressed: _completeOnboarding,
-          //   child: const Text('Skip', style: TextStyle(color: Colors.white)),
-          // ),
+          TextButton(
+            onPressed: _completeOnboarding,
+            child: const Text('Skip', style: TextStyle(color: Colors.white)),
+          ),
         ],
         centerTitle: true,
       ),
