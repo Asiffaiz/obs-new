@@ -310,6 +310,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   onSecondary: Colors.white,
                 ),
               ),
+              
               child: Stepper(
                 margin: const EdgeInsets.all(0),
                 steps: _stepper(),
