@@ -24,20 +24,153 @@ class ClientOnboardingScreen extends StatefulWidget {
 }
 
 class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
-  int _currentStep = 1;
+  int _currentStep = 0;
   StepperType stepperType = StepperType.vertical;
   bool _isLoading = false;
   List<SignedAgreementModel> _signedAgreements = [];
   Map<String, String> _userData = {};
 
-  // Track which steps are completed (first 2 steps are completed by default)
-  final List<bool> _stepCompleted = [true, true, false, false];
+  // Dynamic onboarding configuration
+  Map<String, dynamic> _onboardingSettings = {};
+  List<String> _stepNames = [];
+  List<bool> _stepCompleted = [];
+  int _totalSteps = 0;
+  int _progress = 0;
+
+  // Form data cache (formId -> form submissions)
+  Map<String, List<Map<String, dynamic>>> _formDataCache = {};
 
   @override
   void initState() {
     super.initState();
+    _loadOnboardingSettings();
     _loadSignedAgreements();
     _loadUserData();
+  }
+
+  void _loadOnboardingSettings() {
+    // Mock JSON data - replace with actual API call
+    final jsonResponse = {
+      "steps": {
+        "Basic Information": {
+          "form": "",
+          "allowSkip": 0,
+          "enable": 0,
+          "isFilled": 1,
+          "type": "basic",
+        },
+        "Agreement Terms": {
+          "form": "",
+          "allowSkip": 0,
+          "enable": 0,
+          "isFilled": 1,
+          "type": "agreement",
+        },
+        "New KYC": {
+          "form": "336586336586",
+          "allowSkip": 1,
+          "enable": 0,
+          "isFilled": 0,
+          "type": "form",
+        },
+        "Interop": {
+          "form": "336586336587",
+          "allowSkip": 1,
+          "enable": 0,
+          "isFilled": 0,
+          "type": "form",
+        },
+        "Security": {
+          "form": "336586336588",
+          "allowSkip": 1,
+          "enable": 0,
+          "isFilled": 0,
+          "type": "form",
+        },
+        "Data Protection": {
+          "form": "336586336589",
+          "allowSkip": 1,
+          "enable": 0,
+          "isFilled": 0,
+          "type": "form",
+        },
+      },
+      "total_steps": 6,
+      "progress": 2, // 2 steps completed
+    };
+
+    setState(() {
+      _onboardingSettings = jsonResponse['steps'] as Map<String, dynamic>;
+      _stepNames = _onboardingSettings.keys.toList();
+      _totalSteps = jsonResponse['total_steps'] as int;
+      _progress = jsonResponse['progress'] as int;
+
+      // Set completion based on isFilled from API
+      _stepCompleted = List.generate(_stepNames.length, (index) {
+        final stepName = _stepNames[index];
+        final stepConfig = _onboardingSettings[stepName];
+        return (stepConfig['isFilled'] as int) == 1;
+      });
+    });
+
+    // Load form data for steps with form IDs
+    _loadFormsData();
+  }
+
+  void _loadFormsData() {
+    // Load dummy form data for each form
+    _onboardingSettings.forEach((stepName, config) {
+      final formId = config['form'] as String;
+      if (formId.isNotEmpty) {
+        // Mock form submissions - replace with actual API call
+        setState(() {
+          _formDataCache[formId] = _getDummyFormData(formId);
+        });
+      }
+    });
+  }
+
+  List<Map<String, dynamic>> _getDummyFormData(String formId) {
+    // Dynamic form data mapping - replace with actual API call
+    final Map<String, List<Map<String, dynamic>>> formsData = {
+      "336586336586": [
+        {
+          'title': 'Know Your Customers',
+          'signee': 'James Smith',
+          'date': 'June 14 2025',
+          'email': 'James@tcpaas.com',
+          'status': 'Submitted',
+          'isFilled': true, // Filled state
+        },
+      ],
+      "336586336587": [
+        {
+          'title': 'Interop Configuration',
+          'description':
+              'Configure your interop settings to connect with external systems. This form helps you set up integration points and data exchange protocols.',
+          'isFilled': false, // Unfilled state
+        },
+      ],
+      "336586336588": [
+        {
+          'title': 'Security',
+          'description':
+              'Configure your security settings to protect your data and systems. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown Lorem Ipsum has been the industry\'s standard dummy',
+          'isFilled': false, // Unfilled state
+        },
+      ],
+      "336586336589": [
+        {
+          'title': 'Data Protection',
+          'description':
+              'Configure your data protection settings to protect your data and systems. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown Lorem Ipsum has been the industry\'s standard dummy',
+          'isFilled': false, // Unfilled state
+        },
+      ],
+    };
+
+    // Return form data for the given formId, or empty list if not found
+    return formsData[formId] ?? [];
   }
 
   void _loadSignedAgreements() {
@@ -54,8 +187,43 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     }
   }
 
+  // Skip current step (if allowed)
+  void _skipStep(int stepIndex) {
+    setState(() {
+      _stepCompleted[stepIndex] = true;
+      _progress++;
+
+      // Check if this was the last step
+      if (_progress >= _totalSteps) {
+        _completeOnboarding();
+      } else if (stepIndex < _stepNames.length - 1) {
+        // Move to next step
+        _currentStep = stepIndex + 1;
+      }
+    });
+  }
+
+  // Mark step as complete and move to next or finish
+  void _completeStep(int stepIndex) {
+    setState(() {
+      _stepCompleted[stepIndex] = true;
+      _progress++;
+
+      // Update the config
+      final stepName = _stepNames[stepIndex];
+      _onboardingSettings[stepName]['isFilled'] = 1;
+
+      // Check if this was the last step
+      if (_progress >= _totalSteps) {
+        _completeOnboarding();
+      } else if (stepIndex < _stepNames.length - 1) {
+        // Move to next step
+        _currentStep = stepIndex + 1;
+      }
+    });
+  }
+
   // Complete onboarding and navigate to home
-  // This is used by the Skip button (currently commented out but kept for future use)
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('client_onboarding_complete', true);
@@ -223,168 +391,204 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   List<Step> _stepper() {
-    List<Step> _steps = [
-      Step(
-        title: Text('Basic Details', style: steperTitleStyle()),
-        subtitle: _stepCompleted[0] ? steperSubtitleStyle() : null,
-        isActive: _currentStep >= 0,
-        state: _getStepState(0),
-        content: SizedBox(
-          // height: 400,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Profile Card
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade200),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+    if (_stepNames.isEmpty) {
+      return []; // Return empty if settings not loaded yet
+    }
+
+    List<Step> steps = [];
+
+    for (int i = 0; i < _stepNames.length; i++) {
+      final stepName = _stepNames[i];
+      final config = _onboardingSettings[stepName];
+      final stepType = config['type'] as String;
+      final formId = config['form'] as String;
+      final allowSkip = (config['allowSkip'] as int) == 1;
+
+      Widget stepContent;
+
+      // Determine content based on step type
+      switch (stepType) {
+        case 'basic':
+          stepContent = _buildBasicDetailsStep();
+          break;
+        case 'agreement':
+          stepContent = _buildAgreementsStep();
+          break;
+        case 'form':
+          stepContent = _buildFormStep(formId, stepName, i);
+          break;
+        default:
+          stepContent = Center(child: Text('Unknown step type: $stepType'));
+      }
+
+      // Build subtitle with skip option if allowed
+      Widget? subtitle;
+      if (_stepCompleted[i]) {
+        subtitle = steperSubtitleStyle();
+      } else if (allowSkip && _currentStep == i) {
+        subtitle = Row(
+          children: [
+            Text(
+              'Optional - ',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            InkWell(
+              onTap: () => _skipStep(i),
+              child: Text(
+                'Skip',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: HexColor("#136FD4"),
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
+        );
+      }
+
+      steps.add(
+        Step(
+          title: Text(stepName, style: steperTitleStyle()),
+          subtitle: subtitle,
+          isActive: _currentStep >= i,
+          state: _getStepState(i),
+          content: stepContent,
+        ),
+      );
+    }
+
+    return steps;
+  }
+
+  Widget _buildBasicDetailsStep() {
+    return SizedBox(
+      // height: 400,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Profile Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          // Avatar
-                          CircleAvatar(
-                            radius: 24,
-                            backgroundColor: AppColors.appButtonColor,
-                            child: Text(
-                              _userData['name']?.isNotEmpty == true
-                                  ? _userData['name']![0].toUpperCase()
-                                  : 'U',
+                      // Avatar
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: AppColors.appButtonColor,
+                        child: Text(
+                          _userData['name']?.isNotEmpty == true
+                              ? _userData['name']![0].toUpperCase()
+                              : 'U',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Name and Email
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _userData['name'] ?? 'User',
                               style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          // Name and Email
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _userData['name'] ?? 'User',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _userData['email'] ?? 'email@example.com',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      const Divider(),
-                      const SizedBox(height: 16),
-                      // Additional Info
-                      if (_userData['comp_name']?.isNotEmpty == true) ...[
-                        _buildInfoRow(
-                          'Company',
-                          _userData['comp_name'] ?? '',
-                          Icons.business,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_userData['phone']?.isNotEmpty == true) ...[
-                        _buildInfoRow(
-                          'Phone',
-                          _userData['phone'] ?? '',
-                          Icons.phone,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_userData['accountno']?.isNotEmpty == true)
-                        _buildInfoRow(
-                          'Account No',
-                          _userData['accountno'] ?? '',
-                          Icons.account_circle,
-                        ),
-                      const SizedBox(height: 20),
-                      // Edit Button
-                      SizedBox(
-                        height: 40,
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            // Navigate to full profile screen
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => const ClientProfileScreen(),
+                            const SizedBox(height: 4),
+                            Text(
+                              _userData['email'] ?? 'email@example.com',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade600,
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.edit, size: 16),
-                          label: const Text(
-                            'Edit Profile',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.appButtonColor,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  // Additional Info
+                  if (_userData['comp_name']?.isNotEmpty == true) ...[
+                    _buildInfoRow(
+                      'Company',
+                      _userData['comp_name'] ?? '',
+                      Icons.business,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_userData['phone']?.isNotEmpty == true) ...[
+                    _buildInfoRow(
+                      'Phone',
+                      _userData['phone'] ?? '',
+                      Icons.phone,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_userData['accountno']?.isNotEmpty == true)
+                    _buildInfoRow(
+                      'Account No',
+                      _userData['accountno'] ?? '',
+                      Icons.account_circle,
+                    ),
+                  const SizedBox(height: 20),
+                  // Edit Button
+                  SizedBox(
+                    height: 40,
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // Navigate to full profile screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ClientProfileScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.edit, size: 16),
+                      label: const Text(
+                        'Edit Profile',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.appButtonColor,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
-      Step(
-        title: Text('Agreements', style: steperTitleStyle()),
-        subtitle:
-            _stepCompleted[1]
-                ? steperSubtitleStyle()
-                : (_signedAgreements.isNotEmpty
-                    ? Text('${_signedAgreements.length} Signed')
-                    : null),
-        content: _buildAgreementsStep(),
-        isActive: _currentStep >= 1,
-        state: _getStepState(1),
-      ),
-      Step(
-        title: Text('Kyc', style: steperTitleStyle()),
-        subtitle: _stepCompleted[2] ? steperSubtitleStyle() : null,
-        content: _buildKycStep(),
-        isActive: _currentStep >= 2,
-        state: _getStepState(2),
-      ),
-      Step(
-        title: Text('Interop', style: steperTitleStyle()),
-        subtitle: _stepCompleted[3] ? steperSubtitleStyle() : null,
-        content: _buildInteropStep(),
-        isActive: _currentStep >= 3,
-        state: _getStepState(3),
-      ),
-    ];
-    return _steps;
+    );
   }
 
   steperSubtitleStyle() {
@@ -745,32 +949,18 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     );
   }
 
-  Widget _buildKycStep() {
-    // Dummy KYC forms data
-    final dummyKycForms = [
-      {
-        'title': 'Know Your Customers',
-        'signee': 'James Smith',
-        'date': 'June 14 2025',
-        'email': 'James@tcpaas.com',
-        'status': 'Submitted',
-        'isFilled': true,
-      },
-      {
-        'title': 'Know Your Customers',
-        'description':
-            'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown Lorem Ipsum has been the industry\'s standard dummy',
-        'isFilled': false,
-      },
-      {
-        'title': 'Know Your Customers',
-        'signee': 'Alice Johnson',
-        'date': 'June 16 2025',
-        'email': 'alice@tcpaas.com',
-        'status': 'Submitted',
-        'isFilled': true,
-      },
-    ];
+  Widget _buildFormStep(String formId, String stepName, int stepIndex) {
+    // Get form submissions from cache
+    final formSubmissions = _formDataCache[formId] ?? [];
+
+    if (formSubmissions.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Text('No data available for $stepName'),
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -781,10 +971,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.zero,
-            itemCount: dummyKycForms.length,
+            itemCount: formSubmissions.length,
             itemBuilder: (context, index) {
-              final form = dummyKycForms[index];
-              return _buildKycCard(form);
+              final submission = formSubmissions[index];
+              return _buildFormCard(submission, stepIndex);
             },
           ),
         ),
@@ -792,7 +982,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     );
   }
 
-  Widget _buildKycCard(Map<String, dynamic> form) {
+  Widget _buildFormCard(Map<String, dynamic> form, int stepIndex) {
     final isFilled = form['isFilled'] as bool;
     final title = form['title'] as String;
 
@@ -831,9 +1021,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
               const SizedBox(height: 16),
               // Content based on filled status
               if (isFilled) ...[
-                _buildFilledKycContent(form),
+                _buildFilledFormContent(form),
               ] else ...[
-                _buildUnfilledKycContent(form),
+                _buildUnfilledFormContent(form, stepIndex),
               ],
             ],
           ),
@@ -842,14 +1032,15 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     );
   }
 
-  Widget _buildFilledKycContent(Map<String, dynamic> form) {
+  Widget _buildFilledFormContent(Map<String, dynamic> form) {
     final signee = form['signee'] as String;
     final date = form['date'] as String;
     final email = form['email'] as String;
     final status = form['status'] as String;
 
     // Determine status color
-    Color statusColor = status == 'Completed' ? Colors.green : Colors.blue;
+    Color statusColor =
+        status == 'Completed' ? HexColor("#25C196") : HexColor("#136FD4");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1022,7 +1213,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     );
   }
 
-  Widget _buildUnfilledKycContent(Map<String, dynamic> form) {
+  Widget _buildUnfilledFormContent(Map<String, dynamic> form, int stepIndex) {
     final description = form['description'] as String;
 
     return Column(
@@ -1064,13 +1255,16 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           ],
         ),
         const SizedBox(height: 20),
-        // Start button
+        // Start button - marks step as complete
         Align(
           alignment: Alignment.centerRight,
           child: SizedBox(
             height: 36,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                // Mark this step as complete and move to next
+                _completeStep(stepIndex);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: HexColor("#136FD4"),
                 foregroundColor: Colors.white,
@@ -1088,48 +1282,6 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildInteropStep() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.sync_alt, size: 60, color: Colors.purple.shade300),
-            const SizedBox(height: 20),
-            Text(
-              'Interop Configuration',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Configure integration settings to connect with your existing systems.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.settings),
-              label: const Text('Configure Interop'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.appButtonColor,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
