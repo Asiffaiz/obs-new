@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hexcolor/hexcolor.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
@@ -24,7 +25,7 @@ class ClientOnboardingScreen extends StatefulWidget {
 }
 
 class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
-  int _currentStep = 0;
+  int _currentStep = 2;
   StepperType stepperType = StepperType.vertical;
   bool _isLoading = false;
   List<SignedAgreementModel> _signedAgreements = [];
@@ -70,7 +71,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           "form": "336586336586",
           "allowSkip": 1,
           "enable": 0,
-          "isFilled": 0,
+          "isFilled": 1,
           "type": "form",
         },
         "Interop": {
@@ -285,7 +286,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: const Text('Client Onboarding'),
+        title: const Text('Welcome Onboarding'),
         actions: [
           TextButton(
             onPressed: _completeOnboarding,
@@ -339,12 +340,31 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   Widget iconChild;
 
                   if (isCompleted) {
-                    // Completed step - show green checkmark (always green if completed)
+                    // Completed step - show green checkmark with Lottie animation
                     bgColor = const Color(0xFF25C196);
-                    iconChild = const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 18,
+                    // Old icon animation code (commented out)
+                    // iconChild = TweenAnimationBuilder<double>(
+                    //   key: ValueKey('check_$stepIndex'),
+                    //   duration: const Duration(milliseconds: 800),
+                    //   tween: Tween(begin: 0.0, end: 1.0),
+                    //   curve: Curves.elasticOut,
+                    //   builder: (context, value, child) {
+                    //     return Transform.scale(
+                    //       scale: value,
+                    //       child: Transform.rotate(
+                    //         angle: value * 6.28, // Full rotation
+                    //         child: const Icon(
+                    //           Icons.check,
+                    //           color: Colors.white,
+                    //           size: 18,
+                    //         ),
+                    //       ),
+                    //     );
+                    //   },
+                    // );
+                    // New Lottie animation with fallback to icon
+                    iconChild = _AnimatedCheckmark(
+                      key: ValueKey('check_$stepIndex'),
                     );
                   } else if (isCurrent) {
                     // Current uncompleted step - show blue circle with number
@@ -373,7 +393,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                     );
                   }
 
-                  return Container(
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
@@ -423,7 +445,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       final stepType = config['type'] as String;
       final formId = config['form'] as String;
       final allowSkip = (config['allowSkip'] as int) == 1;
-
+      final isFilled = (config['isFilled'] as int) == 1;
       Widget stepContent;
 
       // Determine content based on step type
@@ -445,7 +467,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       Widget? subtitle;
       if (_stepCompleted[i]) {
         subtitle = steperSubtitleStyle();
-      } else if (allowSkip && _currentStep == i) {
+      } else if (allowSkip && _currentStep == i && isFilled) {
         subtitle = Row(
           children: [
             Text(
@@ -474,7 +496,26 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           subtitle: subtitle,
           isActive: _currentStep >= i,
           state: _getStepState(i),
-          content: stepContent,
+          content: AnimatedSize(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.1),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: stepContent,
+            ),
+          ),
         ),
       );
     }
@@ -987,7 +1028,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       children: [
         // Horizontal scrollable list of cards
         SizedBox(
-          height: 260,
+          height: 240,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.zero,
@@ -1010,6 +1051,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       alignment: Alignment.topLeft,
       child: Container(
         width: MediaQuery.of(context).size.width * 0.768,
+        height: 230, // Fixed height for consistent UI
         margin: const EdgeInsets.only(right: 12, left: 0),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1037,14 +1079,17 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 16),
               // Content based on filled status
-              if (isFilled) ...[
-                _buildFilledFormContent(form),
-              ] else ...[
-                _buildUnfilledFormContent(form, stepIndex),
-              ],
+              Expanded(
+                child:
+                    isFilled
+                        ? _buildFilledFormContent(form)
+                        : _buildUnfilledFormContent(form, stepIndex),
+              ),
             ],
           ),
         ),
@@ -1064,6 +1109,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Signee
         Row(
@@ -1089,7 +1135,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         // Date
         Row(
           children: [
@@ -1111,7 +1157,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         // Email
         Row(
           children: [
@@ -1136,7 +1182,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         // Status
         Row(
           children: [
@@ -1158,7 +1204,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const Spacer(), // Push buttons to bottom
         // Buttons
         Row(
           children: [
@@ -1238,43 +1284,48 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Description with gradient fade effect
-        Stack(
-          children: [
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade600,
-                height: 1.5,
+        Expanded(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                child: Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                    height: 1.5,
+                  ),
+                  maxLines: 7,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              maxLines: 5,
-              overflow: TextOverflow.clip,
-            ),
-            // Gradient overlay at bottom
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withOpacity(0.0),
-                      Colors.white.withOpacity(0.7),
-                      Colors.white,
-                    ],
+              // Gradient overlay at bottom
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withOpacity(0.0),
+                        Colors.white.withOpacity(0.7),
+                        Colors.white,
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         // Start button - marks step as complete
         Align(
           alignment: Alignment.centerRight,
@@ -1302,6 +1353,66 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Animated Checkmark Widget - Shows Lottie animation then static icon
+class _AnimatedCheckmark extends StatefulWidget {
+  const _AnimatedCheckmark({Key? key}) : super(key: key);
+
+  @override
+  State<_AnimatedCheckmark> createState() => _AnimatedCheckmarkState();
+}
+
+class _AnimatedCheckmarkState extends State<_AnimatedCheckmark> {
+  bool _showIcon = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Wait for Lottie animation to complete (typically 1-2 seconds)
+    // Then show static icon
+    Future.delayed(const Duration(milliseconds: 2000), () {
+      if (mounted) {
+        setState(() {
+          _showIcon = true;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showIcon) {
+      // Show static checkmark icon after animation completes
+      return const Icon(Icons.check, color: Colors.white, size: 18);
+    }
+
+    // Show Lottie animation with larger size to fit better in circle
+    return SizedBox(
+      width: 120,
+      height: 120,
+      child: FittedBox(
+        child: Lottie.asset(
+          'assets/icons/Checked.json',
+          repeat: false,
+
+          animate: true,
+          onLoaded: (composition) {
+            // Optional: Set timer based on actual animation duration
+            if (mounted) {
+              Future.delayed(composition.duration, () {
+                if (mounted) {
+                  setState(() {
+                    _showIcon = true;
+                  });
+                }
+              });
+            }
+          },
+        ),
+      ),
     );
   }
 }
