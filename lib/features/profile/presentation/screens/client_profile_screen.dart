@@ -283,7 +283,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Profile Details')),
+        appBar: AppBar(title: const Text('Profile Details'), centerTitle: true),
         body: SafeArea(
           child: ResponsivePadding(
             child: SingleChildScrollView(
