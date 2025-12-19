@@ -1011,7 +1011,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildFormStep(String formId, String stepName, int stepIndex) {
-    // Get form submissions from cache
+    // Get form submission from cache (single entry)
     final formSubmissions = _formDataCache[formId] ?? [];
 
     if (formSubmissions.isEmpty) {
@@ -1023,75 +1023,58 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Horizontal scrollable list of cards
-        SizedBox(
-          height: 240,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.zero,
-            itemCount: formSubmissions.length,
-            itemBuilder: (context, index) {
-              final submission = formSubmissions[index];
-              return _buildFormCard(submission, stepIndex);
-            },
-          ),
-        ),
-      ],
-    );
+    // Get the first (and only) form submission
+    final submission = formSubmissions.first;
+
+    // Display single card without ListView
+    return _buildFormCard(submission, stepIndex);
   }
 
   Widget _buildFormCard(Map<String, dynamic> form, int stepIndex) {
     final isFilled = form['isFilled'] as bool;
     final title = form['title'] as String;
 
-    return Align(
-      alignment: Alignment.topLeft,
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.768,
-        height: 230, // Fixed height for consistent UI
-        margin: const EdgeInsets.only(right: 12, left: 0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return Container(
+      width: double.infinity, // Full width since it's not in a list
+      height: 230, // Fixed height for consistent UI
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 16),
+            // Content based on filled status
+            Expanded(
+              child:
+                  isFilled
+                      ? _buildFilledFormContent(form)
+                      : _buildUnfilledFormContent(form, stepIndex),
             ),
           ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Title
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
-              // Content based on filled status
-              Expanded(
-                child:
-                    isFilled
-                        ? _buildFilledFormContent(form)
-                        : _buildUnfilledFormContent(form, stepIndex),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -1135,7 +1118,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
         // Date
         Row(
           children: [
@@ -1157,7 +1140,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
         // Email
         Row(
           children: [
@@ -1182,7 +1165,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
         // Status
         Row(
           children: [
