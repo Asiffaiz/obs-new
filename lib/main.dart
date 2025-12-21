@@ -40,7 +40,7 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // HttpInterceptor.navigatorKey = rootNavigatorKey;
   // Set preferred orientations
   // await SystemChrome.setPreferredOrientations([
@@ -113,7 +113,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(create: (context) => authBloc),
-          BlocProvider(create: (_) => UserCubit()..loadUser()),
+        BlocProvider(create: (_) => UserCubit()..loadUser()),
         BlocProvider<BusinessCardBloc>(create: (context) => businessCardBloc),
         BlocProvider<AgreementsBloc>(
           create:

@@ -1,3 +1,7 @@
+// Source - https://stackoverflow.com/q
+// Posted by MohammedAli Kadiwal, modified by community. See post 'Timeline' for change history
+// Retrieved 2025-12-18, License - CC BY-SA 4.0
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -79,7 +83,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         },
         "Security": {
           "form": "336586336588",
-          "allowSkip": 1,
+          "allowSkip": 0,
           "enable": 0,
           "isFilled": 0,
           "type": "form",
@@ -137,6 +141,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           'date': 'June 14 2025',
           'email': 'James@tcpaas.com',
           'status': 'Submitted',
+          'isFilled': true, // Filled state
         },
       ],
       "336586336587": [
@@ -144,6 +149,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           'title': 'Interop Configuration',
           'description':
               'Configure your interop settings to connect with external systems. This form helps you set up integration points and data exchange protocols.',
+          'isFilled': false, // Unfilled state
         },
       ],
       "336586336588": [
@@ -151,6 +157,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           'title': 'Security',
           'description':
               'Configure your security settings to protect your data and systems. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown Lorem Ipsum has been the industry\'s standard dummy',
+          'isFilled': false, // Unfilled state
         },
       ],
       "336586336589": [
@@ -158,6 +165,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           'title': 'Data Protection',
           'description':
               'Configure your data protection settings to protect your data and systems. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown Lorem Ipsum has been the industry\'s standard dummy',
+          'isFilled': false, // Unfilled state
         },
       ],
     };
@@ -291,140 +299,124 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Expanded(
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: -13,
-                  right: 0,
-                  bottom: 0,
-                  child: Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: ColorScheme.light(
-                        primary: const Color(
-                          0xFF007BFF,
-                        ), // Blue for current uncompleted
-                        onPrimary: Colors.white,
-                        // Use secondary color for completed steps
-                        secondary: const Color(
-                          0xFF25C196,
-                        ), // Green for completed
-                        onSecondary: Colors.white,
-                      ),
-                    ),
-
-                    child: Stepper(
-                      margin: const EdgeInsets.all(0),
-                      steps: _stepper(),
-                      type: stepperType,
-                      currentStep: _currentStep,
-                      // Custom connector color based on step state
-                      connectorColor: WidgetStateProperty.resolveWith<Color>((
-                        Set<WidgetState> states,
-                      ) {
-                        if (states.contains(WidgetState.error) ||
-                            states.contains(WidgetState.focused) ||
-                            states.contains(WidgetState.hovered) ||
-                            states.contains(WidgetState.selected)) {
-                          return Color(0xFF25C196);
-                        }
-                        // Check if this is a completed step
-                        // if (states.contains(WidgetState.selected)) {
-                        //   return const Color(0xFF25C196); // Green for completed
-                        // }
-                        return Colors.grey.shade300;
-                      }),
-                      // Custom step icon builder to control individual step colors
-                      stepIconBuilder: (stepIndex, stepState) {
-                        // Determine color and icon based on step completion and selection
-                        final bool isCompleted =
-                            _stepCompleted[stepIndex] == true;
-                        final bool isCurrent = _currentStep == stepIndex;
-
-                        Color bgColor;
-                        Widget iconChild;
-
-                        if (isCompleted) {
-                          // Completed step - show green checkmark with Lottie animation
-                          bgColor = const Color(0xFF25C196);
-                          // Old icon animation code (commented out)
-                          // iconChild = TweenAnimationBuilder<double>(
-                          //   key: ValueKey('check_$stepIndex'),
-                          //   duration: const Duration(milliseconds: 800),
-                          //   tween: Tween(begin: 0.0, end: 1.0),
-                          //   curve: Curves.elasticOut,
-                          //   builder: (context, value, child) {
-                          //     return Transform.scale(
-                          //       scale: value,
-                          //       child: Transform.rotate(
-                          //         angle: value * 6.28, // Full rotation
-                          //         child: const Icon(
-                          //           Icons.check,
-                          //           color: Colors.white,
-                          //           size: 18,
-                          //         ),
-                          //       ),
-                          //     );
-                          //   },
-                          // );
-                          // New Lottie animation with fallback to icon
-                          iconChild = _AnimatedCheckmark(
-                            key: ValueKey('check_$stepIndex'),
-                          );
-                        } else if (isCurrent) {
-                          // Current uncompleted step - show blue circle with number
-                          bgColor = const Color(0xFF007BFF);
-                          iconChild = Center(
-                            child: Text(
-                              '${stepIndex + 1}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        } else {
-                          // Inactive uncompleted step - show grey circle with number
-                          bgColor = Colors.grey.shade400;
-                          iconChild = Center(
-                            child: Text(
-                              '${stepIndex + 1}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                          );
-                        }
-
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeInOut,
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: bgColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: iconChild,
-                        );
-                      },
-                      controlsBuilder: (
-                        BuildContext context,
-                        ControlsDetails details,
-                      ) {
-                        return const SizedBox.shrink(); // Hide default buttons
-                      },
-                      onStepTapped: (step) {
-                        setState(() {
-                          _currentStep = step;
-                        });
-                      },
-                    ),
-                  ),
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.light(
+                  primary: const Color(
+                    0xFF007BFF,
+                  ), // Blue for current uncompleted
+                  onPrimary: Colors.white,
+                  // Use secondary color for completed steps
+                  secondary: const Color(0xFF25C196), // Green for completed
+                  onSecondary: Colors.white,
                 ),
-              ],
+              ),
+
+              child: Stepper(
+                margin: const EdgeInsets.all(0),
+                steps: _stepper(),
+                type: stepperType,
+                currentStep: _currentStep,
+                // Custom connector color based on step state
+                connectorColor: MaterialStateProperty.resolveWith<Color>((
+                  Set<MaterialState> states,
+                ) {
+                  if (states.contains(MaterialState.disabled)) {
+                    return Colors.grey.shade300;
+                  }
+                  // Check if this is a completed step
+                  if (states.contains(MaterialState.selected)) {
+                    return const Color(0xFF25C196); // Green for completed
+                  }
+                  return const Color(0xFF007BFF); // Blue for current
+                }),
+                // Custom step icon builder to control individual step colors
+                stepIconBuilder: (stepIndex, stepState) {
+                  // Determine color and icon based on step completion and selection
+                  final bool isCompleted = _stepCompleted[stepIndex] == true;
+                  final bool isCurrent = _currentStep == stepIndex;
+
+                  Color bgColor;
+                  Widget iconChild;
+
+                  if (isCompleted) {
+                    // Completed step - show green checkmark with Lottie animation
+                    bgColor = const Color(0xFF25C196);
+                    // Old icon animation code (commented out)
+                    // iconChild = TweenAnimationBuilder<double>(
+                    //   key: ValueKey('check_$stepIndex'),
+                    //   duration: const Duration(milliseconds: 800),
+                    //   tween: Tween(begin: 0.0, end: 1.0),
+                    //   curve: Curves.elasticOut,
+                    //   builder: (context, value, child) {
+                    //     return Transform.scale(
+                    //       scale: value,
+                    //       child: Transform.rotate(
+                    //         angle: value * 6.28, // Full rotation
+                    //         child: const Icon(
+                    //           Icons.check,
+                    //           color: Colors.white,
+                    //           size: 18,
+                    //         ),
+                    //       ),
+                    //     );
+                    //   },
+                    // );
+                    // New Lottie animation with fallback to icon
+                    iconChild = _AnimatedCheckmark(
+                      key: ValueKey('check_$stepIndex'),
+                    );
+                  } else if (isCurrent) {
+                    // Current uncompleted step - show blue circle with number
+                    bgColor = const Color(0xFF007BFF);
+                    iconChild = Center(
+                      child: Text(
+                        '${stepIndex + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  } else {
+                    // Inactive uncompleted step - show grey circle with number
+                    bgColor = Colors.grey.shade400;
+                    iconChild = Center(
+                      child: Text(
+                        '${stepIndex + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: iconChild,
+                  );
+                },
+                controlsBuilder: (
+                  BuildContext context,
+                  ControlsDetails details,
+                ) {
+                  return const SizedBox.shrink(); // Hide default buttons
+                },
+                onStepTapped: (step) {
+                  setState(() {
+                    _currentStep = step;
+                  });
+                },
+              ),
             ),
           ),
         ],
@@ -437,14 +429,6 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       fontSize: 14,
       fontWeight: FontWeight.w500,
       color: Colors.black87,
-    );
-  }
-
-  steperStepNumberStyle() {
-    return TextStyle(
-      fontSize: 11,
-      fontWeight: FontWeight.w500,
-      color: Colors.grey.shade600,
     );
   }
 
@@ -473,7 +457,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           stepContent = _buildAgreementsStep();
           break;
         case 'form':
-          stepContent = _buildFormStep(formId, stepName, i, isFilled);
+          stepContent = _buildFormStep(formId, stepName, i);
           break;
         default:
           stepContent = Center(child: Text('Unknown step type: $stepType'));
@@ -483,9 +467,13 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       Widget? subtitle;
       if (_stepCompleted[i]) {
         subtitle = steperSubtitleStyle();
-      } else if (allowSkip && _currentStep == i && !isFilled) {
+      } else if (allowSkip && _currentStep == i && isFilled) {
         subtitle = Row(
           children: [
+            Text(
+              'Optional - ',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
             InkWell(
               onTap: () => _skipStep(i),
               child: Text(
@@ -504,16 +492,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
       steps.add(
         Step(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Step ${i + 1}'.toUpperCase(),
-                style: steperStepNumberStyle(),
-              ),
-              Text(stepName, style: steperTitleStyle()),
-            ],
-          ),
+          title: Text(stepName, style: steperTitleStyle()),
           subtitle: subtitle,
           isActive: _currentStep >= i,
           state: _getStepState(i),
@@ -677,11 +656,11 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: HexColor("##25C196").withOpacity(0.1),
+        color: Colors.green.shade50,
         borderRadius: BorderRadius.circular(20),
       ),
 
-      child: Text('Completed', style: TextStyle(color: HexColor("#25C196"))),
+      child: const Text('Completed'),
     );
   }
 
@@ -787,13 +766,13 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: HexColor("#25C196").withOpacity(0.1),
+                    color: Colors.green.shade50,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     '0$signedCount Signed',
                     style: TextStyle(
-                      color: HexColor("##25C196"),
+                      color: Colors.green.shade700,
                       fontWeight: FontWeight.w600,
                       fontSize: 11,
                     ),
@@ -873,10 +852,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color:
-                          isSigned
-                              ? HexColor("##25C196")
-                              : Colors.grey.shade300,
+                      color: isSigned ? Colors.green : Colors.grey.shade300,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -978,7 +954,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                 children: [
                   Expanded(
                     child: SizedBox(
-                      height: 32,
+                      height: 35,
                       child: ElevatedButton(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
@@ -1003,7 +979,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: SizedBox(
-                      height: 32,
+                      height: 35,
                       child: ElevatedButton(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
@@ -1034,12 +1010,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     );
   }
 
-  Widget _buildFormStep(
-    String formId,
-    String stepName,
-    int stepIndex,
-    isFilled,
-  ) {
+  Widget _buildFormStep(String formId, String stepName, int stepIndex) {
     // Get form submission from cache (single entry)
     final formSubmissions = _formDataCache[formId] ?? [];
 
@@ -1056,56 +1027,54 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     final submission = formSubmissions.first;
 
     // Display single card without ListView
-    return _buildFormCard(submission, stepIndex, isFilled);
+    return _buildFormCard(submission, stepIndex);
   }
 
-  Widget _buildFormCard(Map<String, dynamic> form, int stepIndex, isFilled) {
+  Widget _buildFormCard(Map<String, dynamic> form, int stepIndex) {
+    final isFilled = form['isFilled'] as bool;
     final title = form['title'] as String;
 
-    return Transform.translate(
-      offset: const Offset(-20, 0), // Move left by 10 pixels
-      child: Container(
-        width: double.infinity, // Full width since it's not in a list
-        height: 230, // Fixed height for consistent UI
-        decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return Container(
+      width: double.infinity, // Full width since it's not in a list
+      height: 230, // Fixed height for consistent UI
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 16),
+            // Content based on filled status
+            Expanded(
+              child:
+                  isFilled
+                      ? _buildFilledFormContent(form)
+                      : _buildUnfilledFormContent(form, stepIndex),
             ),
           ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Title
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
-              // Content based on filled status
-              Expanded(
-                child:
-                    isFilled
-                        ? _buildFilledFormContent(form)
-                        : _buildUnfilledFormContent(form, stepIndex),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -1373,7 +1342,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
 // Animated Checkmark Widget - Shows Lottie animation then static icon
 class _AnimatedCheckmark extends StatefulWidget {
-  const _AnimatedCheckmark({super.key});
+  const _AnimatedCheckmark({Key? key}) : super(key: key);
 
   @override
   State<_AnimatedCheckmark> createState() => _AnimatedCheckmarkState();
@@ -1404,23 +1373,29 @@ class _AnimatedCheckmarkState extends State<_AnimatedCheckmark> {
     }
 
     // Show Lottie animation with larger size to fit better in circle
-    return Lottie.asset(
-      'assets/icons/Checked.json',
-      repeat: false,
-      fit: BoxFit.fill, // 🔥 THIS IS THE KEY
-      animate: true,
-      onLoaded: (composition) {
-        // Optional: Set timer based on actual animation duration
-        if (mounted) {
-          Future.delayed(composition.duration, () {
+    return SizedBox(
+      width: 120,
+      height: 120,
+      child: FittedBox(
+        child: Lottie.asset(
+          'assets/icons/Checked.json',
+          repeat: false,
+
+          animate: true,
+          onLoaded: (composition) {
+            // Optional: Set timer based on actual animation duration
             if (mounted) {
-              setState(() {
-                _showIcon = true;
+              Future.delayed(composition.duration, () {
+                if (mounted) {
+                  setState(() {
+                    _showIcon = true;
+                  });
+                }
               });
             }
-          });
-        }
-      },
+          },
+        ),
+      ),
     );
   }
 }

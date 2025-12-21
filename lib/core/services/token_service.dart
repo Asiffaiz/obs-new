@@ -41,7 +41,7 @@ class TokenService {
       return true;
     }
   }
- 
+
   // Generate new access token
   Future<String?> _generateNewToken() async {
     try {
@@ -100,7 +100,7 @@ class TokenService {
         } catch (e) {
           if (kDebugMode) {
             print('Error with endpoint $endpoint: $e');
-          } 
+          }
           lastError = e as Exception;
           // Continue to next endpoint
         }
