@@ -483,10 +483,11 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
       // Build subtitle with skip option if allowed
       Widget? subtitle;
+      Widget? skipButton;
       if (_stepCompleted[i]) {
         subtitle = steperSubtitleStyle();
       } else if (allowSkip && _currentStep == i && !isFilled) {
-        subtitle = Row(
+        skipButton = Row(
           children: [
             InkWell(
               onTap: () => _skipStep(i),
@@ -866,8 +867,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     return Align(
       alignment: Alignment.topLeft,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.80,
-        margin: const EdgeInsets.only(right: 12, left: 0),
+        width: MediaQuery.of(context).size.width * 0.81,
+        margin: const EdgeInsets.only(right: 9, left: 0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -899,48 +900,39 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: Stack(
-                  children: [
-                    SingleChildScrollView(
-                      child: Text(
-                        description,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade600,
-                          height: 1.5,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+              Stack(
+                children: [
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                      height: 1.5,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Container(
+                    height: 73,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(0.0),
+                          Colors.white.withOpacity(0.7),
+                          Colors.white,
+                        ],
                       ),
                     ),
-                    // Gradient overlay at bottom
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        // height: 30,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.white.withOpacity(0.0),
-                              Colors.white.withOpacity(0.7),
-                              Colors.white,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
 
-              const SizedBox(height: 2),
+              const SizedBox(height: 14),
               // Buttons
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: SizedBox(
@@ -954,7 +946,14 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                          ), // Remove all padding
+                          minimumSize:
+                              Size.zero, // Remove minimum size constraints
+                          tapTargetSize:
+                              MaterialTapTargetSize
+                                  .shrinkWrap, // Reduce tap target
                         ),
                         child: const Text(
                           'Download',
@@ -966,7 +965,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                       ),
                     ),
                   ),
-                  Spacer(),
+                  // Spacer(),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: SizedBox(
                       height: 32,
@@ -979,10 +979,18 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                          ), // Remove all padding
+                          minimumSize:
+                              Size.zero, // Remove minimum size constraints
+                          tapTargetSize:
+                              MaterialTapTargetSize
+                                  .shrinkWrap, // Reduce tap target
                         ),
+
                         child: const Text(
-                          'Add New',
+                          'Send to Signee',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -992,26 +1000,32 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: SizedBox(
-                      height: 32,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HexColor("#25C196"),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                  SizedBox(
+                    height: 32,
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HexColor("#25C196"),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
-                          'View',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                        ), // Remove all padding
+                        minimumSize:
+                            Size.zero, // Remove minimum size constraints
+                        tapTargetSize:
+                            MaterialTapTargetSize
+                                .shrinkWrap, // Reduce tap target
+                      ),
+
+                      child: const Text(
+                        'Sign',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -1031,8 +1045,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     return Align(
       alignment: Alignment.topLeft,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.80,
-        margin: const EdgeInsets.only(right: 12, left: 0),
+        width: MediaQuery.of(context).size.width * 0.81,
+        margin: const EdgeInsets.only(right: 9, left: 0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -1255,7 +1269,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             MediaQuery.of(
               context,
             ).size.width, // Full width since it's not in a list
-        height: 230, // Fixed height for consistent UI
+        height: 200, // Fixed height for consistent UI
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -1410,6 +1424,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         SizedBox(height: 14), // Push buttons to bottom
         // Buttons
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
               child: SizedBox(
