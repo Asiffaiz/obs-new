@@ -197,6 +197,16 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     });
   }
 
+  // Move to next step without marking current step as completed
+  void _moveToNextStep(int stepIndex) {
+    setState(() {
+      if (stepIndex < _stepNames.length - 1) {
+        // Move to next step
+        _currentStep = stepIndex + 1;
+      }
+    });
+  }
+
   // Mark step as complete and move to next or finish
   void _completeStep(int stepIndex) {
     setState(() {
@@ -486,37 +496,58 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       Widget? skipButton;
       if (_stepCompleted[i]) {
         subtitle = steperSubtitleStyle();
-      } else if (allowSkip && _currentStep == i && !isFilled) {
+      }
+      if (allowSkip && _currentStep == i && !isFilled) {
         skipButton = Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             InkWell(
               onTap: () => _skipStep(i),
-              child: Text(
-                'SKIP',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: HexColor("#136FD4"),
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.underline,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: HexColor("#136FD4").withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: HexColor("#136FD4"), width: 1),
+                ),
+                child: Text(
+                  'SKIP',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: HexColor("#136FD4"),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
           ],
         );
-      } else if (!allowSkip) {
+      } else if (_currentStep == i) {
         skipButton = Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             InkWell(
-              onTap: () => _skipStep(i),
-              child: Text(
-                'NEXT',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: HexColor("#136FD4"),
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.underline,
+              onTap: () => _moveToNextStep(i),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: HexColor("#136FD4").withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: HexColor("#136FD4"), width: 1),
+                ),
+                child: Text(
+                  'NEXT',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: HexColor("#136FD4"),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -559,12 +590,16 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
               child: Column(
                 children: [
                   stepContent,
-                  skipButton != null
-                      ? Padding(
-                        padding: const EdgeInsets.only(top: 16, right: 24),
-                        child: skipButton,
-                      )
-                      : SizedBox.shrink(),
+                  // skipButton != null
+                  //     ? Padding(
+                  //       padding: const EdgeInsets.only(top: 16, right: 24),
+                  //       child: skipButton,
+                  //     )
+                  //     : SizedBox.shrink(),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, right: 24),
+                    child: skipButton,
+                  ),
                 ],
               ),
             ),
