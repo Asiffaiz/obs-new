@@ -257,14 +257,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
-  easy_stepper:
-    dependency: "direct main"
-    description:
-      name: easy_stepper
-      sha256: "63f66314a509ec690c8152a41288961fd96ba9e92ef184299f068a5e78bd16ad"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.8.5+1"
   encrypt:
     dependency: "direct main"
     description:
@@ -1517,6 +1509,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.2"
+  universal_stepper:
+    dependency: "direct main"
+    description:
+      name: universal_stepper
+      sha256: "213bdd011073aa439f671a3b398c0b77115410d48a4d6e54019a272d450714e5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0+1"
   url_launcher:
     dependency: "direct main"
     description:

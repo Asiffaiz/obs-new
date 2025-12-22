@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -296,7 +297,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                 Positioned(
                   top: 0,
                   left: -13,
-                  right: 0,
+                  right: -20,
                   bottom: 0,
                   child: Theme(
                     data: Theme.of(context).copyWith(
@@ -316,6 +317,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                     child: Stepper(
                       margin: const EdgeInsets.all(0),
                       steps: _stepper(),
+                      clipBehavior: Clip.none,
                       type: stepperType,
                       currentStep: _currentStep,
                       // Custom connector color based on step state
@@ -545,129 +547,132 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildBasicDetailsStep() {
-    return SizedBox(
-      // height: 400,
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      // Avatar
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppColors.appButtonColor,
-                        child: Text(
-                          _userData['name']?.isNotEmpty == true
-                              ? _userData['name']![0].toUpperCase()
-                              : 'U',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+    return Transform.translate(
+      offset: const Offset(-20, 0),
+      child: SizedBox(
+        // height: 400,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Profile Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        // Avatar
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: AppColors.appButtonColor,
+                          child: Text(
+                            _userData['name']?.isNotEmpty == true
+                                ? _userData['name']![0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Name and Email
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _userData['name'] ?? 'User',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(width: 12),
+                        // Name and Email
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _userData['name'] ?? 'User',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _userData['email'] ?? 'email@example.com',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
+                              const SizedBox(height: 4),
+                              Text(
+                                _userData['email'] ?? 'email@example.com',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    // Additional Info
+                    if (_userData['comp_name']?.isNotEmpty == true) ...[
+                      _buildInfoRow(
+                        'Company',
+                        _userData['comp_name'] ?? '',
+                        Icons.business,
                       ),
+                      const SizedBox(height: 12),
                     ],
-                  ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  // Additional Info
-                  if (_userData['comp_name']?.isNotEmpty == true) ...[
-                    _buildInfoRow(
-                      'Company',
-                      _userData['comp_name'] ?? '',
-                      Icons.business,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  if (_userData['phone']?.isNotEmpty == true) ...[
-                    _buildInfoRow(
-                      'Phone',
-                      _userData['phone'] ?? '',
-                      Icons.phone,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  if (_userData['accountno']?.isNotEmpty == true)
-                    _buildInfoRow(
-                      'Account No',
-                      _userData['accountno'] ?? '',
-                      Icons.account_circle,
-                    ),
-                  const SizedBox(height: 20),
-                  // Edit Button
-                  SizedBox(
-                    height: 40,
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // Navigate to full profile screen
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ClientProfileScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.edit, size: 16),
-                      label: const Text(
-                        'Edit Profile',
-                        style: TextStyle(fontSize: 14),
+                    if (_userData['phone']?.isNotEmpty == true) ...[
+                      _buildInfoRow(
+                        'Phone',
+                        _userData['phone'] ?? '',
+                        Icons.phone,
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.appButtonColor,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      const SizedBox(height: 12),
+                    ],
+                    if (_userData['accountno']?.isNotEmpty == true)
+                      _buildInfoRow(
+                        'Account No',
+                        _userData['accountno'] ?? '',
+                        Icons.account_circle,
+                      ),
+                    const SizedBox(height: 20),
+                    // Edit Button
+                    SizedBox(
+                      height: 40,
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // Navigate to full profile screen
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ClientProfileScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.edit, size: 16),
+                        label: const Text(
+                          'Edit Profile',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.appButtonColor,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -732,6 +737,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     // For now, show dummy data
     final dummyAgreements = [
       {
+        'id': 1,
         'title': 'Mailer Service Agreement',
         'signee': 'James Smith',
         'date': 'June 14 2025',
@@ -739,13 +745,16 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         'isSigned': true,
       },
       {
+        'id': 2,
         'title': 'Service Level Agreement',
-        'signee': 'John Doe',
+        'description':
+            'This is a description of the service level agreement, it is a long description of the service level agreement that is used to describe the service level agreement.',
         'date': 'June 10 2025',
         'email': 'john@tcpaas.com',
-        'isSigned': true,
+        'isSigned': false,
       },
       {
+        'id': 3,
         'title': 'Privacy Policy Agreement',
         'signee': 'Jane Smith',
         'date': 'June 12 2025',
@@ -753,6 +762,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         'isSigned': true,
       },
       {
+        'id': 4,
         'title': 'Terms of Service',
         'signee': 'Bob Wilson',
         'date': 'June 08 2025',
@@ -760,6 +770,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         'isSigned': true,
       },
       {
+        'id': 5,
         'title': 'Data Processing Agreement',
         'signee': 'Alice Brown',
         'date': 'June 15 2025',
@@ -770,14 +781,15 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
     final signedCount =
         dummyAgreements.where((a) => a['isSigned'] == true).length;
-
+    final unsignedCount =
+        dummyAgreements.where((a) => a['isSigned'] == false).length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
 
       children: [
         // Header with counts and arrow
         Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -800,53 +812,226 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Container(
-                //   padding: const EdgeInsets.symmetric(
-                //     horizontal: 12,
-                //     vertical: 4,
-                //   ),
-                //   decoration: BoxDecoration(
-                //     color: Colors.red.shade50,
-                //     borderRadius: BorderRadius.circular(20),
-                //   ),
-                //   child: Text(
-                //     '0$unsignedCount Unsigned',
-                //     style: TextStyle(
-                //       color: Colors.red.shade400,
-                //       fontWeight: FontWeight.w600,
-                //       fontSize: 11,
-                //     ),
-                //   ),
-                // ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '0$unsignedCount Unsigned',
+                    style: TextStyle(
+                      color: Colors.red.shade400,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
         ),
         const SizedBox(height: 8),
         // Horizontal scrollable list of cards
-        SizedBox(
-          height: 200, // Fixed height for the horizontal scrollable list
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.zero,
-            itemCount: dummyAgreements.length,
-            itemBuilder: (context, index) {
-              final agreement = dummyAgreements[index];
-              return _buildAgreementCardHorizontal(agreement);
-            },
+        Transform.translate(
+          offset: const Offset(-20, 0),
+          child: SizedBox(
+            height: 200, // Fixed height for the horizontal scrollable list
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              itemCount: dummyAgreements.length,
+              itemBuilder: (context, index) {
+                final agreement = dummyAgreements[index];
+                if (agreement['isSigned'] == true) {
+                  return _buildSignedAgreementCardHorizontal(agreement);
+                } else {
+                  return _buildUnsignedAgreementCardHorizontal(agreement);
+                }
+              },
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildAgreementCardHorizontal(Map<String, dynamic> agreement) {
+  Widget _buildUnsignedAgreementCardHorizontal(Map<String, dynamic> agreement) {
+    final title = agreement['title'] as String;
+    final description = agreement['description'] as String;
+
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.80,
+        margin: const EdgeInsets.only(right: 12, left: 0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Stack(
+                  children: [
+                    SingleChildScrollView(
+                      child: Text(
+                        description,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                          height: 1.5,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    // Gradient overlay at bottom
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        // height: 30,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withOpacity(0.0),
+                              Colors.white.withOpacity(0.7),
+                              Colors.white,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 2),
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 32,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HexColor("#136FD4"),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        child: const Text(
+                          'Download',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Spacer(),
+                  Expanded(
+                    child: SizedBox(
+                      height: 32,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HexColor("#7B7B7B"),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        child: const Text(
+                          'Add New',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SizedBox(
+                      height: 32,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HexColor("#25C196"),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        child: const Text(
+                          'View',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSignedAgreementCardHorizontal(Map<String, dynamic> agreement) {
     final isSigned = agreement['isSigned'] as bool;
 
     return Align(
       alignment: Alignment.topLeft,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.768,
+        width: MediaQuery.of(context).size.width * 0.80,
         margin: const EdgeInsets.only(right: 12, left: 0),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -871,7 +1056,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
                       color:
                           isSigned
@@ -915,10 +1100,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   Flexible(
                     child: Text(
                       agreement['signee'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.blue,
+                        color: AppColors.primaryColor,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -939,10 +1124,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   ),
                   Text(
                     agreement['date'] as String,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.blue,
+                      color: AppColors.primaryColor,
                     ),
                   ),
                 ],
@@ -962,10 +1147,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   Flexible(
                     child: Text(
                       agreement['email'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.blue,
+                        color: AppColors.primaryColor,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -975,6 +1160,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
               const SizedBox(height: 16),
               // Buttons
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: SizedBox(
@@ -1000,7 +1186,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 60),
                   Expanded(
                     child: SizedBox(
                       height: 32,
@@ -1065,10 +1251,13 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     return Transform.translate(
       offset: const Offset(-20, 0), // Move left by 10 pixels
       child: Container(
-        width: double.infinity, // Full width since it's not in a list
+        width:
+            MediaQuery.of(
+              context,
+            ).size.width, // Full width since it's not in a list
         height: 230, // Fixed height for consistent UI
         decoration: BoxDecoration(
-          color: Colors.red,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
@@ -1080,7 +1269,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -1139,10 +1328,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             Flexible(
               child: Text(
                 signee,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.blue,
+                  color: AppColors.primaryColor,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1151,27 +1340,27 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         ),
         const SizedBox(height: 6),
         // Date
-        Row(
-          children: [
-            const Text(
-              'Date: ',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: Colors.black87,
-              ),
-            ),
-            Text(
-              date,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.blue,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
+        // Row(
+        //   children: [
+        //     const Text(
+        //       'Date: ',
+        //       style: TextStyle(
+        //         fontSize: 14,
+        //         fontWeight: FontWeight.w400,
+        //         color: Colors.black87,
+        //       ),
+        //     ),
+        //     Text(
+        //       date,
+        //       style: const TextStyle(
+        //         fontSize: 14,
+        //         fontWeight: FontWeight.w600,
+        //         color: Colors.blue,
+        //       ),
+        //     ),
+        //   ],
+        // ),
+        // const SizedBox(height: 6),
         // Email
         Row(
           children: [
@@ -1186,10 +1375,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             Flexible(
               child: Text(
                 email,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.blue,
+                  color: AppColors.primaryColor,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1213,12 +1402,12 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: statusColor,
+                color: AppColors.primaryColor,
               ),
             ),
           ],
         ),
-        const Spacer(), // Push buttons to bottom
+        SizedBox(height: 14), // Push buttons to bottom
         // Buttons
         Row(
           children: [
@@ -1243,7 +1432,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            Spacer(),
             Expanded(
               child: SizedBox(
                 height: 32,
