@@ -1645,22 +1645,20 @@ class _CustomStepper extends StatelessWidget {
                 if (step.subtitle != null) step.subtitle!,
                 if (step.subtitle != null) const SizedBox(height: 8),
                 // Only show content for current step with animation (no splash effect)
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  alignment: Alignment.topLeft,
-                  child:
-                      isCurrent
-                          ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Step Content - No Transform.translate needed!
-                              step.content,
-                            ],
-                          )
-                          : const SizedBox.shrink(),
-                ),
+                if (isCurrent)
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.topLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Step Content - No Transform.translate needed!
+                        step.content,
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
