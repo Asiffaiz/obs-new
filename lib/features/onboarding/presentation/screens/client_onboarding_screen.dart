@@ -101,7 +101,6 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       _onboardingSettings = jsonResponse['steps'] as Map<String, dynamic>;
       _stepNames = _onboardingSettings.keys.toList();
       _totalSteps = jsonResponse['total_steps'] as int;
-      _progress = jsonResponse['progress'] as int;
 
       // Set completion based on isFilled from API
       _stepCompleted = List.generate(_stepNames.length, (index) {
@@ -109,6 +108,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         final stepConfig = _onboardingSettings[stepName];
         return (stepConfig['isFilled'] as int) == 1;
       });
+
+      // Recalculate progress based on actual completed steps to ensure sync
+      _progress = _stepCompleted.where((completed) => completed).length;
     });
 
     // Load form data for steps with form IDs
@@ -184,16 +186,21 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   // Skip current step (if allowed)
   void _skipStep(int stepIndex) {
     setState(() {
-      _stepCompleted[stepIndex] = true;
-      _progress++;
+      // Only mark as completed and increment progress if not already completed
+      if (!_stepCompleted[stepIndex]) {
+        _stepCompleted[stepIndex] = true;
+        _progress++;
+      }
 
-      // Check if this was the last step
-      if (_progress >= _totalSteps) {
-        _completeOnboarding();
-      } else if (stepIndex < _stepNames.length - 1) {
-        // Move to next step
+      // Move to next step if available
+      if (stepIndex < _stepNames.length - 1) {
         _currentStep = stepIndex + 1;
       }
+    });
+
+    // Check completion after setState completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndCompleteOnboarding();
     });
   }
 
@@ -205,25 +212,48 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         _currentStep = stepIndex + 1;
       }
     });
+
+    // Check completion after setState completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndCompleteOnboarding();
+    });
+  }
+
+  // Check if all steps are completed and navigate to dashboard
+  void _checkAndCompleteOnboarding() {
+    // Recalculate progress to ensure accuracy
+    final completedCount =
+        _stepCompleted.where((completed) => completed).length;
+    _progress = completedCount;
+
+    // If all steps are completed, navigate to dashboard
+    if (_progress >= _totalSteps) {
+      _completeOnboarding();
+    }
   }
 
   // Mark step as complete and move to next or finish
   void _completeStep(int stepIndex) {
     setState(() {
-      _stepCompleted[stepIndex] = true;
-      _progress++;
+      // Only mark as completed and increment progress if not already completed
+      if (!_stepCompleted[stepIndex]) {
+        _stepCompleted[stepIndex] = true;
+        _progress++;
+      }
 
       // Update the config
       final stepName = _stepNames[stepIndex];
       _onboardingSettings[stepName]['isFilled'] = 1;
 
-      // Check if this was the last step
-      if (_progress >= _totalSteps) {
-        _completeOnboarding();
-      } else if (stepIndex < _stepNames.length - 1) {
-        // Move to next step
+      // Move to next step if available
+      if (stepIndex < _stepNames.length - 1) {
         _currentStep = stepIndex + 1;
       }
+    });
+
+    // Check completion after setState completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndCompleteOnboarding();
     });
   }
 
