@@ -335,6 +335,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 8.0,
+                vertical: 8.0,
               ), // Reduced horizontal padding
               child: _CustomStepper(
                 steps: _stepper(),
@@ -692,13 +693,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           );
         }
 
-        if (_signedAgreements.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Center(child: Text('No signed agreements found')),
-          );
-        }
-
+        // Always show agreements list with dummy data for now
         return _buildSignedAgreementsList(_signedAgreements);
       },
     );
@@ -1601,51 +1596,72 @@ class _CustomStepper extends StatelessWidget {
               // Connector Line (only if not last step)
               if (!isLast)
                 Expanded(
-                  child: Container(
-                    width: 2,
-                    // Fixed connector color logic - only green if step is completed
-                    color:
-                        isCompleted
-                            ? const Color(0xFF25C196) // Green for completed
-                            : Colors.grey.shade300, // Grey for not completed
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Container(
+                      width: 2,
+                      constraints: const BoxConstraints(
+                        minHeight:
+                            34, // Minimum height for connector visibility
+                      ),
+                      // Fixed connector color logic - only green if step is completed
+                      color:
+                          isCompleted
+                              ? const Color(0xFF25C196) // Green for completed
+                              : Colors.grey.shade300, // Grey for not completed
+                    ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(width: 16), // Spacing between icon and content
-          // Step Content - Make entire area tappable
+          const SizedBox(width: 8), // Spacing between icon and content
+          // Step Content - Splash effect only on title/subtitle area
           Expanded(
-            child: GestureDetector(
-              onTap: () => onStepTapped(index),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min, // Allow column to shrink
-                children: [
-                  // Step Title
-                  if (step.title != null) step.title!,
-                  if (step.title != null) const SizedBox(height: 8),
-                  // Step Subtitle
-                  if (step.subtitle != null) step.subtitle!,
-                  if (step.subtitle != null) const SizedBox(height: 8),
-                  // Only show content for current step with animation
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.topLeft,
-                    child:
-                        isCurrent
-                            ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Step Content - No Transform.translate needed!
-                                step.content,
-                              ],
-                            )
-                            : const SizedBox.shrink(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // Allow column to shrink
+              children: [
+                // Step Title with splash effect - full width
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onStepTapped(index),
+                    borderRadius: BorderRadius.circular(4),
+                    child: SizedBox(
+                      width: double.infinity, // Full width
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Step Title
+                          if (step.title != null) step.title!,
+                          if (step.title != null) const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
                   ),
-                ],
-              ),
+                ),
+                // Step Subtitle (Completed status) - no splash effect
+                if (step.subtitle != null) step.subtitle!,
+                if (step.subtitle != null) const SizedBox(height: 8),
+                // Only show content for current step with animation (no splash effect)
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  alignment: Alignment.topLeft,
+                  child:
+                      isCurrent
+                          ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Step Content - No Transform.translate needed!
+                              step.content,
+                            ],
+                          )
+                          : const SizedBox.shrink(),
+                ),
+              ],
             ),
           ),
         ],
