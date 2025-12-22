@@ -488,11 +488,30 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         subtitle = steperSubtitleStyle();
       } else if (allowSkip && _currentStep == i && !isFilled) {
         skipButton = Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             InkWell(
               onTap: () => _skipStep(i),
               child: Text(
-                'Skip',
+                'SKIP',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: HexColor("#136FD4"),
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
+        );
+      } else if (!allowSkip) {
+        skipButton = Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            InkWell(
+              onTap: () => _skipStep(i),
+              child: Text(
+                'NEXT',
                 style: TextStyle(
                   fontSize: 12,
                   color: HexColor("#136FD4"),
@@ -537,7 +556,17 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   ),
                 );
               },
-              child: stepContent,
+              child: Column(
+                children: [
+                  stepContent,
+                  skipButton != null
+                      ? Padding(
+                        padding: const EdgeInsets.only(top: 16, right: 24),
+                        child: skipButton,
+                      )
+                      : SizedBox.shrink(),
+                ],
+              ),
             ),
           ),
         ),
