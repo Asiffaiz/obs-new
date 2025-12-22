@@ -332,141 +332,20 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Expanded(
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: -13,
-                  right: -20,
-                  bottom: 0,
-                  child: Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: ColorScheme.light(
-                        primary: const Color(
-                          0xFF007BFF,
-                        ), // Blue for current uncompleted
-                        onPrimary: Colors.white,
-                        // Use secondary color for completed steps
-                        secondary: const Color(
-                          0xFF25C196,
-                        ), // Green for completed
-                        onSecondary: Colors.white,
-                      ),
-                    ),
-
-                    child: Stepper(
-                      margin: const EdgeInsets.all(0),
-                      steps: _stepper(),
-                      clipBehavior: Clip.none,
-                      type: stepperType,
-                      currentStep: _currentStep,
-                      // Custom connector color based on step state
-                      connectorColor: WidgetStateProperty.resolveWith<Color>((
-                        Set<WidgetState> states,
-                      ) {
-                        if (states.contains(WidgetState.error) ||
-                            states.contains(WidgetState.focused) ||
-                            states.contains(WidgetState.hovered) ||
-                            states.contains(WidgetState.selected)) {
-                          return Color(0xFF25C196);
-                        }
-                        // Check if this is a completed step
-                        // if (states.contains(WidgetState.selected)) {
-                        //   return const Color(0xFF25C196); // Green for completed
-                        // }
-                        return Colors.grey.shade300;
-                      }),
-                      // Custom step icon builder to control individual step colors
-                      stepIconBuilder: (stepIndex, stepState) {
-                        // Determine color and icon based on step completion and selection
-                        final bool isCompleted =
-                            _stepCompleted[stepIndex] == true;
-                        final bool isCurrent = _currentStep == stepIndex;
-
-                        Color bgColor;
-                        Widget iconChild;
-
-                        if (isCompleted) {
-                          // Completed step - show green checkmark with Lottie animation
-                          bgColor = const Color(0xFF25C196);
-                          // Old icon animation code (commented out)
-                          // iconChild = TweenAnimationBuilder<double>(
-                          //   key: ValueKey('check_$stepIndex'),
-                          //   duration: const Duration(milliseconds: 800),
-                          //   tween: Tween(begin: 0.0, end: 1.0),
-                          //   curve: Curves.elasticOut,
-                          //   builder: (context, value, child) {
-                          //     return Transform.scale(
-                          //       scale: value,
-                          //       child: Transform.rotate(
-                          //         angle: value * 6.28, // Full rotation
-                          //         child: const Icon(
-                          //           Icons.check,
-                          //           color: Colors.white,
-                          //           size: 18,
-                          //         ),
-                          //       ),
-                          //     );
-                          //   },
-                          // );
-                          // New Lottie animation with fallback to icon
-                          iconChild = _AnimatedCheckmark(
-                            key: ValueKey('check_$stepIndex'),
-                          );
-                        } else if (isCurrent) {
-                          // Current uncompleted step - show blue circle with number
-                          bgColor = const Color(0xFF007BFF);
-                          iconChild = Center(
-                            child: Text(
-                              '${stepIndex + 1}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        } else {
-                          // Inactive uncompleted step - show grey circle with number
-                          bgColor = Colors.grey.shade400;
-                          iconChild = Center(
-                            child: Text(
-                              '${stepIndex + 1}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                          );
-                        }
-
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeInOut,
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: bgColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: iconChild,
-                        );
-                      },
-                      controlsBuilder: (
-                        BuildContext context,
-                        ControlsDetails details,
-                      ) {
-                        return const SizedBox.shrink(); // Hide default buttons
-                      },
-                      onStepTapped: (step) {
-                        setState(() {
-                          _currentStep = step;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+              ), // Reduced horizontal padding
+              child: _CustomStepper(
+                steps: _stepper(),
+                currentStep: _currentStep,
+                stepCompleted: _stepCompleted,
+                onStepTapped: (step) {
+                  setState(() {
+                    _currentStep = step;
+                  });
+                },
+              ),
             ),
           ),
         ],
@@ -642,132 +521,129 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildBasicDetailsStep() {
-    return Transform.translate(
-      offset: const Offset(-20, 0),
-      child: SizedBox(
-        // height: 400,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Profile Card
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade200),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        // Avatar
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: AppColors.appButtonColor,
-                          child: Text(
-                            _userData['name']?.isNotEmpty == true
-                                ? _userData['name']![0].toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Name and Email
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _userData['name'] ?? 'User',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _userData['email'] ?? 'email@example.com',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    const Divider(),
-                    const SizedBox(height: 16),
-                    // Additional Info
-                    if (_userData['comp_name']?.isNotEmpty == true) ...[
-                      _buildInfoRow(
-                        'Company',
-                        _userData['comp_name'] ?? '',
-                        Icons.business,
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    if (_userData['phone']?.isNotEmpty == true) ...[
-                      _buildInfoRow(
-                        'Phone',
-                        _userData['phone'] ?? '',
-                        Icons.phone,
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    if (_userData['accountno']?.isNotEmpty == true)
-                      _buildInfoRow(
-                        'Account No',
-                        _userData['accountno'] ?? '',
-                        Icons.account_circle,
-                      ),
-                    const SizedBox(height: 20),
-                    // Edit Button
-                    SizedBox(
-                      height: 40,
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          // Navigate to full profile screen
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ClientProfileScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.edit, size: 16),
-                        label: const Text(
-                          'Edit Profile',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.appButtonColor,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+    return SizedBox(
+      // height: 400,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Profile Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      // Avatar
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: AppColors.appButtonColor,
+                        child: Text(
+                          _userData['name']?.isNotEmpty == true
+                              ? _userData['name']![0].toUpperCase()
+                              : 'U',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Name and Email
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _userData['name'] ?? 'User',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _userData['email'] ?? 'email@example.com',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  // Additional Info
+                  if (_userData['comp_name']?.isNotEmpty == true) ...[
+                    _buildInfoRow(
+                      'Company',
+                      _userData['comp_name'] ?? '',
+                      Icons.business,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_userData['phone']?.isNotEmpty == true) ...[
+                    _buildInfoRow(
+                      'Phone',
+                      _userData['phone'] ?? '',
+                      Icons.phone,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_userData['accountno']?.isNotEmpty == true)
+                    _buildInfoRow(
+                      'Account No',
+                      _userData['accountno'] ?? '',
+                      Icons.account_circle,
+                    ),
+                  const SizedBox(height: 20),
+                  // Edit Button
+                  SizedBox(
+                    height: 40,
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // Navigate to full profile screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ClientProfileScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.edit, size: 16),
+                      label: const Text(
+                        'Edit Profile',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.appButtonColor,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -931,23 +807,20 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         ),
         const SizedBox(height: 8),
         // Horizontal scrollable list of cards
-        Transform.translate(
-          offset: const Offset(-20, 0),
-          child: SizedBox(
-            height: 200, // Fixed height for the horizontal scrollable list
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.zero,
-              itemCount: dummyAgreements.length,
-              itemBuilder: (context, index) {
-                final agreement = dummyAgreements[index];
-                if (agreement['isSigned'] == true) {
-                  return _buildSignedAgreementCardHorizontal(agreement);
-                } else {
-                  return _buildUnsignedAgreementCardHorizontal(agreement);
-                }
-              },
-            ),
+        SizedBox(
+          height: 200, // Fixed height for the horizontal scrollable list
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.zero,
+            itemCount: dummyAgreements.length,
+            itemBuilder: (context, index) {
+              final agreement = dummyAgreements[index];
+              if (agreement['isSigned'] == true) {
+                return _buildSignedAgreementCardHorizontal(agreement);
+              } else {
+                return _buildUnsignedAgreementCardHorizontal(agreement);
+              }
+            },
           ),
         ),
       ],
@@ -1356,53 +1229,50 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   Widget _buildFormCard(Map<String, dynamic> form, int stepIndex, isFilled) {
     final title = form['title'] as String;
 
-    return Transform.translate(
-      offset: const Offset(-20, 0), // Move left by 10 pixels
-      child: Container(
-        width:
-            MediaQuery.of(
-              context,
-            ).size.width, // Full width since it's not in a list
-        height: 200, // Fixed height for consistent UI
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return Container(
+      width:
+          MediaQuery.of(
+            context,
+          ).size.width, // Full width since it's not in a list
+      height: 200, // Fixed height for consistent UI
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 16),
+            // Content based on filled status
+            Expanded(
+              child:
+                  isFilled
+                      ? _buildFilledFormContent(form)
+                      : _buildUnfilledFormContent(form, stepIndex),
             ),
           ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Title
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
-              // Content based on filled status
-              Expanded(
-                child:
-                    isFilled
-                        ? _buildFilledFormContent(form)
-                        : _buildUnfilledFormContent(form, stepIndex),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -1665,6 +1535,160 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Custom Stepper Widget - Fixes padding and connector color issues
+class _CustomStepper extends StatelessWidget {
+  final List<Step> steps;
+  final int currentStep;
+  final List<bool> stepCompleted;
+  final Function(int) onStepTapped;
+
+  const _CustomStepper({
+    required this.steps,
+    required this.currentStep,
+    required this.stepCompleted,
+    required this.onStepTapped,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: EdgeInsets.zero, // No padding - full control
+      itemCount: steps.length,
+      itemBuilder: (context, index) {
+        final step = steps[index];
+        final isLast = index == steps.length - 1;
+        final isCompleted =
+            index < stepCompleted.length && stepCompleted[index];
+        final isCurrent = currentStep == index;
+
+        return _buildStepItem(
+          context,
+          step,
+          index,
+          isLast,
+          isCompleted,
+          isCurrent,
+        );
+      },
+    );
+  }
+
+  Widget _buildStepItem(
+    BuildContext context,
+    Step step,
+    int index,
+    bool isLast,
+    bool isCompleted,
+    bool isCurrent,
+  ) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Step Icon Column
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Step Icon
+              GestureDetector(
+                onTap: () => onStepTapped(index),
+                child: _buildStepIcon(index, isCompleted, isCurrent),
+              ),
+              // Connector Line (only if not last step)
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    // Fixed connector color logic - only green if step is completed
+                    color:
+                        isCompleted
+                            ? const Color(0xFF25C196) // Green for completed
+                            : Colors.grey.shade300, // Grey for not completed
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 16), // Spacing between icon and content
+          // Step Content - Make entire area tappable
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onStepTapped(index),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min, // Allow column to shrink
+                children: [
+                  // Step Title
+                  if (step.title != null) step.title!,
+                  if (step.title != null) const SizedBox(height: 8),
+                  // Step Subtitle
+                  if (step.subtitle != null) step.subtitle!,
+                  if (step.subtitle != null) const SizedBox(height: 8),
+                  // Only show content for current step with animation
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.topLeft,
+                    child:
+                        isCurrent
+                            ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Step Content - No Transform.translate needed!
+                                step.content,
+                              ],
+                            )
+                            : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepIcon(int stepIndex, bool isCompleted, bool isCurrent) {
+    Color bgColor;
+    Widget iconChild;
+
+    if (isCompleted) {
+      bgColor = const Color(0xFF25C196);
+      iconChild = _AnimatedCheckmark(key: ValueKey('check_$stepIndex'));
+    } else if (isCurrent) {
+      bgColor = const Color(0xFF007BFF);
+      iconChild = Center(
+        child: Text(
+          '${stepIndex + 1}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    } else {
+      bgColor = Colors.grey.shade400;
+      iconChild = Center(
+        child: Text(
+          '${stepIndex + 1}',
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+        ),
+      );
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
+      child: iconChild,
     );
   }
 }
