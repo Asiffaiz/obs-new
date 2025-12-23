@@ -373,7 +373,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 8.0,
+                horizontal: 4.0,
                 vertical: 8.0,
               ), // Reduced horizontal padding
               child: _CustomStepper(
@@ -432,13 +432,22 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       // Determine content based on step type
       switch (stepType) {
         case 'basic':
-          stepContent = _buildBasicDetailsStep();
+          stepContent = Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: _buildBasicDetailsStep(),
+          );
           break;
         case 'agreement':
-          stepContent = _buildAgreementsStep();
+          stepContent = Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: _buildAgreementsStep(),
+          );
           break;
         case 'form':
-          stepContent = _buildFormStep(formId, stepName, i, isFilled);
+          stepContent = Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: _buildFormStep(formId, stepName, i, isFilled),
+          );
           break;
         default:
           stepContent = Center(child: Text('Unknown step type: $stepType'));
@@ -798,7 +807,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       children: [
         // Header with counts and arrow
         Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Row(
               children: [
@@ -1782,26 +1791,29 @@ class _CustomStepper extends StatelessWidget {
       builder: (context, value, child) {
         return Transform.scale(
           scale: value,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOutCubic,
-            width: 24,
-            height: 24,
+          child: Container(
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: bgColor,
               shape: BoxShape.circle,
-              boxShadow:
+              border:
                   isCurrent
-                      ? [
-                        BoxShadow(
-                          color: bgColor.withOpacity(0.4),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ]
-                      : null,
+                      ? Border.all(color: bgColor, width: 2.5)
+                      : Border.all(color: Colors.transparent, width: 2.5),
             ),
-            child: iconChild,
+            child: Center(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOutCubic,
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: iconChild,
+              ),
+            ),
           ),
         );
       },
