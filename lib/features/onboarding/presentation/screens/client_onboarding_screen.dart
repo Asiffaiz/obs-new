@@ -38,12 +38,22 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   // Form data cache (formId -> form submissions)
   Map<String, List<Map<String, dynamic>>> _formDataCache = {};
 
+  // Scroll controller for smooth step navigation
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _stepKeys = {};
+
   @override
   void initState() {
     super.initState();
     _loadOnboardingSettings();
     _loadSignedAgreements();
     _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _loadOnboardingSettings() {
@@ -198,20 +208,44 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       }
     });
 
+    // Smoothly scroll to the new step
+    if (stepIndex < _stepNames.length - 1) {
+      _scrollToStep(_currentStep);
+    }
+
     // Check completion after setState completes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndCompleteOnboarding();
     });
   }
 
-  // Move to next step without marking current step as completed
-  void _moveToNextStep(int stepIndex) {
-    setState(() {
-      if (stepIndex < _stepNames.length - 1) {
-        // Move to next step
-        _currentStep = stepIndex + 1;
+  // Smoothly scroll to a specific step
+  void _scrollToStep(int stepIndex) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _stepKeys[stepIndex];
+      final context = key?.currentContext;
+      if (context != null && _scrollController.hasClients) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOutCubic,
+          alignment: 0.1, // Scroll to show step near top
+        );
       }
     });
+  }
+
+  // Move to next step without marking current step as completed
+  void _moveToNextStep(int stepIndex) {
+    if (stepIndex < _stepNames.length - 1) {
+      setState(() {
+        // Move to next step
+        _currentStep = stepIndex + 1;
+      });
+
+      // Smoothly scroll to the new step
+      _scrollToStep(_currentStep);
+    }
 
     // Check completion after setState completes
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -250,6 +284,11 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         _currentStep = stepIndex + 1;
       }
     });
+
+    // Smoothly scroll to the new step
+    if (stepIndex < _stepNames.length - 1) {
+      _scrollToStep(_currentStep);
+    }
 
     // Check completion after setState completes
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -341,10 +380,14 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                 steps: _stepper(),
                 currentStep: _currentStep,
                 stepCompleted: _stepCompleted,
+                scrollController: _scrollController,
+                stepKeys: _stepKeys,
                 onStepTapped: (step) {
                   setState(() {
                     _currentStep = step;
                   });
+                  // Smoothly scroll to the tapped step
+                  _scrollToStep(step);
                 },
               ),
             ),
@@ -1275,13 +1318,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
   Widget _buildFilledFormContent(Map<String, dynamic> form) {
     final signee = form['signee'] as String;
-    final date = form['date'] as String;
     final email = form['email'] as String;
     final status = form['status'] as String;
-
-    // Determine status color
-    Color statusColor =
-        status == 'Completed' ? HexColor("#25C196") : HexColor("#136FD4");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1540,17 +1578,22 @@ class _CustomStepper extends StatelessWidget {
   final int currentStep;
   final List<bool> stepCompleted;
   final Function(int) onStepTapped;
+  final ScrollController scrollController;
+  final Map<int, GlobalKey> stepKeys;
 
   const _CustomStepper({
     required this.steps,
     required this.currentStep,
     required this.stepCompleted,
     required this.onStepTapped,
+    required this.scrollController,
+    required this.stepKeys,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      controller: scrollController,
       padding: EdgeInsets.zero, // No padding - full control
       itemCount: steps.length,
       itemBuilder: (context, index) {
@@ -1559,6 +1602,11 @@ class _CustomStepper extends StatelessWidget {
         final isCompleted =
             index < stepCompleted.length && stepCompleted[index];
         final isCurrent = currentStep == index;
+
+        // Ensure key exists for this step
+        if (!stepKeys.containsKey(index)) {
+          stepKeys[index] = GlobalKey();
+        }
 
         return _buildStepItem(
           context,
@@ -1580,89 +1628,109 @@ class _CustomStepper extends StatelessWidget {
     bool isCompleted,
     bool isCurrent,
   ) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Step Icon Column
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Step Icon
-              GestureDetector(
-                onTap: () => onStepTapped(index),
-                child: _buildStepIcon(index, isCompleted, isCurrent),
-              ),
-              // Connector Line (only if not last step)
-              if (!isLast)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Container(
-                      width: 2,
-                      constraints: const BoxConstraints(
-                        minHeight:
-                            34, // Minimum height for connector visibility
-                      ),
-                      // Fixed connector color logic - only green if step is completed
-                      color:
-                          isCompleted
-                              ? const Color(0xFF25C196) // Green for completed
-                              : Colors.grey.shade300, // Grey for not completed
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(width: 8), // Spacing between icon and content
-          // Step Content - Splash effect only on title/subtitle area
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min, // Allow column to shrink
+    return Container(
+      key: stepKeys[index],
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Step Icon Column
+            Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Step Title with splash effect - full width
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => onStepTapped(index),
-                    borderRadius: BorderRadius.circular(4),
-                    child: SizedBox(
-                      width: double.infinity, // Full width
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Step Title
-                          if (step.title != null) step.title!,
-                          if (step.title != null) const SizedBox(height: 8),
-                        ],
-                      ),
-                    ),
-                  ),
+                // Step Icon
+                GestureDetector(
+                  onTap: () => onStepTapped(index),
+                  child: _buildStepIcon(index, isCompleted, isCurrent),
                 ),
-                // Step Subtitle (Completed status) - no splash effect
-                if (step.subtitle != null) step.subtitle!,
-                if (step.subtitle != null) const SizedBox(height: 8),
-                // Only show content for current step with animation (no splash effect)
-                if (isCurrent)
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.topLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Step Content - No Transform.translate needed!
-                        step.content,
-                      ],
+                // Connector Line (only if not last step)
+                if (!isLast)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Container(
+                        width: 2,
+                        constraints: const BoxConstraints(
+                          minHeight:
+                              34, // Minimum height for connector visibility
+                        ),
+                        // Fixed connector color logic - only green if step is completed
+                        color:
+                            isCompleted
+                                ? const Color(0xFF25C196) // Green for completed
+                                : Colors
+                                    .grey
+                                    .shade300, // Grey for not completed
+                      ),
                     ),
                   ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(width: 8), // Spacing between icon and content
+            // Step Content - Splash effect only on title/subtitle area
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min, // Allow column to shrink
+                children: [
+                  // Step Title with splash effect and animation - full width
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => onStepTapped(index),
+                      borderRadius: BorderRadius.circular(4),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        padding: EdgeInsets.all(isCurrent ? 4.0 : 0.0),
+                        child: SizedBox(
+                          width: double.infinity, // Full width
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Step Title
+                              step.title,
+                              const SizedBox(height: 8),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Step Subtitle (Completed status) - no splash effect
+                  if (step.subtitle != null) step.subtitle!,
+                  if (step.subtitle != null) const SizedBox(height: 8),
+                  // Only show content for current step with beautiful animation
+                  if (isCurrent)
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, child) {
+                        return Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: AnimatedSize(
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeInOutCubic,
+                              alignment: Alignment.topLeft,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [step.content],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1670,12 +1738,15 @@ class _CustomStepper extends StatelessWidget {
   Widget _buildStepIcon(int stepIndex, bool isCompleted, bool isCurrent) {
     Color bgColor;
     Widget iconChild;
+    double scale = 1.0;
 
     if (isCompleted) {
       bgColor = const Color(0xFF25C196);
       iconChild = _AnimatedCheckmark(key: ValueKey('check_$stepIndex'));
+      scale = 1.0;
     } else if (isCurrent) {
       bgColor = const Color(0xFF007BFF);
+      scale = 1.1; // Slightly larger when current
       iconChild = Center(
         child: Text(
           '${stepIndex + 1}',
@@ -1688,6 +1759,7 @@ class _CustomStepper extends StatelessWidget {
       );
     } else {
       bgColor = Colors.grey.shade400;
+      scale = 1.0;
       iconChild = Center(
         child: Text(
           '${stepIndex + 1}',
@@ -1696,13 +1768,36 @@ class _CustomStepper extends StatelessWidget {
       );
     }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-      child: iconChild,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: scale),
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOutCubic,
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+              boxShadow:
+                  isCurrent
+                      ? [
+                        BoxShadow(
+                          color: bgColor.withOpacity(0.4),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                      : null,
+            ),
+            child: iconChild,
+          ),
+        );
+      },
     );
   }
 }
