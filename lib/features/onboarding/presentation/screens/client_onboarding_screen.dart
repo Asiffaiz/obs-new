@@ -1682,7 +1682,7 @@ class _CustomStepper extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8), // Spacing between icon and content
+            const SizedBox(width: 4), // Spacing between icon and content
             // Step Content - Splash effect only on title/subtitle area
             Expanded(
               child: Column(
