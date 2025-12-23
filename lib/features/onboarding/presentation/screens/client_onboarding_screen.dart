@@ -701,7 +701,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
 
-      child: Text('Completed', style: TextStyle(color: HexColor("#25C196"))),
+      child: Text('Completed', style: TextStyle(color: Colors.black)),
     );
   }
 
