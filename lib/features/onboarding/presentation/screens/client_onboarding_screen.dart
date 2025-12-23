@@ -1595,6 +1595,7 @@ class _CustomStepper extends StatelessWidget {
     return ListView.builder(
       controller: scrollController,
       padding: EdgeInsets.zero, // No padding - full control
+      clipBehavior: Clip.none, // Allow shadows to extend beyond bounds
       itemCount: steps.length,
       itemBuilder: (context, index) {
         final step = steps[index];
@@ -1630,41 +1631,47 @@ class _CustomStepper extends StatelessWidget {
   ) {
     return Container(
       key: stepKeys[index],
+      clipBehavior: Clip.none, // Allow shadows to extend beyond bounds
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Step Icon Column
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Step Icon
-                GestureDetector(
-                  onTap: () => onStepTapped(index),
-                  child: _buildStepIcon(index, isCompleted, isCurrent),
-                ),
-                // Connector Line (only if not last step)
-                if (!isLast)
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Container(
-                        width: 2,
-                        constraints: const BoxConstraints(
-                          minHeight:
-                              34, // Minimum height for connector visibility
+            // Step Icon Column with padding for shadow
+            Padding(
+              padding: const EdgeInsets.only(left: 2, right: 2),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Step Icon
+                  GestureDetector(
+                    onTap: () => onStepTapped(index),
+                    child: _buildStepIcon(index, isCompleted, isCurrent),
+                  ),
+                  // Connector Line (only if not last step)
+                  if (!isLast)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Container(
+                          width: 2,
+                          constraints: const BoxConstraints(
+                            minHeight:
+                                34, // Minimum height for connector visibility
+                          ),
+                          // Fixed connector color logic - only green if step is completed
+                          color:
+                              isCompleted
+                                  ? const Color(
+                                    0xFF25C196,
+                                  ) // Green for completed
+                                  : Colors
+                                      .grey
+                                      .shade300, // Grey for not completed
                         ),
-                        // Fixed connector color logic - only green if step is completed
-                        color:
-                            isCompleted
-                                ? const Color(0xFF25C196) // Green for completed
-                                : Colors
-                                    .grey
-                                    .shade300, // Grey for not completed
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(width: 8), // Spacing between icon and content
             // Step Content - Splash effect only on title/subtitle area
