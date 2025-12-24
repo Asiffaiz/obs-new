@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hexcolor/hexcolor.dart';
 import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/constants/global_veriables_state.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
@@ -46,8 +47,6 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
   void dispose() {
     super.dispose();
   }
-
-
 
   _handleShowDialog() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -367,10 +366,9 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
                       mandatoryAgreements.length;
 
           if (mandatoryAgreements.isNotEmpty) {
-            if (isMandatoryDialogShown==false) {
-            
+            if (isMandatoryDialogShown == false) {
               _handleShowDialog();
-                AuthService().saveIsShowMandatoryDialog(true);
+              AuthService().saveIsShowMandatoryDialog(true);
             }
           }
 
@@ -493,7 +491,8 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
       itemCount: unsignedAgreements.length,
       itemBuilder: (context, index) {
         final agreement = unsignedAgreements[index];
-        return _buildAgreementCard(agreement, index);
+        // return _buildAgreementCard(agreement, index);
+        return _buildUnsignedMandatoryAgreementCardHorizontal(agreement, index);
       },
     );
   }
@@ -601,6 +600,189 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnsignedMandatoryAgreementCardHorizontal(
+    AgreementModel agreement,
+    int index,
+  ) {
+    final title = agreement.title;
+    final description = agreement.description;
+
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Container(
+        width: double.infinity,
+
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 16),
+              Stack(
+                children: [
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                      height: 1.5,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Container(
+                    height: 73,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(0.0),
+                          Colors.white.withOpacity(0.7),
+                          Colors.white,
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+              // Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 32,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HexColor("#136FD4"),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                          ), // Remove all padding
+                          minimumSize:
+                              Size.zero, // Remove minimum size constraints
+                          tapTargetSize:
+                              MaterialTapTargetSize
+                                  .shrinkWrap, // Reduce tap target
+                        ),
+                        child: const Text(
+                          'Download',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Spacer(),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SizedBox(
+                      height: 32,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HexColor("#7B7B7B"),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                          ), // Remove all padding
+                          minimumSize:
+                              Size.zero, // Remove minimum size constraints
+                          tapTargetSize:
+                              MaterialTapTargetSize
+                                  .shrinkWrap, // Reduce tap target
+                        ),
+
+                        child: const Text(
+                          'Send to Signee',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    height: 32,
+                    child: ElevatedButton(
+                      onPressed:
+                          () => _navigateToAgreementDetail(agreement, index),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HexColor("#25C196"),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                        ), // Remove all padding
+                        minimumSize:
+                            Size.zero, // Remove minimum size constraints
+                        tapTargetSize:
+                            MaterialTapTargetSize
+                                .shrinkWrap, // Reduce tap target
+                      ),
+
+                      child: const Text(
+                        'Sign',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
