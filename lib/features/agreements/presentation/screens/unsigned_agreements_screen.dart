@@ -15,6 +15,7 @@ import '../bloc/agreements_bloc.dart';
 import '../bloc/agreements_event.dart';
 import '../bloc/agreements_state.dart';
 import 'agreement_detail_screen.dart';
+import '../../../../config/routes.dart';
 
 class UnsignedAgreementsScreen extends StatefulWidget {
   final VoidCallback? onComplete;
@@ -719,7 +720,21 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
                     child: SizedBox(
                       height: 32,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          context.push(
+                            AppRoutes.sendToSignee,
+                            extra: {
+                              'agreement': agreement,
+                              'comeFrom': 'optional',
+                              'onSuccess': () {
+                                // Refresh the agreements list if needed
+                                context.read<AgreementsBloc>().add(
+                                  const LoadAgreements(),
+                                );
+                              },
+                            },
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: HexColor("#7B7B7B"),
                           foregroundColor: Colors.white,

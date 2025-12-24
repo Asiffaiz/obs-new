@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/screens/signed_agreements_main_screen.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/screens/unsigned_agreements_screen.dart';
+import 'package:voicealerts_obs/features/agreements/presentation/screens/send_to_signee_screen.dart';
+import 'package:voicealerts_obs/features/agreements/domain/models/agreement_model.dart';
 import 'package:voicealerts_obs/features/bussiness%20card/presentation/screens/business_card_form_screen.dart';
 import 'package:voicealerts_obs/features/bussiness%20card/presentation/screens/business_card_scan_screen.dart';
 import 'package:voicealerts_obs/features/forms/presentation/screens/client_assigned_forms_screen.dart';
@@ -50,6 +52,7 @@ class AppRoutes {
   static const String signedAgreements = '/signed-agreements';
   static const String unsignedAgreements = '/unsigned-agreements';
   static const String optionalAgreements = '/optional-agreements';
+  static const String sendToSignee = '/send-to-signee';
   static const String reports = '/reports';
   static const String cardForm = '/card/:id/form';
   static const String scan = '/scan';
@@ -207,6 +210,56 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppRoutes.signedAgreements,
         builder: (context, state) => const SignedAgreementsMainScreen(),
+      ),
+
+      // Send to Signee Route with smooth transition
+      GoRoute(
+        path: AppRoutes.sendToSignee,
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final agreement = extra?['agreement'] as AgreementModel?;
+          final onSuccess = extra?['onSuccess'] as VoidCallback?;
+          final comeFrom = extra?['comeFrom'] as String?;
+
+          return CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: SendToSigneeScreen(
+              agreement: agreement!,
+              onSuccess: onSuccess,
+              comeFrom: comeFrom,
+            ),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              // Smooth fade and slide transition without bounce
+              const begin = Offset(0.0, 0.05);
+              const end = Offset.zero;
+              const curve = Curves.easeOutCubic;
+
+              var slideAnimation = Tween(begin: begin, end: end).animate(
+                CurvedAnimation(
+                  parent: animation,
+                  curve: curve,
+                ),
+              );
+
+              var fadeAnimation = Tween(begin: 0.0, end: 1.0).animate(
+                CurvedAnimation(
+                  parent: animation,
+                  curve: curve,
+                ),
+              );
+
+              return FadeTransition(
+                opacity: fadeAnimation,
+                child: SlideTransition(
+                  position: slideAnimation,
+                  child: child,
+                ),
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 300),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+          );
+        },
       ),
 
       // Reports Route

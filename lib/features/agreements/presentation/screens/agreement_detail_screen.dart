@@ -834,7 +834,7 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
           body: SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(
-                vertical: isTablet ? 48 : 24,
+                vertical: isTablet ? 48 : 6,
                 horizontal: isTablet ? 48 : 0.0,
               ),
               child: Column(
@@ -1375,17 +1375,19 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
       child: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.symmetric(
-            vertical: 24.0,
+            vertical: 2,
             horizontal: isTablet ? 48.0 : 24.0,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
-                'Send To Signee',
-                style: const TextStyle(
-                  fontSize: 24,
+                'Send Agreement to Signee',
+                style: TextStyle(
+                  fontSize: isTablet ? 28 : 24,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
               const SizedBox(height: 24),
@@ -1764,6 +1766,16 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
       case AgreementViewMode.detail:
         return Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
           child: Column(
             children: [
               if (widget.agreement.type == "accept")
@@ -1875,6 +1887,16 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
           child: ElevatedButton(
             onPressed: _acceptAgreement,
             style: ElevatedButton.styleFrom(
@@ -1893,6 +1915,16 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
           padding: EdgeInsets.symmetric(
             vertical: 8,
             horizontal: isTablet ? 48.0 : 24.0,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
