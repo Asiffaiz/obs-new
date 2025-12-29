@@ -440,15 +440,16 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
           //     minHeight: 8,
           //   ),
           // ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Row(
             children: [
               Text(
                 progress == 1.0
                     ? 'All mandatory agreements have been signed.'
-                    : 'Please sign all mandatory agreements to continue.',
+                    : 'Please sign all mandatory agreements to continue',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
+              Icon(Icons.info_outline, color: Colors.grey.shade600),
             ],
           ),
         ],
@@ -611,7 +612,9 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
     int index,
   ) {
     final title = agreement.title;
-    final description = agreement.description;
+    final description =
+        agreement.description +
+        "lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
     return Align(
       alignment: Alignment.topLeft,

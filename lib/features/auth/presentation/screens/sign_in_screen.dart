@@ -349,11 +349,11 @@ class _SignInScreenState extends State<SignInScreen> {
                       // Social auth buttons
                       const SocialAuthButtons(),
 
-                      //      const SizedBox(height: 16),
+                      // const SizedBox(height: 16),
 
-                      // Business Card Scan button
-                      //    ScanWithBusinessCardSignin(),
-                      const SizedBox(height: 16),
+                      // // Business Card Scan button
+                      // ScanWithBusinessCardSignin(),
+                      const SizedBox(height: 6),
                     ],
                   ),
                 ),
