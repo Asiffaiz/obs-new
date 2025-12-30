@@ -123,6 +123,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           "allowSkip": 1,
           "enable": 0,
           "isFilled": 0,
+          "isSkipped": 0,
           "type": "form",
         },
         "VoiceAlerts Carrier Login": {
@@ -133,6 +134,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           "allowSkip": 1,
           "enable": 0,
           "isFilled": 0,
+          "isSkipped": 0,
           "type": "form",
         },
         "Online Business": {
@@ -143,6 +145,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           "allowSkip": 1,
           "enable": 0,
           "isFilled": 0,
+          "isSkipped": 0,
           "type": "form",
         },
       },
@@ -154,6 +157,13 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       _onboardingSettings = jsonResponse['steps'] as Map<String, dynamic>;
       _stepNames = _onboardingSettings.keys.toList();
       _totalSteps = jsonResponse['total_steps'] as int;
+
+      // Initialize isSkipped to 0 if not present
+      _onboardingSettings.forEach((stepName, config) {
+        if (!config.containsKey('isSkipped')) {
+          config['isSkipped'] = 0;
+        }
+      });
 
       // Set completion based on isFilled from API
       _stepCompleted = List.generate(_stepNames.length, (index) {
@@ -244,29 +254,53 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   // Skip current step (if allowed)
-  void _skipStep(int stepIndex) {
-    setState(() {
-      // Only mark as completed and increment progress if not already completed
-      if (!_stepCompleted[stepIndex]) {
-        _stepCompleted[stepIndex] = true;
-        _progress++;
+  // Check if all skippable steps are skipped
+  bool _areAllSkippableStepsSkipped() {
+    for (int i = 0; i < _stepNames.length; i++) {
+      final stepName = _stepNames[i];
+      final config = _onboardingSettings[stepName];
+      final allowSkip = (config['allowSkip'] as int) == 1;
+      final isSkipped = (config['isSkipped'] as int? ?? 0) == 1;
+      final isFilled = (config['isFilled'] as int) == 1;
+
+      // If step is skippable but not skipped and not filled, return false
+      if (allowSkip && !isSkipped && !isFilled) {
+        return false;
       }
+    }
+    return true;
+  }
+
+  void _skipStep(int stepIndex) {
+    final stepName = _stepNames[stepIndex];
+    final config = _onboardingSettings[stepName];
+    final isLastStep = stepIndex == _stepNames.length - 1;
+
+    setState(() {
+      // Mark current step as skipped
+      config['isSkipped'] = 1;
 
       // Move to next step if available
-      if (stepIndex < _stepNames.length - 1) {
+      if (!isLastStep) {
         _currentStep = stepIndex + 1;
       }
     });
 
-    // Smoothly scroll to the new step
-    if (stepIndex < _stepNames.length - 1) {
-      _scrollToStep(_currentStep);
+    // If it's the last step, check if all skippable steps are skipped
+    if (isLastStep) {
+      if (_areAllSkippableStepsSkipped()) {
+        // All skippable steps are skipped, trigger completion flow
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _completeOnboarding();
+        });
+        return;
+      }
     }
 
-    // Check completion after setState completes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndCompleteOnboarding();
-    });
+    // Smoothly scroll to the new step if not last
+    if (!isLastStep) {
+      _scrollToStep(_currentStep);
+    }
   }
 
   // Smoothly scroll to a specific step
