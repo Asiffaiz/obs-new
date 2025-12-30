@@ -100,6 +100,7 @@ String replaceAgreementPlaceholders(
     '[[AGENT_COMPANY_NAME]]': data['client_comp_name'] ?? '*****',
     // Client Signor Details
     '[[CLIENT_COMPANY_NAME]]': data['client_comp_name'] ?? '',
+    '[[CLIENT_COMPANY_NAME]': data['client_comp_name'] ?? '',
     '[[CLIENT_SIGNOR_EMAIL]]': data['client_email'] ?? '',
     '[[CLIENT_EMAIL]]': data['client_email'] ?? '',
     '[[CLIENT_PHONE]]': data['client_phone_no'] ?? '',

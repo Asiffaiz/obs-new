@@ -24,6 +24,9 @@ import 'package:voicealerts_obs/features/profile/data/services/profile_service.d
 import 'package:voicealerts_obs/features/reports/data/repositories/reports_repository_impl.dart';
 import 'package:voicealerts_obs/features/reports/data/services/reports_service.dart';
 import 'package:voicealerts_obs/features/reports/domain/repositories/reports_repository.dart';
+import 'package:voicealerts_obs/features/onboarding/data/services/onboarding_agreements_service.dart';
+import 'package:voicealerts_obs/features/onboarding/data/repositories/onboarding_agreements_repository_impl.dart';
+import 'package:voicealerts_obs/features/onboarding/domain/repositories/onboarding_agreements_repository.dart';
 import '../features/auth/data/repositories/auth_repository_impl.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
@@ -63,6 +66,9 @@ Future<void> initializeDependencies() async {
 
   // Register ProfileService
   getIt.registerLazySingleton(() => ProfileService());
+
+  // Register OnboardingAgreementsService
+  getIt.registerLazySingleton(() => OnboardingAgreementsService());
 
   // Register DatabaseHelper
   getIt.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper());
@@ -121,6 +127,12 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<ProductRepository>(() => ProductRepository());
 
   getIt.registerLazySingleton<ProfileRepository>(() => ProfileRepository());
+
+  getIt.registerLazySingleton<OnboardingAgreementsRepository>(
+    () => OnboardingAgreementsRepositoryImpl(
+      getIt<OnboardingAgreementsService>(),
+    ),
+  );
 
   // BLoCs
   getIt.registerFactory(

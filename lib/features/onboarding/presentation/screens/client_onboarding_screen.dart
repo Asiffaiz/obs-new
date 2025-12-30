@@ -7,11 +7,19 @@ import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
+import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
+import 'package:voicealerts_obs/features/agreements/domain/models/agreement_model.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_bloc.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_event.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_state.dart';
 import 'package:voicealerts_obs/features/agreements/domain/models/signed_agreement_model.dart';
+import 'package:voicealerts_obs/features/agreements/presentation/screens/agreement_detail_screen.dart';
 import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
+import 'package:voicealerts_obs/features/onboarding/presentation/bloc/onboarding_agreements_bloc.dart';
+import 'package:voicealerts_obs/features/onboarding/presentation/bloc/onboarding_agreements_event.dart';
+import 'package:voicealerts_obs/features/onboarding/presentation/bloc/onboarding_agreements_state.dart';
+import 'package:voicealerts_obs/features/onboarding/domain/models/onboarding_signed_agreement_model.dart';
+import 'package:voicealerts_obs/features/onboarding/domain/models/onboarding_optional_agreement_model.dart';
 import 'package:voicealerts_obs/features/forms/presentation/screens/form_main_screen.dart';
 import 'package:voicealerts_obs/features/profile/presentation/screens/client_profile_screen.dart';
 
@@ -26,7 +34,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   int _currentStep = 2;
   StepperType stepperType = StepperType.vertical;
   bool _isLoading = false;
+  bool _agreementsLoaded = false; // Flag to prevent multiple API calls
   List<SignedAgreementModel> _signedAgreements = [];
+  List<OnboardingSignedAgreementModel> _onboardingSignedAgreements = [];
+  List<OnboardingOptionalAgreementModel> _onboardingOptionalAgreements = [];
   Map<String, String> _userData = {};
 
   // Dynamic onboarding configuration
@@ -121,8 +132,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           'description':
               'Please submit your Brand Identity information using this form to help us protect and strengthen your brand identity. Our goal is to get your application vetted as quickly and efficiently as possible.',
           "allowSkip": 1,
+          "allow_multiple": 1,
           "enable": 0,
-          "isFilled": 0,
+          "isFilled": 1,
           "isSkipped": 0,
           "type": "form",
         },
@@ -132,6 +144,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           'description':
               'Login to your VoiceAlerts Carrier Dashboard for streamlined service management and insights.',
           "allowSkip": 1,
+          "allow_multiple": 0,
           "enable": 0,
           "isFilled": 0,
           "isSkipped": 0,
@@ -143,6 +156,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           'description':
               'Online Grocery Business Introduction &amp; Feedback FormAbout Us: We are an online grocery store committed to delivering fresh, quality products straight to your doorstep. From daily essentials to seasonal produce, we make grocery shopping easy, fast, and affordable.',
           "allowSkip": 1,
+          "allow_multiple": 0,
           "enable": 0,
           "isFilled": 0,
           "isSkipped": 0,
@@ -241,6 +255,36 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
   void _loadSignedAgreements() {
     context.read<AgreementsBloc>().add(const LoadSignedAgreements());
+  }
+
+  void _loadOnboardingAgreements() {
+    // Prevent multiple simultaneous calls
+    if (_isLoading) {
+      return;
+    }
+
+    final accountNo = _userData['accountno'] ?? '';
+    final email = _userData['email'] ?? '';
+
+    if (accountNo.isNotEmpty && email.isNotEmpty) {
+      context.read<OnboardingAgreementsBloc>().add(
+        LoadOnboardingAgreements(accountNo: accountNo, email: email),
+      );
+    } else {
+      // If user data not loaded yet, load it first then load agreements
+      _loadUserData().then((_) {
+        final accountNo = _userData['accountno'] ?? '';
+        final email = _userData['email'] ?? '';
+        if (accountNo.isNotEmpty &&
+            email.isNotEmpty &&
+            mounted &&
+            !_isLoading) {
+          context.read<OnboardingAgreementsBloc>().add(
+            LoadOnboardingAgreements(accountNo: accountNo, email: email),
+          );
+        }
+      });
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -511,6 +555,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       final formId = config['form'] as String;
       final formToken = config['form_token'] as String? ?? '';
       final allowSkip = (config['allowSkip'] as int) == 1;
+      final allowMultiple =
+          ((config['allow_multiple'] as int) == 1 &&
+          (config['isFilled'] as int) == 1) ?? false;
       final isFilled = (config['isFilled'] as int) == 1;
       Widget stepContent;
 
@@ -531,7 +578,14 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         case 'form':
           stepContent = Padding(
             padding: const EdgeInsets.only(right: 4),
-            child: _buildFormStep(formId, formToken, stepName, i, isFilled),
+            child: _buildFormStep(
+              formId,
+              formToken,
+              stepName,
+              i,
+              isFilled,
+              allowMultiple,
+            ),
           );
           break;
         default:
@@ -800,28 +854,55 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildAgreementsStep() {
-    return BlocConsumer<AgreementsBloc, AgreementsState>(
+    return BlocConsumer<OnboardingAgreementsBloc, OnboardingAgreementsState>(
       listener: (context, state) {
-        if (state.status == AgreementsStatus.loadedSignedAgreements) {
+        if (state.status == OnboardingAgreementsStatus.loaded) {
           setState(() {
-            _signedAgreements = state.signedAgreements;
+            _onboardingSignedAgreements = state.signedAgreements;
+            _onboardingOptionalAgreements = state.optionalAgreements;
             _isLoading = false;
+            _agreementsLoaded = true; // Mark as loaded
           });
-        } else if (state.status == AgreementsStatus.loadingSignedAgreements) {
+        } else if (state.status == OnboardingAgreementsStatus.loading) {
           setState(() {
             _isLoading = true;
           });
-        } else if (state.status == AgreementsStatus.error) {
+        } else if (state.status == OnboardingAgreementsStatus.error) {
           setState(() {
             _isLoading = false;
+            _agreementsLoaded = false; // Reset flag on error to allow retry
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to load agreements')),
+            SnackBar(
+              content: Text(state.errorMessage ?? 'Failed to load agreements'),
+              action: SnackBarAction(
+                label: 'Retry',
+                onPressed: () {
+                  _agreementsLoaded = false; // Reset flag for retry
+                  _loadOnboardingAgreements();
+                },
+              ),
+            ),
           );
         }
       },
       builder: (context, state) {
-        if (_isLoading) {
+        // Load agreements when step is shown if state is initial (never loaded)
+        // This will trigger on first build of the step
+        if (state.status == OnboardingAgreementsStatus.initial) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              // Double-check state hasn't changed
+              final currentState =
+                  context.read<OnboardingAgreementsBloc>().state.status;
+              if (currentState == OnboardingAgreementsStatus.initial) {
+                _loadOnboardingAgreements();
+              }
+            }
+          });
+        }
+
+        if (state.status == OnboardingAgreementsStatus.loading) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(32.0),
@@ -830,10 +911,192 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           );
         }
 
-        // Always show agreements list with dummy data for now
-        return _buildSignedAgreementsList(_signedAgreements);
+        // Show agreements list from API
+        // Use bloc state data directly
+        return _buildOnboardingAgreementsList(
+          state.signedAgreements,
+          state.optionalAgreements,
+        );
       },
     );
+  }
+
+  Widget _buildOnboardingAgreementsList(
+    List<OnboardingSignedAgreementModel> signedAgreements,
+    List<OnboardingOptionalAgreementModel> optionalAgreements,
+  ) {
+    // Combine signed and optional agreements for display
+    final allAgreements = <Map<String, dynamic>>[];
+
+    // Add signed agreements
+    for (var agreement in signedAgreements) {
+      allAgreements.add({
+        'id': agreement.title.hashCode,
+        'title': agreement.title,
+        'signee': agreement.signeeName,
+        'date':
+            agreement.signedDate != null
+                ? _formatDate(agreement.signedDate!)
+                : 'N/A',
+        'email': agreement.signeeEmail,
+        'isSigned': agreement.isSigned,
+        'pdfPath': agreement.pdfPath,
+      });
+    }
+
+    // Add unsigned optional agreements
+    for (var agreement in optionalAgreements) {
+      if (!agreement.isSigned) {
+        allAgreements.add({
+          'id': agreement.agreementId,
+          'agreement_accountno': agreement.agreementAccountNo,
+          'agreement_id': agreement.agreementId,
+          'agreement_title': agreement.title,
+          'is_mandatory': agreement.isMandatory,
+          'agreement_type': agreement.agreementType,
+          'agreement_instructions': agreement.agreementInstructions,
+          'agreement_content': agreement.agreementContent,
+          'signatory_details': agreement.signatoryDetails,
+          'title': agreement.title,
+          'description':
+              agreement.agreementInstructions.isNotEmpty
+                  ? agreement.agreementInstructions
+                  : 'No description available',
+          'isSigned': false,
+        });
+      }
+    }
+
+    //     var agreementModel = AgreementModel(
+    //   agreementAccountNo: agreement['agreement_accountno'],
+    //   id: agreement['agreement_id'],
+    //   title: agreement['agreement_title'],
+
+    //   isMandatory: agreement['is_mandatory'],
+
+    //   type: agreement['agreement_type'],
+    //   description: agreement['agreement_instructions'],
+    //   content: agreement['agreement_content'],
+    //   status: AgreementStatus.pending,
+    //   signatoryDetails: agreement['signatory_details'],
+    // );
+
+    final signedCount =
+        allAgreements.where((a) => a['isSigned'] == true).length;
+    final unsignedCount =
+        allAgreements.where((a) => a['isSigned'] == false).length;
+
+    if (allAgreements.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                'No agreements available',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header with counts
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: HexColor("#25C196").withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${signedCount.toString().padLeft(2, '0')} Signed',
+                    style: TextStyle(
+                      color: HexColor("#25C196"),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${unsignedCount.toString().padLeft(2, '0')} Unsigned',
+                    style: TextStyle(
+                      color: Colors.red.shade400,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Horizontal scrollable list of cards
+        SizedBox(
+          height: 200,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.zero,
+            itemCount: allAgreements.length,
+            itemBuilder: (context, index) {
+              final agreement = allAgreements[index];
+              if (agreement['isSigned'] == true) {
+                return _buildSignedAgreementCardHorizontal(agreement);
+              } else {
+                return _buildUnsignedAgreementCardHorizontal(agreement);
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${months[date.month - 1]} ${date.day} ${date.year}';
   }
 
   Widget _buildSignedAgreementsList(List<SignedAgreementModel> agreements) {
@@ -960,9 +1223,23 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildUnsignedAgreementCardHorizontal(Map<String, dynamic> agreement) {
-    final title = agreement['title'] as String;
-    final description = agreement['description'] as String;
+    final title = agreement['title'] as String? ?? '';
+    final description =
+        agreement['description'] as String? ?? 'No description available';
 
+    var agreementModel = AgreementModel(
+      agreementAccountNo: agreement['agreement_accountno'],
+      id: agreement['agreement_id'],
+      title: agreement['agreement_title'],
+
+      isMandatory: agreement['is_mandatory'],
+
+      type: agreement['agreement_type'],
+      description: agreement['agreement_instructions'],
+      content: agreement['agreement_content'],
+      status: AgreementStatus.pending,
+      signatoryDetails: {},
+    );
     return Align(
       alignment: Alignment.topLeft,
       child: Container(
@@ -1070,7 +1347,21 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                     child: SizedBox(
                       height: 32,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          context.push(
+                            AppRoutes.sendToSignee,
+                            extra: {
+                              'agreement': agreementModel,
+                              'comeFrom': 'optional',
+                              'onSuccess': () {
+                                // Refresh the agreements list if needed
+                                // context.read<AgreementsBloc>().add(
+                                //   const LoadAgreements(),
+                                // );
+                              },
+                            },
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: HexColor("#7B7B7B"),
                           foregroundColor: Colors.white,
@@ -1102,7 +1393,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   SizedBox(
                     height: 32,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        _navigateToAgreementSignedDetail(agreementModel);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HexColor("#25C196"),
                         foregroundColor: Colors.white,
@@ -1134,6 +1427,30 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _navigateToAgreementSignedDetail(AgreementModel agreement) {
+    // Get the bloc instance before navigation
+    // final agreementsBloc = context.read<AgreementsBloc>();
+
+    // // Add the event to go to the specific agreement
+    // agreementsBloc.add(GoToAgreement(index));
+
+    // // Check if this is the last agreement
+    // final isLastAgreement = index == agreementsBloc.state.agreements.length - 1;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AgreementDetailScreen(
+              agreement: agreement,
+              isLastAgreement: false,
+              onComplete: () {},
+              comeFrom: 'optional',
+            ),
       ),
     );
   }
@@ -1304,7 +1621,19 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                     child: SizedBox(
                       height: 32,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed:
+                            agreement['pdfPath'] != null &&
+                                    agreement['pdfPath'].isNotEmpty
+                                ? () {
+                                  if (agreement['pdfPath'] != null &&
+                                      agreement['pdfPath'].isNotEmpty) {
+                                    _navigateToAgreementDetail(
+                                      agreement['pdfPath'] as String,
+                                      agreement['title'] as String,
+                                    );
+                                  }
+                                }
+                                : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: HexColor("#7B7B7B"),
                           foregroundColor: Colors.white,
@@ -1333,12 +1662,22 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     );
   }
 
+  void _navigateToAgreementDetail(pdfPath, String title) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CustomPdfViewer(url: pdfPath, title: title),
+      ),
+    );
+  }
+
   Widget _buildFormStep(
     String formId,
     String formToken,
     String stepName,
     int stepIndex,
     isFilled,
+    allowMultiple,
   ) {
     // Get form submission from cache (single entry)
     final formSubmissions = _formDataCache[formId] ?? [];
@@ -1356,16 +1695,25 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     final submission = formSubmissions.first;
 
     // Display single card without ListView
-    return _buildFormCard(submission, formId, formToken, stepIndex, isFilled);
+    return _buildFormCard(
+      submission,
+      formId,
+      formToken,
+      stepIndex,
+      isFilled,
+      allowMultiple,
+    );
   }
 
   Map<String, dynamic> updateFormData(
     Map<String, dynamic> form,
     String formId,
     String formToken,
+    bool allowMultiple,
   ) {
     form['form_id'] = formId;
     form['form_token'] = formToken;
+    form['allow_multiple'] = allowMultiple;
     return form;
   }
 
@@ -1375,9 +1723,15 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     formToken,
     int stepIndex,
     isFilled,
+    allowMultiple,
   ) {
     final title = form['title'] as String;
-    Map<String, dynamic> updatedForm = updateFormData(form, formId, formToken);
+    Map<String, dynamic> updatedForm = updateFormData(
+      form,
+      formId,
+      formToken,
+      allowMultiple,
+    );
 
     return Container(
       width:
@@ -1429,10 +1783,12 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildFilledFormContent(Map<String, dynamic> form) {
-    final signee = form['signee'] as String;
-    final email = form['email'] as String;
-    final status = form['status'] as String;
+    final signee = form['signee'] as String? ?? 'N/A';
+    final email = form['email'] as String? ?? 'N/A';
+    final status = form['status'] as String? ?? 'N/A';
 
+    bool isAllowMultiple = form['allow_multiple'];
+    print("isAllowMultiple: $isAllowMultiple");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1557,27 +1913,31 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
               ),
             ),
             Spacer(),
-            Expanded(
-              child: SizedBox(
-                height: 32,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HexColor("#7B7B7B"),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
+            if (isAllowMultiple)
+              Expanded(
+                child: SizedBox(
+                  height: 32,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HexColor("#7B7B7B"),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
-                  child: const Text(
-                    'Add New',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                    child: const Text(
+                      'Add New',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
             const SizedBox(width: 8),
             Expanded(
               child: SizedBox(

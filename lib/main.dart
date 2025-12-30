@@ -35,6 +35,8 @@ import 'core/services/token_service.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/agreements/presentation/bloc/agreements_bloc.dart';
 import 'features/agreements/data/repositories/mock_agreements_repository_impl.dart';
+import 'features/onboarding/presentation/bloc/onboarding_agreements_bloc.dart';
+import 'features/onboarding/domain/repositories/onboarding_agreements_repository.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -156,6 +158,12 @@ class MyApp extends StatelessWidget {
           create:
               (context) =>
                   ProfileBloc(profileRepository: GetIt.I<ProfileRepository>()),
+        ),
+        BlocProvider<OnboardingAgreementsBloc>(
+          create:
+              (context) => OnboardingAgreementsBloc(
+                repository: GetIt.I<OnboardingAgreementsRepository>(),
+              ),
         ),
       ],
       child: MaterialApp.router(

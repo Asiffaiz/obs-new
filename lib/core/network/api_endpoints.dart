@@ -37,6 +37,8 @@ class ApiEndpoints {
       '$baseUrl/appApis/get_archived_agreements';
   static final String sendToSignee =
       '$baseUrl/appApis/send_agreement_to_signee';
+  static final String getClientAgreementsListingAll =
+      '$baseUrl/appApis/get_client_agreements_listing_all';
 
   // Reports endpoints
   static final String getReportsData = '$baseUrl/appApis/get_client_reports';
