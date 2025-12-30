@@ -12,6 +12,7 @@ import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements
 import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_state.dart';
 import 'package:voicealerts_obs/features/agreements/domain/models/signed_agreement_model.dart';
 import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
+import 'package:voicealerts_obs/features/forms/presentation/screens/form_main_screen.dart';
 import 'package:voicealerts_obs/features/profile/presentation/screens/client_profile_screen.dart';
 
 class ClientOnboardingScreen extends StatefulWidget {
@@ -56,6 +57,23 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     super.dispose();
   }
 
+  _navigateToForm(String formAccountNo, String formToken) {
+    if (formAccountNo != '' && formToken != '' && formToken != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => FormMainScreen(
+                formAccountNo: formAccountNo,
+                formToken: formToken,
+                isFrom: 'onboarding',
+                refreshForms: null,
+              ),
+        ),
+      );
+    }
+  }
+
   void _loadOnboardingSettings() {
     // Mock JSON data - replace with actual API call
     final jsonResponse = {
@@ -77,6 +95,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         "Brand Identity Application": {
           "form": "973318973318",
           "form_token": "6b986c43-dbc2-47c8-8c2b-3a0ed9a84809",
+          'description':
+              'Please submit your Brand Identity information using this form to help us protect and strengthen your brand identity. Our goal is to get your application vetted as quickly and efficiently as possible.',
           "allowSkip": 1,
           "enable": 0,
           "isFilled": 0,
@@ -85,6 +105,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         "VoiceAlerts Carrier Login": {
           "form": "9890298902",
           "form_token": "37c0f7e6-2104-41b7-9290-fcdb4a43110c",
+          'description':
+              'Login to your VoiceAlerts Carrier Dashboard for streamlined service management and insights.',
           "allowSkip": 1,
           "enable": 0,
           "isFilled": 0,
@@ -93,20 +115,15 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         "Online Business": {
           "form": "302962302962",
           "form_token": "563c891e-3986-499e-9a9f-c09d7b932a20",
-          "allowSkip": 1,
-          "enable": 0,
-          "isFilled": 0,
-          "type": "form",
-        },
-        "Data Protection": {
-          "form": "336586336589",
+          'description':
+              'Online Grocery Business Introduction &amp; Feedback FormAbout Us: We are an online grocery store committed to delivering fresh, quality products straight to your doorstep. From daily essentials to seasonal produce, we make grocery shopping easy, fast, and affordable.',
           "allowSkip": 1,
           "enable": 0,
           "isFilled": 0,
           "type": "form",
         },
       },
-      "total_steps": 6,
+      "total_steps": 5,
       "progress": 2, // 2 steps completed
     };
 
@@ -435,6 +452,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       final config = _onboardingSettings[stepName];
       final stepType = config['type'] as String;
       final formId = config['form'] as String;
+      final formToken = config['form_token'] as String? ?? '';
       final allowSkip = (config['allowSkip'] as int) == 1;
       final isFilled = (config['isFilled'] as int) == 1;
       Widget stepContent;
@@ -456,7 +474,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         case 'form':
           stepContent = Padding(
             padding: const EdgeInsets.only(right: 4),
-            child: _buildFormStep(formId, stepName, i, isFilled),
+            child: _buildFormStep(formId, formToken, stepName, i, isFilled),
           );
           break;
         default:
@@ -1260,6 +1278,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
   Widget _buildFormStep(
     String formId,
+    String formToken,
     String stepName,
     int stepIndex,
     isFilled,
@@ -1280,11 +1299,28 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     final submission = formSubmissions.first;
 
     // Display single card without ListView
-    return _buildFormCard(submission, stepIndex, isFilled);
+    return _buildFormCard(submission, formId, formToken, stepIndex, isFilled);
   }
 
-  Widget _buildFormCard(Map<String, dynamic> form, int stepIndex, isFilled) {
+  Map<String, dynamic> updateFormData(
+    Map<String, dynamic> form,
+    String formId,
+    String formToken,
+  ) {
+    form['form_id'] = formId;
+    form['form_token'] = formToken;
+    return form;
+  }
+
+  Widget _buildFormCard(
+    Map<String, dynamic> form,
+    formId,
+    formToken,
+    int stepIndex,
+    isFilled,
+  ) {
     final title = form['title'] as String;
+    Map<String, dynamic> updatedForm = updateFormData(form, formId, formToken);
 
     return Container(
       width:
@@ -1326,8 +1362,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             Expanded(
               child:
                   isFilled
-                      ? _buildFilledFormContent(form)
-                      : _buildUnfilledFormContent(form, stepIndex),
+                      ? _buildFilledFormContent(updatedForm)
+                      : _buildUnfilledFormContent(updatedForm, stepIndex),
             ),
           ],
         ),
@@ -1569,7 +1605,11 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             child: ElevatedButton(
               onPressed: () {
                 // Mark this step as complete and move to next
-                _completeStep(stepIndex);
+                // _completeStep(stepIndex);
+                _navigateToForm(
+                  form['form_id'] as String,
+                  form['form_token'] as String,
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: HexColor("#136FD4"),
