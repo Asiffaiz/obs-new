@@ -493,6 +493,38 @@ class _DynamicStepperFormState extends State<DynamicStepperForm> {
   }
 
   Widget _buildCurrentStepContent() {
+    // Handle empty groups case to prevent crash
+    if (_orderedGroups.isEmpty ||
+        _currentStep < 0 ||
+        _currentStep >= _orderedGroups.length) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                'No form content available',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This form does not contain any groups or questions.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final group = _orderedGroups[_currentStep];
 
     // Pull questions by ids, ignore missing, then sort by each question's sequenceNumber
