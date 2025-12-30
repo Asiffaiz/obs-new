@@ -61,14 +61,37 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     if (formAccountNo != '' && formToken != '' && formToken != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder:
-              (context) => FormMainScreen(
+        PageRouteBuilder(
+          pageBuilder:
+              (context, animation, secondaryAnimation) => FormMainScreen(
                 formAccountNo: formAccountNo,
                 formToken: formToken,
                 isFrom: 'onboarding',
                 refreshForms: null,
               ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // Smooth fade and slide transition without bounce
+            const begin = Offset(0.0, 0.05);
+            const end = Offset.zero;
+            const curve = Curves.easeOutCubic;
+
+            var slideAnimation = Tween(
+              begin: begin,
+              end: end,
+            ).animate(CurvedAnimation(parent: animation, curve: curve));
+
+            var fadeAnimation = Tween(
+              begin: 0.0,
+              end: 1.0,
+            ).animate(CurvedAnimation(parent: animation, curve: curve));
+
+            return FadeTransition(
+              opacity: fadeAnimation,
+              child: SlideTransition(position: slideAnimation, child: child),
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
         ),
       );
     }
