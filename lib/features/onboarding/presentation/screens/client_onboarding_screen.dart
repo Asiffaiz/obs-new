@@ -32,7 +32,7 @@ class ClientOnboardingScreen extends StatefulWidget {
 }
 
 class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
-  int _currentStep = 2;
+  int _currentStep = 3;
   StepperType stepperType = StepperType.vertical;
   bool _isLoading = false;
   bool _agreementsLoaded = false; // Flag to prevent multiple API calls
@@ -490,10 +490,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       appBar: AppBar(
         title: const Text('Welcome Onboarding'),
         actions: [
-          TextButton(
-            onPressed: _completeOnboarding,
-            child: const Text('Skip', style: TextStyle(color: Colors.white)),
-          ),
+          // TextButton(
+          //   onPressed: _completeOnboarding,
+          //   child: const Text('Skip', style: TextStyle(color: Colors.white)),
+          // ),
         ],
         centerTitle: true,
       ),
@@ -1275,7 +1275,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 16),
@@ -1512,7 +1512,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

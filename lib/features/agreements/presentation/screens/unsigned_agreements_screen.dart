@@ -446,10 +446,10 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
               Text(
                 progress == 1.0
                     ? 'All mandatory agreements have been signed.'
-                    : 'Please sign all mandatory agreements to continue',
+                    : 'Please sign all mandatory agreements to continue ',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
-              Icon(Icons.info_outline, color: Colors.grey.shade600),
+              Icon(Icons.info_outline, color: Colors.grey.shade600, size: 20),
             ],
           ),
         ],
@@ -502,106 +502,113 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
   Widget _buildAgreementCard(AgreementModel agreement, int index) {
     return GestureDetector(
       // onTap: () => _navigateToAgreementDetail(agreement, index),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: AppColors.cardColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.agreementCardBorderColor),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 1,
-              blurRadius: 2,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        _getAgreementTypeIcon(agreement.type),
-                        color: _getAgreementTypeColor(agreement.type),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          agreement.title,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: AppColors.cardColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.agreementCardBorderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          _getAgreementTypeIcon(agreement.type),
+                          color: _getAgreementTypeColor(agreement.type),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            agreement.title,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 8),
-                  _buildInfoRow(
-                    'Type:',
-                    agreement.type.toUpperCase(),
-                    AppColors.primaryColor,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildDescription(agreement.description),
-                ],
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      'Type:',
+                      agreement.type.toUpperCase(),
+                      AppColors.primaryColor,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildDescription(agreement.description),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildStatusColumn(
-                        title: 'Status',
-                        value: _getStatusText(agreement.status),
-                        // icon: _getStatusIcon(agreement.status),
-                        color: _getStatusColor(agreement.status),
-                      ),
-                      // _buildStatusColumn(
-                      //   title: 'Type',
-                      //   value: _getTypeText(agreement.type),
-                      //   icon: _getAgreementTypeIcon(agreement.type),
-                      //   color: _getAgreementTypeColor(agreement.type),
-                      // ),
-                      _buildStatusColumn(
-                        title: 'Mandatory',
-                        value: agreement.isMandatory ? 'Yes' : 'No',
-                        // icon:
-                        //     agreement.isMandatory
-                        //         ? Icons.priority_high
-                        //         : Icons.check_circle_outline,
-                        color:
-                            agreement.isMandatory ? Colors.red : Colors.green,
-                      ),
-                      _buildActionButton(
-                        icon: Icons.visibility,
-                        label: agreement.type.toUpperCase(),
-                        color: AppColors.primaryColor,
-                        onPressed:
-                            () => _navigateToAgreementDetail(agreement, index),
-                      ),
-                    ],
-                  ),
-                ],
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildStatusColumn(
+                          title: 'Status',
+                          value: _getStatusText(agreement.status),
+                          // icon: _getStatusIcon(agreement.status),
+                          color: _getStatusColor(agreement.status),
+                        ),
+                        // _buildStatusColumn(
+                        //   title: 'Type',
+                        //   value: _getTypeText(agreement.type),
+                        //   icon: _getAgreementTypeIcon(agreement.type),
+                        //   color: _getAgreementTypeColor(agreement.type),
+                        // ),
+                        _buildStatusColumn(
+                          title: 'Mandatory',
+                          value: agreement.isMandatory ? 'Yes' : 'No',
+                          // icon:
+                          //     agreement.isMandatory
+                          //         ? Icons.priority_high
+                          //         : Icons.check_circle_outline,
+                          color:
+                              agreement.isMandatory ? Colors.red : Colors.green,
+                        ),
+                        _buildActionButton(
+                          icon: Icons.visibility,
+                          label: agreement.type.toUpperCase(),
+                          color: AppColors.primaryColor,
+                          onPressed:
+                              () =>
+                                  _navigateToAgreementDetail(agreement, index),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -612,174 +619,137 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
     int index,
   ) {
     final title = agreement.title;
-    final description =
-        agreement.description +
-        "lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+    final description = agreement.description;
 
-    return Align(
-      alignment: Alignment.topLeft,
-      child: Container(
-        width: double.infinity,
-
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            // Title
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              // Title
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+            const SizedBox(height: 16),
+            Stack(
+              children: [
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                    height: 1.5,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
-              Stack(
-                children: [
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                      height: 1.5,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Container(
-                    height: 73,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withOpacity(0.0),
-                          Colors.white.withOpacity(0.7),
-                          Colors.white,
-                        ],
-                      ),
+                Container(
+                  height: 73,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withOpacity(0.0),
+                        Colors.white.withOpacity(0.7),
+                        Colors.white,
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
 
-              const SizedBox(height: 14),
-              // Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 32,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HexColor("#136FD4"),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                          ), // Remove all padding
-                          minimumSize:
-                              Size.zero, // Remove minimum size constraints
-                          tapTargetSize:
-                              MaterialTapTargetSize
-                                  .shrinkWrap, // Reduce tap target
-                        ),
-                        child: const Text(
-                          'Download',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Spacer(),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: SizedBox(
-                      height: 32,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          context.push(
-                            AppRoutes.sendToSignee,
-                            extra: {
-                              'agreement': agreement,
-                              'comeFrom': 'optional',
-                              'onSuccess': () {
-                                // Refresh the agreements list if needed
-                                context.read<AgreementsBloc>().add(
-                                  const LoadAgreements(),
-                                );
-                              },
-                            },
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HexColor("#7B7B7B"),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                          ), // Remove all padding
-                          minimumSize:
-                              Size.zero, // Remove minimum size constraints
-                          tapTargetSize:
-                              MaterialTapTargetSize
-                                  .shrinkWrap, // Reduce tap target
-                        ),
-
-                        child: const Text(
-                          'Send to Signee',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
+            const SizedBox(height: 14),
+            // Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: SizedBox(
                     height: 32,
                     child: ElevatedButton(
-                      onPressed:
-                          () => _navigateToAgreementDetail(agreement, index),
+                      onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: HexColor("#25C196"),
+                        backgroundColor: HexColor("#136FD4"),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
                         ),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
+                          horizontal: 6,
+                        ), // Remove all padding
+                        minimumSize:
+                            Size.zero, // Remove minimum size constraints
+                        tapTargetSize:
+                            MaterialTapTargetSize
+                                .shrinkWrap, // Reduce tap target
+                      ),
+                      child: const Text(
+                        'Download',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Spacer(),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SizedBox(
+                    height: 32,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.push(
+                          AppRoutes.sendToSignee,
+                          extra: {
+                            'agreement': agreement,
+                            'comeFrom': 'mandatory',
+                            'onSuccess': () {
+                              // Refresh the agreements list if needed
+                              context.read<AgreementsBloc>().add(
+                                const LoadAgreements(),
+                              );
+                            },
+                          },
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HexColor("#7B7B7B"),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
                         ), // Remove all padding
                         minimumSize:
                             Size.zero, // Remove minimum size constraints
@@ -789,7 +759,7 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
                       ),
 
                       child: const Text(
-                        'Sign',
+                        'Send to Signee',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -797,10 +767,40 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 32,
+                  child: ElevatedButton(
+                    onPressed:
+                        () => _navigateToAgreementDetail(agreement, index),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HexColor("#25C196"),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                      ), // Remove all padding
+                      minimumSize: Size.zero, // Remove minimum size constraints
+                      tapTargetSize:
+                          MaterialTapTargetSize.shrinkWrap, // Reduce tap target
+                    ),
+
+                    child: const Text(
+                      'Sign',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

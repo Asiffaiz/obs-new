@@ -134,12 +134,17 @@ class _SendToSigneeScreenState extends State<SendToSigneeScreen>
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.of(context).pop(); // Close success dialog
-                            if (widget.onSuccess != null) {
-                              widget.onSuccess!();
-                            } else if (widget.comeFrom == 'optional') {
+                            // if (widget.onSuccess != null) {
+                            //   widget.onSuccess!();
+                            // } else
+
+                            if (widget.comeFrom == 'optional') {
                               context.pop();
                             } else if (widget.comeFrom == 'mandatory') {
                               context.go(AppRoutes.agreements);
+                              if (widget.onSuccess != null) {
+                                widget.onSuccess!();
+                              }
                             } else {
                               context.pop(); // Default: go back
                             }
