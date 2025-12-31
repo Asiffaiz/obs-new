@@ -10,6 +10,12 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     return ThemeData(
+      pageTransitionsTheme: PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       primaryColor: primaryColor,
       scaffoldBackgroundColor: Colors.white,
       appBarTheme: AppBarTheme(

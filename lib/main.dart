@@ -171,6 +171,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         routerConfig: router,
+        
         builder: (context, child) {
           // Apply responsive breakpoints
           return ResponsiveBreakpoints.builder(
