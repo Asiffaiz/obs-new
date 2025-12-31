@@ -15,6 +15,7 @@ import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements
 import 'package:voicealerts_obs/features/agreements/domain/models/signed_agreement_model.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/screens/agreement_detail_screen.dart';
 import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
+import 'package:voicealerts_obs/features/forms/presentation/screens/form_submissions_screen.dart';
 import 'package:voicealerts_obs/features/onboarding/presentation/bloc/onboarding_agreements_bloc.dart';
 import 'package:voicealerts_obs/features/onboarding/presentation/bloc/onboarding_agreements_event.dart';
 import 'package:voicealerts_obs/features/onboarding/presentation/bloc/onboarding_agreements_state.dart';
@@ -126,6 +127,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           "isFilled": 1,
           "type": "agreement",
         },
+
         "Brand Identity Application": {
           "form": "973318973318",
           "form_token": "6b986c43-dbc2-47c8-8c2b-3a0ed9a84809",
@@ -556,9 +558,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       final formToken = config['form_token'] as String? ?? '';
       final allowSkip = (config['allowSkip'] as int) == 1;
       final allowMultiple =
-          ((config['allow_multiple'] as int) == 1 &&
-          (config['isFilled'] as int) == 1) ?? false;
+          (config['allow_multiple'] as int? ?? 0) == 1 &&
+          (config['isFilled'] as int? ?? 0) == 1;
       final isFilled = (config['isFilled'] as int) == 1;
+      print("allowMultiple: $allowMultiple");
       Widget stepContent;
 
       // Determine content based on step type
@@ -1783,12 +1786,16 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   }
 
   Widget _buildFilledFormContent(Map<String, dynamic> form) {
-    final signee = form['signee'] as String? ?? 'N/A';
-    final email = form['email'] as String? ?? 'N/A';
-    final status = form['status'] as String? ?? 'N/A';
+    // final signee = form['signee'] as String? ?? 'N/A';
+    // final email = form['email'] as String? ?? 'N/A';
+    // final status = form['status'] as String? ?? 'N/A';
+
+    final signee = _userData['name'] as String? ?? 'N/A';
+    final email = _userData['email'] as String? ?? 'N/A';
+    final status = "Submitted";
 
     bool isAllowMultiple = form['allow_multiple'];
-    print("isAllowMultiple: $isAllowMultiple");
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1918,7 +1925,12 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                 child: SizedBox(
                   height: 32,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _navigateToForm(
+                        form['form_id'] as String,
+                        form['form_token'] as String,
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: HexColor("#7B7B7B"),
                       foregroundColor: Colors.white,
@@ -1943,7 +1955,13 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
               child: SizedBox(
                 height: 32,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    _handleSubmissionsNavigation(
+                      form['form_id'] as String,
+                      form['title'] as String,
+                      context,
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HexColor("#25C196"),
                     foregroundColor: Colors.white,
@@ -1964,6 +1982,26 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         ),
       ],
     );
+  }
+
+  _handleSubmissionsNavigation(
+    String formAccountNo,
+    String formTitle,
+
+    BuildContext context,
+  ) {
+    if (formAccountNo != '' && formTitle != '') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => FormSubmissionsScreen(
+                formAccountNo: formAccountNo,
+                formTitle: formTitle,
+              ),
+        ),
+      );
+    }
   }
 
   Widget _buildUnfilledFormContent(Map<String, dynamic> form, int stepIndex) {
