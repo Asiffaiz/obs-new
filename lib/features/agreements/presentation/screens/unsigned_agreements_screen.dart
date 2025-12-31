@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/constants/global_veriables_state.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/widgets/custom_error_dialog.dart';
 import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
 import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_event.dart';
-import 'package:voicealerts_obs/features/auth/presentation/screens/sign_in_screen.dart';
+import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_state.dart';
 import '../../domain/models/agreement_model.dart';
 import '../bloc/agreements_bloc.dart';
 import '../bloc/agreements_event.dart';
@@ -31,6 +30,7 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
   bool _hasShownDialog = false;
   bool _isDataLoaded = false;
   bool isMandatoryDialogShown = false;
+  bool _isLoggingOut = false;
   @override
   void initState() {
     super.initState();
@@ -235,7 +235,7 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (dialogContext) => AlertDialog(
             backgroundColor: Colors.white,
             title: const Text('Logout Confirmation'),
             content: const Text('Are you sure you want to logout?'),
@@ -244,18 +244,20 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(dialogContext).pop(),
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () async {
-                  Navigator.of(context).pop();
+                  Navigator.of(dialogContext).pop();
+
+                  // Set flag to indicate logout is in progress
+                  setState(() {
+                    _isLoggingOut = true;
+                  });
 
                   // Clear user data from SharedPreferences and sign out from both Firebase and API
                   final authBloc = context.read<AuthBloc>();
-                  // Navigate to sign in screen
-                  //  Navigator.  pushReplacement(context, MaterialPageRoute(builder: (context) => SignInScreen()));
-                  // context.go(AppRoutes.signIn);
 
                   // First handle API logout to clear SharedPreferences
                   authBloc.add(const ApiLogoutRequested());
@@ -263,7 +265,10 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
                   // Then handle general sign out for any other auth sessions
                   authBloc.add(const SignOutRequested());
 
-                  context.go(AppRoutes.signIn);
+                  // Don't navigate immediately - let BlocListener handle navigation
+                  // after state changes to unauthenticated
+                  // This prevents race condition where splash screen redirects to dashboard
+                  // because the auth state and SharedPreferences are cleared before navigation
                 },
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text('Logout'),
@@ -275,120 +280,141 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) {
+        // Only listen when logout is in progress and state changes to unauthenticated
+        return _isLoggingOut &&
+            current.status == AuthStatus.unauthenticated &&
+            previous.status != AuthStatus.unauthenticated;
+      },
+      listener: (context, state) {
+        // Reset logout flag
+        _isLoggingOut = false;
+        // Navigate to sign in screen only after logout is complete
+        // This prevents race condition where splash screen redirects to dashboard
+        // because the auth state and SharedPreferences are cleared before navigation
+        if (mounted) {
+          context.go(AppRoutes.signIn);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
 
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Unsigned Agreements'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              _showLogoutConfirmation(context);
-            },
-            icon: const Icon(Icons.logout_outlined),
-          ),
-        ],
-      ),
-      body: BlocConsumer<AgreementsBloc, AgreementsState>(
-        listener: (context, state) {
-          if (state.allMandatoryAgreementsSigned && widget.onComplete != null) {
-            widget.onComplete!();
-          }
+        appBar: AppBar(
+          centerTitle: true,
+          title: const Text('Unsigned Agreements'),
+          actions: [
+            IconButton(
+              onPressed: () {
+                _showLogoutConfirmation(context);
+              },
+              icon: const Icon(Icons.logout_outlined),
+            ),
+          ],
+        ),
+        body: BlocConsumer<AgreementsBloc, AgreementsState>(
+          listener: (context, state) {
+            if (state.allMandatoryAgreementsSigned &&
+                widget.onComplete != null) {
+              widget.onComplete!();
+            }
 
-          if (state.status == AgreementsStatus.error) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              CustomErrorDialog.show(
-                context: context,
-                onRetry: () {
-                  // Your retry logic here
-                  Navigator.pop(context);
-                  context.read<AgreementsBloc>().add(const LoadAgreements());
-                },
-              );
-            });
-          }
-        },
-        builder: (context, state) {
-          if (state.status == AgreementsStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (state.status == AgreementsStatus.error) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                CustomErrorDialog.show(
+                  context: context,
+                  onRetry: () {
+                    // Your retry logic here
+                    Navigator.pop(context);
+                    context.read<AgreementsBloc>().add(const LoadAgreements());
+                  },
+                );
+              });
+            }
+          },
+          builder: (context, state) {
+            if (state.status == AgreementsStatus.loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (state.status == AgreementsStatus.error) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Something went wrong please try again',
-                    style: const TextStyle(fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: SizedBox(
-                      width: 200,
-                      height: 40,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          context.read<AgreementsBloc>().add(
-                            const LoadAgreements(),
-                          );
-                        },
-                        child: const Text('Retry'),
+            if (state.status == AgreementsStatus.error) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Something went wrong please try again',
+                      style: const TextStyle(fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: 200,
+                        height: 40,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            context.read<AgreementsBloc>().add(
+                              const LoadAgreements(),
+                            );
+                          },
+                          child: const Text('Retry'),
+                        ),
                       ),
                     ),
+                  ],
+                ),
+              );
+            }
+
+            if (state.agreements.isEmpty) {
+              return const Center(child: Text('No agreements found'));
+            }
+
+            // Calculate progress
+            final mandatoryAgreements =
+                state.agreements.where((a) => a.isMandatory).toList();
+            final signedMandatoryAgreements =
+                mandatoryAgreements
+                    .where(
+                      (a) =>
+                          a.status == AgreementStatus.signed ||
+                          a.status == AgreementStatus.approved,
+                    )
+                    .toList();
+            final progress =
+                mandatoryAgreements.isEmpty
+                    ? 1.0
+                    : signedMandatoryAgreements.length /
+                        mandatoryAgreements.length;
+
+            if (mandatoryAgreements.isNotEmpty) {
+              if (isMandatoryDialogShown == false) {
+                _handleShowDialog();
+                AuthService().saveIsShowMandatoryDialog(true);
+              }
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<AgreementsBloc>().add(const LoadAgreements());
+              },
+              child: Column(
+                children: [
+                  _buildProgressIndicator(
+                    progress,
+                    signedMandatoryAgreements.length,
+                    mandatoryAgreements.length,
+                  ),
+                  Expanded(
+                    child: _buildUnsignedAgreementsList(state.agreements),
                   ),
                 ],
               ),
             );
-          }
-
-          if (state.agreements.isEmpty) {
-            return const Center(child: Text('No agreements found'));
-          }
-
-          // Calculate progress
-          final mandatoryAgreements =
-              state.agreements.where((a) => a.isMandatory).toList();
-          final signedMandatoryAgreements =
-              mandatoryAgreements
-                  .where(
-                    (a) =>
-                        a.status == AgreementStatus.signed ||
-                        a.status == AgreementStatus.approved,
-                  )
-                  .toList();
-          final progress =
-              mandatoryAgreements.isEmpty
-                  ? 1.0
-                  : signedMandatoryAgreements.length /
-                      mandatoryAgreements.length;
-
-          if (mandatoryAgreements.isNotEmpty) {
-            if (isMandatoryDialogShown == false) {
-              _handleShowDialog();
-              AuthService().saveIsShowMandatoryDialog(true);
-            }
-          }
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<AgreementsBloc>().add(const LoadAgreements());
-            },
-            child: Column(
-              children: [
-                _buildProgressIndicator(
-                  progress,
-                  signedMandatoryAgreements.length,
-                  mandatoryAgreements.length,
-                ),
-                Expanded(child: _buildUnsignedAgreementsList(state.agreements)),
-              ],
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
