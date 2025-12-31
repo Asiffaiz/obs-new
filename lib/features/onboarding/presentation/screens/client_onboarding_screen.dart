@@ -1245,135 +1245,173 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     );
     return Align(
       alignment: Alignment.topLeft,
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.81,
-        margin: const EdgeInsets.only(right: 9, left: 0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              // Title
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+      child: InkWell(
+        onTap: () {
+          _navigateToAgreementSignedDetail(agreementModel);
+        },
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.81,
+          margin: const EdgeInsets.only(right: 9, left: 0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
-              Stack(
-                children: [
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                      height: 1.5,
+                const SizedBox(height: 16),
+                Stack(
+                  children: [
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                        height: 1.5,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Container(
-                    height: 73,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withOpacity(0.0),
-                          Colors.white.withOpacity(0.7),
-                          Colors.white,
-                        ],
+                    Container(
+                      height: 73,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withOpacity(0.0),
+                            Colors.white.withOpacity(0.7),
+                            Colors.white,
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
 
-              const SizedBox(height: 14),
-              // Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 32,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HexColor("#136FD4"),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                const SizedBox(height: 14),
+                // Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 32,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HexColor("#136FD4"),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                            ), // Remove all padding
+                            minimumSize:
+                                Size.zero, // Remove minimum size constraints
+                            tapTargetSize:
+                                MaterialTapTargetSize
+                                    .shrinkWrap, // Reduce tap target
                           ),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                          ), // Remove all padding
-                          minimumSize:
-                              Size.zero, // Remove minimum size constraints
-                          tapTargetSize:
-                              MaterialTapTargetSize
-                                  .shrinkWrap, // Reduce tap target
-                        ),
-                        child: const Text(
-                          'Download',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                          child: const Text(
+                            'Download',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  // Spacer(),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: SizedBox(
+                    // Spacer(),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: SizedBox(
+                        height: 32,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            context.push(
+                              AppRoutes.sendToSignee,
+                              extra: {
+                                'agreement': agreementModel,
+                                'comeFrom': 'optional',
+                                'onSuccess': () {
+                                  // Refresh the agreements list if needed
+                                  // context.read<AgreementsBloc>().add(
+                                  //   const LoadAgreements(),
+                                  // );
+                                },
+                              },
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HexColor("#7B7B7B"),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                            ), // Remove all padding
+                            minimumSize:
+                                Size.zero, // Remove minimum size constraints
+                            tapTargetSize:
+                                MaterialTapTargetSize
+                                    .shrinkWrap, // Reduce tap target
+                          ),
+
+                          child: const Text(
+                            'Send to Signee',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
                       height: 32,
                       child: ElevatedButton(
                         onPressed: () {
-                          context.push(
-                            AppRoutes.sendToSignee,
-                            extra: {
-                              'agreement': agreementModel,
-                              'comeFrom': 'optional',
-                              'onSuccess': () {
-                                // Refresh the agreements list if needed
-                                // context.read<AgreementsBloc>().add(
-                                //   const LoadAgreements(),
-                                // );
-                              },
-                            },
-                          );
+                          _navigateToAgreementSignedDetail(agreementModel);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: HexColor("#7B7B7B"),
+                          backgroundColor: HexColor("#25C196"),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
                           ),
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
+                            horizontal: 18,
                           ), // Remove all padding
                           minimumSize:
                               Size.zero, // Remove minimum size constraints
@@ -1383,7 +1421,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                         ),
 
                         child: const Text(
-                          'Send to Signee',
+                          'Sign',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -1391,43 +1429,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    height: 32,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _navigateToAgreementSignedDetail(agreementModel);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HexColor("#25C196"),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                        ), // Remove all padding
-                        minimumSize:
-                            Size.zero, // Remove minimum size constraints
-                        tapTargetSize:
-                            MaterialTapTargetSize
-                                .shrinkWrap, // Reduce tap target
-                      ),
-
-                      child: const Text(
-                        'Sign',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1478,187 +1483,201 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              // Title with check icon
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color:
-                          isSigned
-                              ? HexColor("##25C196")
-                              : Colors.grey.shade300,
-                      shape: BoxShape.circle,
+        child: InkWell(
+          onTap:
+              agreement['pdfPath'] != null && agreement['pdfPath'].isNotEmpty
+                  ? () {
+                    if (agreement['pdfPath'] != null &&
+                        agreement['pdfPath'].isNotEmpty) {
+                      _navigateToAgreementDetail(
+                        agreement['pdfPath'] as String,
+                        agreement['title'] as String,
+                      );
+                    }
+                  }
+                  : () {},
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                // Title with check icon
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color:
+                            isSigned
+                                ? HexColor("##25C196")
+                                : Colors.grey.shade300,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isSigned ? Icons.check : Icons.close,
+                        color: Colors.white,
+                        size: 14,
+                      ),
                     ),
-                    child: Icon(
-                      isSigned ? Icons.check : Icons.close,
-                      color: Colors.white,
-                      size: 14,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        agreement['title'] as String,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      agreement['title'] as String,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // Signee and Date in single row
+                Row(
+                  children: [
+                    const Text(
+                      'Signee: ',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                         color: Colors.black,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              // Signee and Date in single row
-              Row(
-                children: [
-                  const Text(
-                    'Signee: ',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                    Flexible(
+                      child: Text(
+                        agreement['signee'] as String,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  Flexible(
-                    child: Text(
-                      agreement['signee'] as String,
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Date
+                Row(
+                  children: [
+                    const Text(
+                      'Date: ',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Text(
+                      agreement['date'] as String,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primaryColor,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Date
-              Row(
-                children: [
-                  const Text(
-                    'Date: ',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  Text(
-                    agreement['date'] as String,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Email
-              Row(
-                children: [
-                  const Text(
-                    'Email: ',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  Flexible(
-                    child: Text(
-                      agreement['email'] as String,
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Email
+                Row(
+                  children: [
+                    const Text(
+                      'Email: ',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primaryColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 32,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HexColor("#136FD4"),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Download',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        color: Colors.black,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 60),
-                  Expanded(
-                    child: SizedBox(
-                      height: 32,
-                      child: ElevatedButton(
-                        onPressed:
-                            agreement['pdfPath'] != null &&
-                                    agreement['pdfPath'].isNotEmpty
-                                ? () {
-                                  if (agreement['pdfPath'] != null &&
-                                      agreement['pdfPath'].isNotEmpty) {
-                                    _navigateToAgreementDetail(
-                                      agreement['pdfPath'] as String,
-                                      agreement['title'] as String,
-                                    );
+                    Flexible(
+                      child: Text(
+                        agreement['email'] as String,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 32,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HexColor("#136FD4"),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Download',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 60),
+                    Expanded(
+                      child: SizedBox(
+                        height: 32,
+                        child: ElevatedButton(
+                          onPressed:
+                              agreement['pdfPath'] != null &&
+                                      agreement['pdfPath'].isNotEmpty
+                                  ? () {
+                                    if (agreement['pdfPath'] != null &&
+                                        agreement['pdfPath'].isNotEmpty) {
+                                      _navigateToAgreementDetail(
+                                        agreement['pdfPath'] as String,
+                                        agreement['title'] as String,
+                                      );
+                                    }
                                   }
-                                }
-                                : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HexColor("#7B7B7B"),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                                  : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HexColor("#7B7B7B"),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            elevation: 0,
                           ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'View',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                          child: const Text(
+                            'View',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
