@@ -5,16 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
-import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_bloc.dart';
-import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements_event.dart';
 import 'package:voicealerts_obs/features/auth/presentation/screens/sign_up_screen.dart';
-import 'package:voicealerts_obs/features/auth/presentation/widgets/scan_with_bussiness_card_signin.dart';
 
 import '../../../../config/routes.dart';
 import '../../../../core/constants/strings.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/responsive_padding.dart';
 import '../../../../core/widgets/password_text_field.dart';
+import '../../data/services/auth_service.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -34,6 +32,28 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   String? _successMessage;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberMeData();
+  }
+
+  Future<void> _loadRememberMeData() async {
+    final authService = AuthService();
+    final savedEmail = await authService.getRememberMeEmail();
+    final isEnabled = await authService.isRememberMeEnabled();
+    
+    if (mounted) {
+      setState(() {
+        _rememberMe = isEnabled;
+        if (savedEmail != null && savedEmail.isNotEmpty) {
+          _emailController.text = savedEmail;
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -42,13 +62,20 @@ class _SignInScreenState extends State<SignInScreen> {
     super.dispose();
   }
 
-  void _signIn() {
+  void _signIn() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
         _successMessage = null;
       });
+
+      // Save Remember Me data before login attempt
+      final authService = AuthService();
+      await authService.saveRememberMeData(
+        _emailController.text.trim(),
+        _rememberMe,
+      );
 
       context.read<AuthBloc>().add(
         LoginWithApiRequested(
@@ -280,17 +307,54 @@ class _SignInScreenState extends State<SignInScreen> {
                         enabled: !_isLoading,
                       ),
                       const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed:
-                              _isLoading
-                                  ? null
-                                  : () {
-                                    context.push(AppRoutes.forgotPassword);
-                                  },
-                          child: const Text(AppStrings.forgotPassword),
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: _rememberMe,
+                                onChanged: _isLoading
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          _rememberMe = value ?? false;
+                                        });
+                                      },
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity:
+                                    VisualDensity.compact,
+                              ),
+                              const SizedBox(width: 4),
+                              GestureDetector(
+                                onTap: _isLoading
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _rememberMe = !_rememberMe;
+                                        });
+                                      },
+                                child: Text(
+                                  'Remember Me',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.welcomeMenuTextColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          TextButton(
+                            onPressed:
+                                _isLoading
+                                    ? null
+                                    : () {
+                                      context.push(AppRoutes.forgotPassword);
+                                    },
+                            child: const Text(AppStrings.forgotPassword),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 24),
                       SizedBox(

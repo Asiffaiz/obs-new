@@ -18,4 +18,8 @@ class SharedPreferenceKeys {
   static const String accessTokenKey = 'api_access_token';
   static const String tokenExpiryKey = 'api_token_expiry';
   static const String onboardingCompleteKey = 'client_onboarding_complete';
+  
+  // Remember Me keys (should NOT be cleared on logout)
+  static const String rememberMeEmailKey = 'remember_me_email';
+  static const String rememberMeEnabledKey = 'remember_me_enabled';
 }

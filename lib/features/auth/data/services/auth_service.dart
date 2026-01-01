@@ -134,6 +134,7 @@ class AuthService {
   }
 
   // Logout user
+  // Note: Remember Me data is NOT cleared on logout
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(SharedPreferenceKeys.tokenKey);
@@ -152,6 +153,36 @@ class AuthService {
     await prefs.remove(SharedPreferenceKeys.zipKey);
     await prefs.remove(SharedPreferenceKeys.countryKey);
     await prefs.remove(SharedPreferenceKeys.onboardingCompleteKey);
+    // Remember Me keys are intentionally NOT removed here
+  }
+
+  // Save Remember Me data
+  Future<void> saveRememberMeData(String email, bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (enabled) {
+      await prefs.setString(SharedPreferenceKeys.rememberMeEmailKey, email);
+      await prefs.setBool(SharedPreferenceKeys.rememberMeEnabledKey, true);
+    } else {
+      await prefs.setBool(SharedPreferenceKeys.rememberMeEnabledKey, false);
+      // Optionally clear email when disabled
+      // await prefs.remove(SharedPreferenceKeys.rememberMeEmailKey);
+    }
+  }
+
+  // Get Remember Me email
+  Future<String?> getRememberMeEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isEnabled = prefs.getBool(SharedPreferenceKeys.rememberMeEnabledKey) ?? false;
+    if (isEnabled) {
+      return prefs.getString(SharedPreferenceKeys.rememberMeEmailKey);
+    }
+    return null;
+  }
+
+  // Check if Remember Me is enabled
+  Future<bool> isRememberMeEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(SharedPreferenceKeys.rememberMeEnabledKey) ?? false;
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
