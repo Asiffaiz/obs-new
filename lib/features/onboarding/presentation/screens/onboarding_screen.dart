@@ -247,7 +247,7 @@ class OnboardingPage extends StatelessWidget {
       // width: 300,
       // height: 200,
       child: Image.asset(
-        'assets/images/convoso_onboard.png',
+        'assets/images/sharelink_avatar.png',
         fit: BoxFit.contain,
       ),
     );

@@ -172,7 +172,8 @@ class AuthService {
   // Get Remember Me email
   Future<String?> getRememberMeEmail() async {
     final prefs = await SharedPreferences.getInstance();
-    final isEnabled = prefs.getBool(SharedPreferenceKeys.rememberMeEnabledKey) ?? false;
+    final isEnabled =
+        prefs.getBool(SharedPreferenceKeys.rememberMeEnabledKey) ?? false;
     if (isEnabled) {
       return prefs.getString(SharedPreferenceKeys.rememberMeEmailKey);
     }

@@ -167,11 +167,11 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp.router(
-        title: 'VoiceAlerts',
+        title: 'OBS',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         routerConfig: router,
-        
+
         builder: (context, child) {
           // Apply responsive breakpoints
           return ResponsiveBreakpoints.builder(
