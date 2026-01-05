@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
-import '../../domain/models/onboarding_agreements_response_model.dart';
+import '../../domain/models/onboarding_settings_response_model.dart';
 
-class OnboardingAgreementsService {
+class OnboardingSettingsService {
   final ApiClient _apiClient = ApiClient();
   static const int _maxRetries = 3;
   static const Duration _retryDelay = Duration(seconds: 2);
@@ -26,8 +26,8 @@ class OnboardingAgreementsService {
     return prefs.getString(_accountNoKey) ?? '';
   }
 
-  /// Get onboarding agreements with retry logic
-  Future<OnboardingAgreementsResponseModel> getOnboardingAgreements({
+  /// Get onboarding settings with retry logic
+  Future<OnboardingSettingsResponseModel> getOnboardingSettings({
     required String accountNo,
     required String email,
   }) async {
@@ -37,44 +37,39 @@ class OnboardingAgreementsService {
     while (retryCount < _maxRetries) {
       try {
         final response = await _apiClient.post(
-          ApiEndpoints.getClientAgreementsListingAll,
-          {'accountno': accountNo, 'email': email},
+          ApiEndpoints.getOnboardingUser,
+          {
+            'accountno': accountNo,
+            'email': email,
+          },
         );
 
-        if (response.statusCode == 200 && response.data['status'] == 200) {
-          return OnboardingAgreementsResponseModel.fromJson(response.data);
-        } else if (response.statusCode == 200 &&
-            response.data['status'] == 404) {
-          // Return empty lists if no agreements found
-          return const OnboardingAgreementsResponseModel(
-            signedAgreements: [],
-            optionalAgreements: [],
-          );
+        if (response.statusCode == 200 &&
+            response.data['status'] == 'success' &&
+            response.data['data'] != null) {
+          return OnboardingSettingsResponseModel.fromJson(response.data);
         } else {
           throw Exception(
             response.data['message']?.toString() ??
-                'Failed to get onboarding agreements',
+                'Failed to get onboarding settings',
           );
         }
       } catch (e) {
-        lastException =
-            e is Exception
-                ? e
-                : Exception('Error fetching onboarding agreements: $e');
+        lastException = e is Exception
+            ? e
+            : Exception('Error fetching onboarding settings: $e');
         retryCount++;
 
         if (retryCount < _maxRetries) {
           if (kDebugMode) {
             print(
-              'Retrying onboarding agreements fetch (attempt $retryCount/$_maxRetries)...',
+              'Retrying onboarding settings fetch (attempt $retryCount/$_maxRetries)...',
             );
           }
           await Future.delayed(_retryDelay);
         } else {
           if (kDebugMode) {
-            print(
-              'Failed to fetch onboarding agreements after $_maxRetries attempts',
-            );
+            print('Failed to fetch onboarding settings after $_maxRetries attempts');
           }
           throw lastException;
         }
@@ -84,3 +79,4 @@ class OnboardingAgreementsService {
     throw lastException ?? Exception('Unknown error occurred');
   }
 }
+

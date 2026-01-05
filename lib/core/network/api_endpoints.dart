@@ -69,6 +69,10 @@ class ApiEndpoints {
   static final String updateClientProfile =
       '$baseUrl/appApis/update_client_profile';
 
+  // Onboarding endpoints
+  static final String getOnboardingUser =
+      '$baseUrl/appApis/get_onboarding_user';
+
   // Add more endpoints as needed, organized by feature
 
   static final String privacyPolicy =

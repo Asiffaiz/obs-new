@@ -23,6 +23,8 @@ import 'package:voicealerts_obs/features/onboarding/domain/models/onboarding_sig
 import 'package:voicealerts_obs/features/onboarding/domain/models/onboarding_optional_agreement_model.dart';
 import 'package:voicealerts_obs/features/forms/presentation/screens/form_main_screen.dart';
 import 'package:voicealerts_obs/features/profile/presentation/screens/client_profile_screen.dart';
+import 'package:voicealerts_obs/features/onboarding/domain/repositories/onboarding_settings_repository.dart';
+import 'package:voicealerts_obs/config/dependency_injection.dart';
 
 class ClientOnboardingScreen extends StatefulWidget {
   const ClientOnboardingScreen({super.key});
@@ -58,9 +60,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    _loadOnboardingSettings();
+    _loadUserData().then((_) {
+      _loadOnboardingSettings();
+    });
     _loadSignedAgreements();
-    _loadUserData();
   }
 
   @override
@@ -109,150 +112,125 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     }
   }
 
-  void _loadOnboardingSettings() {
-    // Mock JSON data - replace with actual API call
-    final jsonResponse = {
-      "steps": {
-        "Basic Information": {
-          "form": "",
-          "allowSkip": 0,
-          "enable": 0,
-          "isFilled": 1,
-          "type": "basic",
-        },
-        "Agreement Terms": {
-          "form": "",
-          "allowSkip": 0,
-          "enable": 0,
-          "isFilled": 1,
-          "type": "agreement",
-        },
+  Future<void> _loadOnboardingSettings() async {
+    // Get user data for API call
+    final accountNo = _userData['accountno'] ?? '';
+    final email = _userData['email'] ?? '';
 
-        "Brand Identity Application": {
-          "form": "973318973318",
-          "form_token": "6b986c43-dbc2-47c8-8c2b-3a0ed9a84809",
-          'description':
-              'Please submit your Brand Identity information using this form to help us protect and strengthen your brand identity. Our goal is to get your application vetted as quickly and efficiently as possible.',
-          "allowSkip": 1,
-          "allow_multiple": 1,
-          "enable": 0,
-          "isFilled": 1,
-          "isSkipped": 0,
-          "type": "form",
-        },
-        "VoiceAlerts Carrier Login": {
-          "form": "9890298902",
-          "form_token": "37c0f7e6-2104-41b7-9290-fcdb4a43110c",
-          'description':
-              'Login to your VoiceAlerts Carrier Dashboard for streamlined service management and insights.',
-          "allowSkip": 1,
-          "allow_multiple": 0,
-          "enable": 0,
-          "isFilled": 0,
-          "isSkipped": 0,
-          "type": "form",
-        },
-        "Online Business": {
-          "form": "302962302962",
-          "form_token": "563c891e-3986-499e-9a9f-c09d7b932a20",
-          'description':
-              'Online Grocery Business Introduction &amp; Feedback FormAbout Us: We are an online grocery store committed to delivering fresh, quality products straight to your doorstep. From daily essentials to seasonal produce, we make grocery shopping easy, fast, and affordable.',
-          "allowSkip": 1,
-          "allow_multiple": 0,
-          "enable": 0,
-          "isFilled": 0,
-          "isSkipped": 0,
-          "type": "form",
-        },
-      },
-      "total_steps": 5,
-      "progress": 2, // 2 steps completed
-    };
+    if (accountNo.isEmpty || email.isEmpty) {
+      if (kDebugMode) {
+        print('Cannot load onboarding settings: accountno or email is empty');
+      }
+      return;
+    }
 
     setState(() {
-      _onboardingSettings = jsonResponse['steps'] as Map<String, dynamic>;
-      _stepNames = _onboardingSettings.keys.toList();
-      _totalSteps = jsonResponse['total_steps'] as int;
-
-      // Initialize isSkipped to 0 if not present
-      _onboardingSettings.forEach((stepName, config) {
-        if (!config.containsKey('isSkipped')) {
-          config['isSkipped'] = 0;
-        }
-      });
-
-      // Set completion based on isFilled from API
-      _stepCompleted = List.generate(_stepNames.length, (index) {
-        final stepName = _stepNames[index];
-        final stepConfig = _onboardingSettings[stepName];
-        return (stepConfig['isFilled'] as int) == 1;
-      });
-
-      // Recalculate progress based on actual completed steps to ensure sync
-      _progress = _stepCompleted.where((completed) => completed).length;
+      _isLoading = true;
     });
 
-    // Load form data for steps with form IDs
-    _loadFormsData();
+    try {
+      final repository = getIt<OnboardingSettingsRepository>();
+      final response = await repository.getOnboardingSettings(
+        accountNo: accountNo,
+        email: email,
+      );
+
+      if (mounted) {
+        setState(() {
+          _onboardingSettings = response.steps;
+          _stepNames = _onboardingSettings.keys.toList();
+          _totalSteps = response.totalSteps;
+
+          if (kDebugMode) {
+            print('Loaded ${_stepNames.length} steps: $_stepNames');
+            print('Onboarding settings: $_onboardingSettings');
+          }
+
+          // Initialize isSkipped to 0 if not present
+          _onboardingSettings.forEach((stepName, config) {
+            if (!config.containsKey('isSkipped')) {
+              config['isSkipped'] = 0;
+            }
+          });
+
+          // Set completion based on isFilled from API
+          _stepCompleted = List.generate(_stepNames.length, (index) {
+            final stepName = _stepNames[index];
+            final stepConfig = _onboardingSettings[stepName];
+            return (stepConfig['isFilled'] as int) == 1;
+          });
+
+          // Use progress from API or recalculate based on completed steps
+          _progress = response.progress;
+
+          _isLoading = false;
+        });
+
+        // Load form data for steps with form IDs
+        _loadFormsData();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      if (kDebugMode) {
+        print('Error loading onboarding settings: $e');
+      }
+    }
   }
 
   void _loadFormsData() {
-    // Load dummy form data for each form
+    // Extract form data from API response for each form step
     _onboardingSettings.forEach((stepName, config) {
       final formId = config['form'] as String;
       if (formId.isNotEmpty) {
-        // Mock form submissions - replace with actual API call
+        // Extract form data from API response
         setState(() {
-          _formDataCache[formId] = _getDummyFormData(formId);
+          _formDataCache[formId] = _getFormDataFromConfig(formId, config);
         });
       }
     });
   }
 
-  List<Map<String, dynamic>> _getDummyFormData(String formId) {
-    // Dynamic form data mapping - replace with actual API call
-    final Map<String, List<Map<String, dynamic>>> formsData = {
-      "336586336586": [
-        {
-          'title': 'Know Your Customers',
-          'signee': 'James Smith',
-          'date': 'June 14 2025',
-          'email': 'James@tcpaas.com',
-          'status': 'Submitted',
-        },
-      ],
-      "9890298902": [
-        {
-          'title': 'VoiceAlerts Carrier Login',
-          'description':
-              'Login to your VoiceAlerts Carrier Dashboard for streamlined service management and insights.',
-        },
-      ],
-      "973318973318": [
-        {
-          'title': 'Brand Identity Application',
-          'description':
-              'Please submit your Brand Identity information using this form to help us protect and strengthen your brand identity. Our goal is to get your application vetted as quickly and efficiently as possible.',
-        },
-      ],
-      "302962302962": [
-        {
-          'title': 'Online Business',
-          'description':
-              'Online Grocery Business Introduction &amp; Feedback FormAbout Us: We are an online grocery store committed to delivering fresh, quality products straight to your doorstep. From daily essentials to seasonal produce, we make grocery shopping easy, fast, and affordable.',
-        },
-      ],
-      "336586336589": [
-        {
-          'title': 'Data Protection',
-          'description':
-              'Configure your data protection settings to protect your data and systems. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown Lorem Ipsum has been the industry\'s standard dummy',
-        },
-      ],
-    };
+  List<Map<String, dynamic>> _getFormDataFromConfig(
+    String formId,
+    Map<String, dynamic> config,
+  ) {
+    final isFilled = (config['isFilled'] as int? ?? 0) == 1;
+    final title = config['title'] as String? ?? '';
+    final description = config['description'] as String? ?? '';
+    final date = config['date'] as String? ?? '';
+    final formStatus = config['form_status'] as String? ?? '';
 
-    // Return form data for the given formId, or empty list if not found
-    return formsData[formId] ?? [];
+    // Static values as requested
+    const signee = 'James Smith';
+    const email = 'James@tcpaas.com';
+
+    if (isFilled) {
+      // If form is filled, return object with title, signee, date, email, status
+      return [
+        {
+          'title': title,
+          'signee': signee,
+          'date':
+              date.isNotEmpty
+                  ? date
+                  : 'June 14 2025', // Use API date or fallback
+          'email': email,
+          'status':
+              formStatus.isNotEmpty
+                  ? formStatus
+                  : 'Submitted', // Use API status or fallback
+        },
+      ];
+    } else {
+      // If form is not filled, return object with title and description
+      return [
+        {'title': title, 'description': description},
+      ];
+    }
   }
 
   void _loadSignedAgreements() {
@@ -497,33 +475,36 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         ],
         centerTitle: true,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 4.0,
-                vertical: 8.0,
-              ), // Reduced horizontal padding
-              child: _CustomStepper(
-                steps: _stepper(),
-                currentStep: _currentStep,
-                stepCompleted: _stepCompleted,
-                scrollController: _scrollController,
-                stepKeys: _stepKeys,
-                onStepTapped: (step) {
-                  setState(() {
-                    _currentStep = step;
-                  });
-                  // Smoothly scroll to the tapped step
-                  _scrollToStep(step);
-                },
+      body:
+          _isLoading || _stepNames.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4.0,
+                        vertical: 8.0,
+                      ), // Reduced horizontal padding
+                      child: _CustomStepper(
+                        steps: _stepper(),
+                        currentStep: _currentStep,
+                        stepCompleted: _stepCompleted,
+                        scrollController: _scrollController,
+                        stepKeys: _stepKeys,
+                        onStepTapped: (step) {
+                          setState(() {
+                            _currentStep = step;
+                          });
+                          // Smoothly scroll to the tapped step
+                          _scrollToStep(step);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

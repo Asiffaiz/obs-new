@@ -27,6 +27,9 @@ import 'package:voicealerts_obs/features/reports/domain/repositories/reports_rep
 import 'package:voicealerts_obs/features/onboarding/data/services/onboarding_agreements_service.dart';
 import 'package:voicealerts_obs/features/onboarding/data/repositories/onboarding_agreements_repository_impl.dart';
 import 'package:voicealerts_obs/features/onboarding/domain/repositories/onboarding_agreements_repository.dart';
+import 'package:voicealerts_obs/features/onboarding/data/services/onboarding_settings_service.dart';
+import 'package:voicealerts_obs/features/onboarding/data/repositories/onboarding_settings_repository_impl.dart';
+import 'package:voicealerts_obs/features/onboarding/domain/repositories/onboarding_settings_repository.dart';
 import '../features/auth/data/repositories/auth_repository_impl.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
@@ -69,6 +72,9 @@ Future<void> initializeDependencies() async {
 
   // Register OnboardingAgreementsService
   getIt.registerLazySingleton(() => OnboardingAgreementsService());
+
+  // Register OnboardingSettingsService
+  getIt.registerLazySingleton(() => OnboardingSettingsService());
 
   // Register DatabaseHelper
   getIt.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper());
@@ -131,6 +137,12 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<OnboardingAgreementsRepository>(
     () => OnboardingAgreementsRepositoryImpl(
       getIt<OnboardingAgreementsService>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<OnboardingSettingsRepository>(
+    () => OnboardingSettingsRepositoryImpl(
+      getIt<OnboardingSettingsService>(),
     ),
   );
 
