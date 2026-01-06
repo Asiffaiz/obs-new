@@ -201,8 +201,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     final isFilled = (config['isFilled'] as int? ?? 0) == 1;
     final title = config['title'] as String? ?? '';
     final description = config['description'] as String? ?? '';
-    final date = config['date'] as String? ?? '';
-    final formStatus = config['form_status'] as String? ?? '';
+    final date = config['formFilledDate'] as String? ?? '';
+    final formStatus = isFilled ? 'Completed' : 'Pending';
 
     // Static values as requested
     const signee = 'James Smith';
@@ -214,10 +214,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         {
           'title': title,
           'signee': signee,
-          'date':
-              date.isNotEmpty
-                  ? date
-                  : 'June 14 2025', // Use API date or fallback
+          'date': date.isNotEmpty ? date : 'N/A', // Use API date or fallback
           'email': email,
           'status':
               formStatus.isNotEmpty

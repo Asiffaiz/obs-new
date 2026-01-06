@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/core/network/api_client.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
 
-
 class FormsService {
   final ApiClient _apiClient = ApiClient();
 
@@ -87,14 +86,14 @@ class FormsService {
         // Parse API response into ApiAgreementModel objects
         List<dynamic> formsData = response.data['data'] ?? [];
         if (response.data.containsKey('draft_response')) {
-          final String draftResponse = response.data['draft_response'] ?? [];
+          final String draftResponse = response.data['draft_response'] ?? '';
           formsData[0]['draft_response'] = draftResponse;
         }
         if (response.data.containsKey('form_media_path')) {
           final String formMediaPath = response.data['form_media_path'] ?? '';
           formsData[0]['form_media_path'] = formMediaPath;
         }
-           if (response.data.containsKey('progress')) {
+        if (response.data.containsKey('progress')) {
           final String progress = response.data['progress'] ?? '0';
           formsData[0]['progress'] = progress;
         }
@@ -300,20 +299,14 @@ class FormsService {
       if (response.statusCode == 200 && response.data['status'] == 200) {
         return true;
       } else {
-        throw Exception(
-          response.data['message'] ?? 'Failed to save form',
-        );
+        throw Exception(response.data['message'] ?? 'Failed to save form');
       }
     } catch (e) {
-      throw Exception(
-        'An error occurred while saving form: ${e.toString()}',
-      );
+      throw Exception('An error occurred while saving form: ${e.toString()}');
     }
   }
 
   Future<String> saveFormMedia({
-
-   
     required String base64Data,
     required String fileName,
     required String fileType,
