@@ -25,6 +25,7 @@ import 'package:voicealerts_obs/features/forms/presentation/screens/form_main_sc
 import 'package:voicealerts_obs/features/profile/presentation/screens/client_profile_screen.dart';
 import 'package:voicealerts_obs/features/onboarding/domain/repositories/onboarding_settings_repository.dart';
 import 'package:voicealerts_obs/config/dependency_injection.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 class ClientOnboardingScreen extends StatefulWidget {
   const ClientOnboardingScreen({super.key});
@@ -66,6 +67,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     _loadSignedAgreements();
   }
 
+  void _refreshStepper() {
+    _loadOnboardingSettings();
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -83,6 +88,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                 formToken: formToken,
                 isFrom: 'onboarding',
                 refreshForms: null,
+                refreshStepper: _refreshStepper,
               ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             // Smooth fade and slide transition without bounce
@@ -841,16 +847,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           setState(() {
             _onboardingSignedAgreements = state.signedAgreements;
             _onboardingOptionalAgreements = state.optionalAgreements;
-            _isLoading = false;
             _agreementsLoaded = true; // Mark as loaded
-          });
-        } else if (state.status == OnboardingAgreementsStatus.loading) {
-          setState(() {
-            _isLoading = true;
           });
         } else if (state.status == OnboardingAgreementsStatus.error) {
           setState(() {
-            _isLoading = false;
             _agreementsLoaded = false; // Reset flag on error to allow retry
           });
           ScaffoldMessenger.of(context).showSnackBar(
@@ -2001,6 +2001,17 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     }
   }
 
+  // Helper method to check if content is HTML
+  bool _isHtmlContent(String content) {
+    if (content.isEmpty) return false;
+    // Check for common HTML tags
+    final htmlPattern = RegExp(
+      r'<(p|div|span|br|strong|b|em|i|u|h[1-6]|ul|ol|li|a|img|table|tr|td|th|style|script)[\s>]',
+      caseSensitive: false,
+    );
+    return htmlPattern.hasMatch(content);
+  }
+
   Widget _buildUnfilledFormContent(Map<String, dynamic> form, int stepIndex) {
     final description =
         form['description'] as String? ?? 'No description available';
@@ -2009,21 +2020,39 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Description with gradient fade effect
+        // Description with gradient fade effect - supports HTML content
         Expanded(
           child: Stack(
             children: [
               SingleChildScrollView(
-                child: Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade600,
-                    height: 1.5,
-                  ),
-                  maxLines: 7,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child:
+                    _isHtmlContent(description)
+                        ? Html(
+                          data: description,
+                          style: {
+                            "body": Style(
+                              fontSize: FontSize(13),
+                              color: Colors.grey.shade600,
+                              lineHeight: const LineHeight(1.5),
+                              margin: Margins.zero,
+                              padding: HtmlPaddings.zero,
+                            ),
+                            "p": Style(
+                              margin: Margins.only(bottom: 8),
+                              padding: HtmlPaddings.zero,
+                            ),
+                          },
+                        )
+                        : Text(
+                          description,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                            height: 1.5,
+                          ),
+                          maxLines: 7,
+                          overflow: TextOverflow.ellipsis,
+                        ),
               ),
               // Gradient overlay at bottom
               Positioned(

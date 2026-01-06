@@ -12,12 +12,14 @@ class FormMainScreen extends StatefulWidget {
   final String formToken;
   final String isFrom;
   final void Function()? refreshForms;
+  final void Function()? refreshStepper;
   const FormMainScreen({
     super.key,
     required this.formAccountNo,
     required this.formToken,
     required this.isFrom,
     this.refreshForms,
+    this.refreshStepper,
   });
 
   @override
@@ -54,6 +56,10 @@ class _FormMainScreenState extends State<FormMainScreen> {
         widget.refreshForms != null) {
       Navigator.pop(context);
       widget.refreshForms!();
+    }else if (widget.isFrom == 'onboarding' &&
+        widget.refreshStepper != null) {
+      Navigator.pop(context);
+      widget.refreshStepper!();
     }
   }
 

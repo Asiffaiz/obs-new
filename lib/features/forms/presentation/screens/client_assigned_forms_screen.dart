@@ -128,6 +128,7 @@ class _ClientAssignedFormsScreenState extends State<ClientAssignedFormsScreen> {
                     formToken: form.formLink,
                     isFrom: widget.isFrom,
                     refreshForms: _refreshForms,
+                    refreshStepper: null,
                   ),
             ),
           );
