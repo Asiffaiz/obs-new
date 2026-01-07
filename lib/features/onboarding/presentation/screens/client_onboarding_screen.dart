@@ -59,6 +59,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _stepKeys = {};
 
+  // Loading state for skip button
+  final Map<int, bool> _skipLoadingStates = {};
+
   @override
   void initState() {
     super.initState();
@@ -358,35 +361,88 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     return true;
   }
 
-  void _skipStep(int stepIndex) {
+  Future<void> _skipStep(int stepIndex) async {
     final stepName = _stepNames[stepIndex];
     final config = _onboardingSettings[stepName];
     final isLastStep = stepIndex == _stepNames.length - 1;
+    final formAccountNo = config['form'] as String? ?? '';
 
-    setState(() {
-      // Mark current step as skipped
-      config['isSkipped'] = 1;
-
-      // Move to next step if available
-      if (!isLastStep) {
-        _currentStep = stepIndex + 1;
+    // Get account number from user data
+    final accountNo = _userData['accountno'] ?? '';
+    if (accountNo.isEmpty) {
+      if (kDebugMode) {
+        print('Cannot skip step: accountno is empty');
       }
-    });
-
-    // If it's the last step, check if all skippable steps are skipped
-    if (isLastStep) {
-      if (_areAllSkippableStepsSkipped()) {
-        // All skippable steps are skipped, trigger completion flow
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _completeOnboarding();
-        });
-        return;
-      }
+      return;
     }
 
-    // Smoothly scroll to the new step if not last
-    if (!isLastStep) {
-      _scrollToStep(_currentStep);
+    // Set loading state for this step
+    setState(() {
+      _skipLoadingStates[stepIndex] = true;
+    });
+
+    try {
+      // Call API to skip the step
+      final service = OnboardingSettingsService();
+      await service.skipOnboardingStep(
+        accountNo: accountNo,
+        type: 'client',
+        title: stepName,
+        form: formAccountNo,
+      );
+
+      if (kDebugMode) {
+        print('Successfully skipped step: $stepName');
+      }
+
+      // Update local state after successful API call
+      if (mounted) {
+        setState(() {
+          // Mark current step as skipped
+          config['isSkipped'] = 1;
+          _skipLoadingStates[stepIndex] = false;
+
+          // Move to next step if available
+          if (!isLastStep) {
+            _currentStep = stepIndex + 1;
+          }
+        });
+
+        // If it's the last step, check if all skippable steps are skipped
+        if (isLastStep) {
+          if (_areAllSkippableStepsSkipped()) {
+            // All skippable steps are skipped, trigger completion flow
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _completeOnboarding();
+            });
+            return;
+          }
+        }
+
+        // Smoothly scroll to the new step if not last
+        if (!isLastStep) {
+          _scrollToStep(_currentStep);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _skipLoadingStates[stepIndex] = false;
+        });
+
+        // Show error to user
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to skip step: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+
+      if (kDebugMode) {
+        print('Error skipping step: $e');
+      }
     }
   }
 
@@ -646,29 +702,46 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
         subtitle = steperSubtitleStyle();
       }
       if (allowSkip && _currentStep == i && !isFilled) {
+        final isSkipLoading = _skipLoadingStates[i] ?? false;
         skipButton = Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             InkWell(
-              onTap: () => _skipStep(i),
+              onTap: isSkipLoading ? null : () => _skipStep(i),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
                 ),
+                height: 28, // Fixed height to prevent overflow
+                alignment: Alignment.center, // Center content vertically
                 decoration: BoxDecoration(
                   color: HexColor("#136FD4").withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: HexColor("#136FD4"), width: 1),
                 ),
-                child: Text(
-                  'SKIP',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: HexColor("#136FD4"),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child:
+                    isSkipLoading
+                        ? SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              HexColor("#136FD4"),
+                            ),
+                          ),
+                        )
+                        : Text(
+                          'SKIP',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: HexColor("#136FD4"),
+                            fontWeight: FontWeight.w600,
+                            height:
+                                1.0, // Set line height to prevent extra space
+                          ),
+                        ),
               ),
             ),
           ],

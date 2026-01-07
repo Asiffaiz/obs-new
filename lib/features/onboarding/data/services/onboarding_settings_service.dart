@@ -135,4 +135,67 @@ class OnboardingSettingsService {
 
     throw lastException ?? Exception('Unknown error occurred');
   }
+
+  /// Skip onboarding step with retry logic
+  Future<void> skipOnboardingStep({
+    required String accountNo,
+    required String type,
+    required String title,
+    required String form,
+  }) async {
+    int retryCount = 0;
+    Exception? lastException;
+
+    while (retryCount < _maxRetries) {
+      try {
+        final response = await _apiClient.post(
+          ApiEndpoints.updateOnboardingStep,
+          {
+            'accountno': accountNo,
+            'type': type,
+            'isSkipped': 1,
+            'title': title,
+            'form': form,
+          },
+        );
+        if (kDebugMode) {
+          print('Skip API response: ${response.data}');
+        }
+        if (response.statusCode == 200 &&
+            response.data['status'] == 'success') {
+          if (kDebugMode) {
+            print('Successfully skipped onboarding step: $title');
+          }
+          return; // Success, exit the method
+        } else {
+          throw Exception(
+            response.data['message']?.toString() ??
+                'Failed to skip onboarding step',
+          );
+        }
+      } catch (e) {
+        lastException =
+            e is Exception
+                ? e
+                : Exception('Error skipping onboarding step: $e');
+        retryCount++;
+
+        if (retryCount < _maxRetries) {
+          if (kDebugMode) {
+            print(
+              'Retrying onboarding step skip (attempt $retryCount/$_maxRetries)...',
+            );
+          }
+          await Future.delayed(_retryDelay);
+        } else {
+          if (kDebugMode) {
+            print('Failed to skip onboarding step after $_maxRetries attempts');
+          }
+          throw lastException;
+        }
+      }
+    }
+
+    throw lastException ?? Exception('Unknown error occurred');
+  }
 }
