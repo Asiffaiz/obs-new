@@ -240,6 +240,11 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
         // Load form data for steps with form IDs
         _loadFormsData();
+
+        // Check if all steps are already completed or skipped
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _checkAndCompleteOnboarding();
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -461,16 +466,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           _currentStep = _calculateCurrentStep();
         });
 
-        // If it's the last step, check if all skippable steps are skipped
-        if (isLastStep) {
-          if (_areAllSkippableStepsSkipped()) {
-            // All skippable steps are skipped, trigger completion flow
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _completeOnboarding();
-            });
-            return;
-          }
-        }
+        // Check if all steps are completed or skipped after skipping
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _checkAndCompleteOnboarding();
+        });
 
         // Smoothly scroll to the new step if it changed
         if (_currentStep > stepIndex) {
@@ -551,16 +550,35 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     });
   }
 
+  // Check if all steps are completed or skipped
+  bool _areAllStepsCompletedOrSkipped() {
+    for (int i = 0; i < _stepNames.length; i++) {
+      final stepName = _stepNames[i];
+      final config = _onboardingSettings[stepName];
+      final isFilled = (config['isFilled'] as int) == 1;
+      final isSkipped = (config['isSkipped'] as int? ?? 0) == 1;
+
+      // If step is neither completed nor skipped, onboarding is not complete
+      if (!isFilled && !isSkipped) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Check if all steps are completed and navigate to dashboard
   void _checkAndCompleteOnboarding() {
-    // Recalculate progress to ensure accuracy
-    final completedCount =
-        _stepCompleted.where((completed) => completed).length;
-    _progress = completedCount;
+    // Check if all steps are either completed or skipped
+    if (_areAllStepsCompletedOrSkipped()) {
+      // Recalculate progress to ensure accuracy
+      final completedCount =
+          _stepCompleted.where((completed) => completed).length;
+      _progress = completedCount;
 
-    // If all steps are completed, navigate to dashboard
-    if (_progress >= _totalSteps) {
-      _completeOnboarding();
+      // All steps are done, navigate to dashboard
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _completeOnboarding();
+      });
     }
   }
 
