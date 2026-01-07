@@ -23,6 +23,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import '../../../../core/constants/shared_prefence_keys.dart';
 
 class AgreementDetailScreen extends StatefulWidget {
   final AgreementModel agreement;
@@ -473,6 +474,21 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
     return byteData?.buffer.asUint8List();
   }
 
+  // Helper method to navigate after signing all agreements
+  Future<void> _navigateAfterSigningAllAgreements(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingComplete =
+        prefs.getBool(SharedPreferenceKeys.onboardingCompleteKey) ?? false;
+
+    if (!onboardingComplete) {
+      // Navigate to onboarding if not completed
+      context.go(AppRoutes.clientOnboarding);
+    } else {
+      // Navigate to home if onboarding is complete
+      context.go(AppRoutes.home);
+    }
+  }
+
   void _showSuccessDialog(BuildContext context) {
     // Reset and start the animation
     _animationController.reset();
@@ -484,8 +500,8 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
       builder: (BuildContext context) {
         return WillPopScope(
           onWillPop: () async {
-            // Navigate to dashboard when back button is pressed
-            context.go(AppRoutes.home);
+            // Navigate based on onboarding completion status
+            await _navigateAfterSigningAllAgreements(context);
             return false; // Prevent default back behavior
           },
           child: Dialog(
@@ -579,9 +595,9 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.of(context).pop();
-                      context.go(AppRoutes.home);
+                      await _navigateAfterSigningAllAgreements(context);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.appButtonColor,

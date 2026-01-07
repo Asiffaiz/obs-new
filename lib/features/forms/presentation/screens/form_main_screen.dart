@@ -56,8 +56,7 @@ class _FormMainScreenState extends State<FormMainScreen> {
         widget.refreshForms != null) {
       Navigator.pop(context);
       widget.refreshForms!();
-    }else if (widget.isFrom == 'onboarding' &&
-        widget.refreshStepper != null) {
+    } else if (widget.isFrom == 'onboarding' && widget.refreshStepper != null) {
       Navigator.pop(context);
       widget.refreshStepper!();
     }

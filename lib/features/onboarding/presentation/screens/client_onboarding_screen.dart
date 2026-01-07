@@ -67,8 +67,10 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     _loadSignedAgreements();
   }
 
-  void _refreshStepper() {
-    _loadOnboardingSettings();
+  void _refreshStepper(String? formAccountno) {
+    if (formAccountno != '' && formAccountno != null) {
+      _loadOnboardingSettings();
+    }
   }
 
   @override
@@ -88,7 +90,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                 formToken: formToken,
                 isFrom: 'onboarding',
                 refreshForms: null,
-                refreshStepper: _refreshStepper,
+                refreshStepper: () => _refreshStepper(formAccountNo),
               ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             // Smooth fade and slide transition without bounce
