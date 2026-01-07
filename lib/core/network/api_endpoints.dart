@@ -13,7 +13,8 @@ class ApiEndpoints {
 
   // Password reset endpoints
   static final String forgotPassword = '$baseUrl/appApis/forgot_password';
-  static final String sendVerifyRegisterCode = '$baseUrl/appApis/send_registration_pin_verification';
+  static final String sendVerifyRegisterCode =
+      '$baseUrl/appApis/send_registration_pin_verification';
   static final String verifyPinCode = '$baseUrl/appApis/verify_pincode';
   static final String resetPassword = '$baseUrl/appApis/reset_password';
 
@@ -72,6 +73,8 @@ class ApiEndpoints {
   // Onboarding endpoints
   static final String getOnboardingUser =
       '$baseUrl/appApis/get_onboarding_user';
+  static final String updateOnboardingStep =
+      '$baseUrl/appApis/save_onboarding_user';
 
   // Add more endpoints as needed, organized by feature
 

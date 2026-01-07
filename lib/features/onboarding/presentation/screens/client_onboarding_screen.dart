@@ -24,6 +24,7 @@ import 'package:voicealerts_obs/features/onboarding/domain/models/onboarding_opt
 import 'package:voicealerts_obs/features/forms/presentation/screens/form_main_screen.dart';
 import 'package:voicealerts_obs/features/profile/presentation/screens/client_profile_screen.dart';
 import 'package:voicealerts_obs/features/onboarding/domain/repositories/onboarding_settings_repository.dart';
+import 'package:voicealerts_obs/features/onboarding/data/services/onboarding_settings_service.dart';
 import 'package:voicealerts_obs/config/dependency_injection.dart';
 import 'package:flutter_html/flutter_html.dart';
 
@@ -67,9 +68,66 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     _loadSignedAgreements();
   }
 
-  void _refreshStepper(String? formAccountno) {
-    if (formAccountno != '' && formAccountno != null) {
+  Future<void> _refreshStepper(String? formAccountno) async {
+    if (formAccountno == null || formAccountno.isEmpty) {
+      return;
+    }
+
+    // Get account number from user data
+    final accountNo = _userData['accountno'] ?? '';
+    if (accountNo.isEmpty) {
+      if (kDebugMode) {
+        print('Cannot refresh stepper: accountno is empty');
+      }
+      return;
+    }
+
+    // Find the step title (title) that matches the form account number
+    String? stepTitle;
+    _onboardingSettings.forEach((title, config) {
+      final formId = config['form'] as String? ?? '';
+      if (formId == formAccountno) {
+        stepTitle = title;
+      }
+    });
+
+    if (stepTitle == null || stepTitle!.isEmpty) {
+      if (kDebugMode) {
+        print('Cannot find step title for form account number: $formAccountno');
+      }
+      // Still refresh the stepper even if we can't find the title
       _loadOnboardingSettings();
+      return;
+    }
+
+    // First, update the step via API
+    try {
+      final service = OnboardingSettingsService();
+      await service.updateOnboardingStep(
+        accountNo: accountNo,
+        type: 'client',
+        title: stepTitle!,
+        form: formAccountno,
+      );
+      if (kDebugMode) {
+        print('Successfully updated step: $stepTitle');
+      }
+      // Then refresh the stepper
+      _loadOnboardingSettings();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating onboarding step: $e');
+      }
+      // Show error to user but still refresh the stepper
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update step: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
