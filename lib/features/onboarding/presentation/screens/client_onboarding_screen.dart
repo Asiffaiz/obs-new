@@ -36,7 +36,7 @@ class ClientOnboardingScreen extends StatefulWidget {
 }
 
 class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
-  int _currentStep = 3;
+  int _currentStep = 0;
   StepperType stepperType = StepperType.vertical;
   bool _isLoading = false;
   bool _agreementsLoaded = false; // Flag to prevent multiple API calls
@@ -115,7 +115,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       if (kDebugMode) {
         print('Successfully updated step: $stepTitle');
       }
-      // Then refresh the stepper
+      // Then refresh the stepper (this will recalculate current step)
       _loadOnboardingSettings();
     } catch (e) {
       if (kDebugMode) {
@@ -232,6 +232,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           // Use progress from API or recalculate based on completed steps
           _progress = response.progress;
 
+          // Calculate current step based on completed/skipped steps
+          _currentStep = _calculateCurrentStep();
+
           _isLoading = false;
         });
 
@@ -343,6 +346,58 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     }
   }
 
+  // Calculate the current step (first incomplete/unskipped step)
+  int _calculateCurrentStep() {
+    for (int i = 0; i < _stepNames.length; i++) {
+      final stepName = _stepNames[i];
+      final config = _onboardingSettings[stepName];
+      final isFilled = (config['isFilled'] as int) == 1;
+      final isSkipped = (config['isSkipped'] as int? ?? 0) == 1;
+
+      // If step is not completed and not skipped, this is the current step
+      if (!isFilled && !isSkipped) {
+        return i;
+      }
+    }
+    // All steps are completed or skipped, return the last step
+    return _stepNames.length > 0 ? _stepNames.length - 1 : 0;
+  }
+
+  // Check if a step can be navigated to
+  bool _canNavigateToStep(int stepIndex) {
+    // Can always navigate to current step or previous steps
+    if (stepIndex <= _currentStep) {
+      return true;
+    }
+
+    // Check if all previous steps are completed or skipped
+    for (int i = 0; i < stepIndex; i++) {
+      final stepName = _stepNames[i];
+      final config = _onboardingSettings[stepName];
+      final isFilled = (config['isFilled'] as int) == 1;
+      final isSkipped = (config['isSkipped'] as int? ?? 0) == 1;
+
+      // If any previous step is not completed and not skipped, cannot navigate
+      if (!isFilled && !isSkipped) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Validate if current step is completed (for mandatory steps)
+  bool _isCurrentStepCompleted(int stepIndex) {
+    if (stepIndex >= _stepNames.length) return false;
+
+    final stepName = _stepNames[stepIndex];
+    final config = _onboardingSettings[stepName];
+    final isFilled = (config['isFilled'] as int) == 1;
+    final isSkipped = (config['isSkipped'] as int? ?? 0) == 1;
+
+    return isFilled || isSkipped;
+  }
+
   // Skip current step (if allowed)
   // Check if all skippable steps are skipped
   bool _areAllSkippableStepsSkipped() {
@@ -402,10 +457,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           config['isSkipped'] = 1;
           _skipLoadingStates[stepIndex] = false;
 
-          // Move to next step if available
-          if (!isLastStep) {
-            _currentStep = stepIndex + 1;
-          }
+          // Recalculate current step based on completed/skipped steps
+          _currentStep = _calculateCurrentStep();
         });
 
         // If it's the last step, check if all skippable steps are skipped
@@ -419,8 +472,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           }
         }
 
-        // Smoothly scroll to the new step if not last
-        if (!isLastStep) {
+        // Smoothly scroll to the new step if it changed
+        if (_currentStep > stepIndex) {
           _scrollToStep(_currentStep);
         }
       }
@@ -462,16 +515,34 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     });
   }
 
-  // Move to next step without marking current step as completed
+  // Move to next step with validation for mandatory steps
   void _moveToNextStep(int stepIndex) {
+    // Validate if current step is completed (for mandatory steps)
+    if (!_isCurrentStepCompleted(stepIndex)) {
+      // Show validation error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please complete this step before proceeding to the next step.',
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Step is completed, move to next step
     if (stepIndex < _stepNames.length - 1) {
       setState(() {
-        // Move to next step
-        _currentStep = stepIndex + 1;
+        // Calculate the next current step
+        _currentStep = _calculateCurrentStep();
       });
 
-      // Smoothly scroll to the new step
-      _scrollToStep(_currentStep);
+      // Smoothly scroll to the new step if it changed
+      if (_currentStep > stepIndex) {
+        _scrollToStep(_currentStep);
+      }
     }
 
     // Check completion after setState completes
@@ -506,16 +577,15 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       final stepName = _stepNames[stepIndex];
       _onboardingSettings[stepName]['isFilled'] = 1;
 
-      // Move to next step if available
-      if (stepIndex < _stepNames.length - 1) {
-        _currentStep = stepIndex + 1;
+      // Recalculate current step based on completed/skipped steps
+      final previousCurrentStep = _currentStep;
+      _currentStep = _calculateCurrentStep();
+
+      // Smoothly scroll to the new step if it changed
+      if (_currentStep > previousCurrentStep) {
+        _scrollToStep(_currentStep);
       }
     });
-
-    // Smoothly scroll to the new step
-    if (stepIndex < _stepNames.length - 1) {
-      _scrollToStep(_currentStep);
-    }
 
     // Check completion after setState completes
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -613,11 +683,25 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
                         scrollController: _scrollController,
                         stepKeys: _stepKeys,
                         onStepTapped: (step) {
-                          setState(() {
-                            _currentStep = step;
-                          });
-                          // Smoothly scroll to the tapped step
-                          _scrollToStep(step);
+                          // Validate if user can navigate to this step
+                          if (_canNavigateToStep(step)) {
+                            setState(() {
+                              _currentStep = step;
+                            });
+                            // Smoothly scroll to the tapped step
+                            _scrollToStep(step);
+                          } else {
+                            // Show error message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Please complete or skip the current step before proceeding.',
+                                ),
+                                backgroundColor: Colors.orange,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
                         },
                       ),
                     ),
