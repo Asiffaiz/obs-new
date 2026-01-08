@@ -44,7 +44,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final authService = AuthService();
     final savedEmail = await authService.getRememberMeEmail();
     final isEnabled = await authService.isRememberMeEnabled();
-    
+
     if (mounted) {
       setState(() {
         _rememberMe = isEnabled;
@@ -108,13 +108,11 @@ class _SignInScreenState extends State<SignInScreen> {
 
           // Navigate to dashboard after a short delay
           Future.delayed(const Duration(seconds: 1), () async {
-            // Check if onboarding is needed (you can add a flag in SharedPreferences)
-            final prefs = await SharedPreferences.getInstance();
-            final onboardingComplete =
-                prefs.getBool(SharedPreferenceKeys.onboardingCompleteKey) ??
-                false;
+            // Check if onboarding is needed based on API response
+            final authService = AuthService();
+            final onboardingStatus = await authService.getOnboardingStatus();
 
-            if (!onboardingComplete) {
+            if (onboardingStatus != 'complete') {
               context.go(AppRoutes.clientOnboarding);
             } else {
               context.go(AppRoutes.home);
@@ -314,27 +312,28 @@ class _SignInScreenState extends State<SignInScreen> {
                             children: [
                               Checkbox(
                                 value: _rememberMe,
-                                onChanged: _isLoading
-                                    ? null
-                                    : (value) {
-                                        setState(() {
-                                          _rememberMe = value ?? false;
-                                        });
-                                      },
+                                onChanged:
+                                    _isLoading
+                                        ? null
+                                        : (value) {
+                                          setState(() {
+                                            _rememberMe = value ?? false;
+                                          });
+                                        },
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
-                                visualDensity:
-                                    VisualDensity.compact,
+                                visualDensity: VisualDensity.compact,
                               ),
                               const SizedBox(width: 4),
                               GestureDetector(
-                                onTap: _isLoading
-                                    ? null
-                                    : () {
-                                        setState(() {
-                                          _rememberMe = !_rememberMe;
-                                        });
-                                      },
+                                onTap:
+                                    _isLoading
+                                        ? null
+                                        : () {
+                                          setState(() {
+                                            _rememberMe = !_rememberMe;
+                                          });
+                                        },
                                 child: Text(
                                   'Remember Me',
                                   style: TextStyle(

@@ -7,6 +7,7 @@ import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/widgets/voice_alerts_logo.dart';
 import '../../../../config/routes.dart';
 
+import '../../../auth/data/services/auth_service.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -119,12 +120,11 @@ class _SplashScreenState extends State<SplashScreen>
           if (isAllAgreementsSigned == false) {
             context.go(AppRoutes.unsignedAgreements);
           } else {
-            // Check if onboarding is needed (you can add a flag in SharedPreferences)
-            final prefs = await SharedPreferences.getInstance();
-            final onboardingComplete =
-                prefs.getBool('client_onboarding_complete') ?? false;
+            // Check if onboarding is needed based on API response
+            final authService = AuthService();
+            final onboardingStatus = await authService.getOnboardingStatus();
 
-            if (!onboardingComplete) {
+            if (onboardingStatus != 'complete') {
               context.go(AppRoutes.clientOnboarding);
             } else {
               context.go(AppRoutes.home);

@@ -46,6 +46,10 @@ class AuthService {
     prefs.setString(SharedPreferenceKeys.stateKey, userData['state'] ?? '');
     prefs.setString(SharedPreferenceKeys.zipKey, userData['zip'] ?? '');
     prefs.setString(SharedPreferenceKeys.countryKey, userData['country'] ?? '');
+    prefs.setString(
+      SharedPreferenceKeys.onboardingStatusKey,
+      userData['onboarding_status'] ?? 'incomplete',
+    );
   }
 
   Future<void> saveUserDataOnUpdateProfile(
@@ -122,8 +126,9 @@ class AuthService {
     userData['zip'] = prefs.getString(SharedPreferenceKeys.zipKey) ?? '';
     userData['country'] =
         prefs.getString(SharedPreferenceKeys.countryKey) ?? '';
-
-  
+    userData['onboarding_status'] =
+        prefs.getString(SharedPreferenceKeys.onboardingStatusKey) ??
+        'incomplete';
 
     return userData;
   }
@@ -133,6 +138,19 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(SharedPreferenceKeys.tokenKey);
     return token != null && token.isNotEmpty;
+  }
+
+  // Get onboarding status from SharedPreferences
+  Future<String> getOnboardingStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(SharedPreferenceKeys.onboardingStatusKey) ??
+        'incomplete';
+  }
+
+  // Check if onboarding is complete
+  Future<bool> isOnboardingComplete() async {
+    final status = await getOnboardingStatus();
+    return status == 'complete';
   }
 
   // Logout user
@@ -155,6 +173,7 @@ class AuthService {
     await prefs.remove(SharedPreferenceKeys.zipKey);
     await prefs.remove(SharedPreferenceKeys.countryKey);
     await prefs.remove(SharedPreferenceKeys.onboardingCompleteKey);
+    await prefs.remove(SharedPreferenceKeys.onboardingStatusKey);
     // Remember Me keys are intentionally NOT removed here
   }
 

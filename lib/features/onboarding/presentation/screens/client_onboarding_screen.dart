@@ -6,6 +6,7 @@ import 'package:hexcolor/hexcolor.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/config/routes.dart';
+import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
 import 'package:voicealerts_obs/features/agreements/domain/models/agreement_model.dart';
@@ -15,6 +16,8 @@ import 'package:voicealerts_obs/features/agreements/presentation/bloc/agreements
 import 'package:voicealerts_obs/features/agreements/domain/models/signed_agreement_model.dart';
 import 'package:voicealerts_obs/features/agreements/presentation/screens/agreement_detail_screen.dart';
 import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
+import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_event.dart';
 import 'package:voicealerts_obs/features/forms/presentation/screens/form_submissions_screen.dart';
 import 'package:voicealerts_obs/features/onboarding/presentation/bloc/onboarding_agreements_bloc.dart';
 import 'package:voicealerts_obs/features/onboarding/presentation/bloc/onboarding_agreements_event.dart';
@@ -44,6 +47,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
   List<OnboardingSignedAgreementModel> _onboardingSignedAgreements = [];
   List<OnboardingOptionalAgreementModel> _onboardingOptionalAgreements = [];
   Map<String, String> _userData = {};
+  bool _isLoggingOut = false;
 
   // Dynamic onboarding configuration
   Map<String, dynamic> _onboardingSettings = {};
@@ -616,9 +620,9 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     // Show success popup with animation
     await _showSuccessPopup();
 
-    // Save completion status
+    // Save completion status from API response
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('client_onboarding_complete', true);
+    await prefs.setString(SharedPreferenceKeys.onboardingStatusKey, 'complete');
 
     // Navigate with smooth transition
     if (mounted) {
@@ -668,6 +672,53 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
     );
   }
 
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text('Logout Confirmation'),
+            content: const Text('Are you sure you want to logout?'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop();
+
+                  // Set flag to indicate logout is in progress
+                  setState(() {
+                    _isLoggingOut = true;
+                  });
+
+                  // Clear user data from SharedPreferences and sign out from both Firebase and API
+                  final authBloc = context.read<AuthBloc>();
+
+                  // First handle API logout to clear SharedPreferences
+                  authBloc.add(const ApiLogoutRequested());
+
+                  // Then handle general sign out for any other auth sessions
+                  authBloc.add(const SignOutRequested());
+
+                  // Don't navigate immediately - let BlocListener handle navigation
+                  // after state changes to unauthenticated
+                  // This prevents race condition where splash screen redirects to dashboard
+                  // because the auth state and SharedPreferences are cleared before navigation
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Logout'),
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -679,6 +730,12 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
           //   onPressed: _completeOnboarding,
           //   child: const Text('Skip', style: TextStyle(color: Colors.white)),
           // ),
+          IconButton(
+            onPressed: () {
+              _showLogoutConfirmation(context);
+            },
+            icon: const Icon(Icons.logout_outlined),
+          ),
         ],
         centerTitle: true,
       ),

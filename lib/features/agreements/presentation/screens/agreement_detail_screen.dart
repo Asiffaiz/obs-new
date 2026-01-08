@@ -24,6 +24,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../../../core/constants/shared_prefence_keys.dart';
+import '../../../auth/data/services/auth_service.dart';
 
 class AgreementDetailScreen extends StatefulWidget {
   final AgreementModel agreement;
@@ -476,11 +477,10 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
 
   // Helper method to navigate after signing all agreements
   Future<void> _navigateAfterSigningAllAgreements(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final onboardingComplete =
-        prefs.getBool(SharedPreferenceKeys.onboardingCompleteKey) ?? false;
+    final authService = AuthService();
+    final onboardingStatus = await authService.getOnboardingStatus();
 
-    if (!onboardingComplete) {
+    if (onboardingStatus != 'complete') {
       // Navigate to onboarding if not completed
       context.go(AppRoutes.clientOnboarding);
     } else {
