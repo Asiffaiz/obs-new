@@ -797,13 +797,12 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
             if (widget.onRefreshOptionalAgreements != null) {
               widget.onRefreshOptionalAgreements!();
             }
-      
           } else if (widget.comeFrom == 'mandatory') {
             AppState.instance.isShowMandatoryDialog = false;
-            // context.go(AppRoutes.agreements);
-            context.pushReplacement(AppRoutes.agreements);
-          }
-          else if (widget.comeFrom == 'onboarding') {
+            // Just pop back to unsigned agreements screen
+            // The listener in unsigned_agreements_screen will handle navigating to next agreement
+            context.pop();
+          } else if (widget.comeFrom == 'onboarding') {
             context.pop();
             if (widget.onRefreshOnboarding != null) {
               widget.onRefreshOnboarding!();
@@ -838,17 +837,21 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
           appBar: AppBar(
             title: Text(widget.agreement.title),
             elevation: 0,
+            // Hide back button for mandatory agreements
+            automaticallyImplyLeading: widget.comeFrom != 'mandatory',
             leading:
-                _currentViewMode != AgreementViewMode.detail
-                    ? IconButton(
-                      icon: Icon(
-                        Platform.isIOS
-                            ? Icons.arrow_back_ios_new_rounded
-                            : Icons.arrow_back,
-                      ),
-                      onPressed: _goBack,
-                    )
-                    : null,
+                widget.comeFrom == 'mandatory'
+                    ? null
+                    : (_currentViewMode != AgreementViewMode.detail
+                        ? IconButton(
+                          icon: Icon(
+                            Platform.isIOS
+                                ? Icons.arrow_back_ios_new_rounded
+                                : Icons.arrow_back,
+                          ),
+                          onPressed: _goBack,
+                        )
+                        : null),
             actions: [
               IconButton(
                 icon: SvgPicture.asset(

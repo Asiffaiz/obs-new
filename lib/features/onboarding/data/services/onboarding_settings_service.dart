@@ -95,7 +95,10 @@ class OnboardingSettingsService {
           ApiEndpoints.updateOnboardingStep,
           {'accountno': accountNo, 'type': type, 'title': title, 'form': form},
         );
-        print(response.data);
+        if (kDebugMode) {
+       print(response.data);
+        }
+       
         if (response.statusCode == 200 &&
             response.data['status'] == 'success') {
           if (kDebugMode) {

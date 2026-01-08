@@ -31,13 +31,14 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
   bool _isDataLoaded = false;
   bool isMandatoryDialogShown = false;
   bool _isLoggingOut = false;
+  bool _hasNavigatedToFirstAgreement =
+      false; // Track if we've navigated to first agreement
+
   @override
   void initState() {
     super.initState();
     context.read<AgreementsBloc>().add(const LoadAgreements());
     _loadIsShowMandatoryDialog();
-
-    // Schedule the popup to show after the screen is built
   }
 
   Future<void> _loadIsShowMandatoryDialog() async {
@@ -204,6 +205,19 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
     );
   }
 
+  // Find the first unsigned mandatory agreement
+  int? _findFirstUnsignedMandatoryAgreement(List<AgreementModel> agreements) {
+    for (int i = 0; i < agreements.length; i++) {
+      final agreement = agreements[i];
+      if (agreement.isMandatory &&
+          (agreement.status == AgreementStatus.pending)) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  // Navigate to a specific agreement detail screen
   void _navigateToAgreementDetail(AgreementModel agreement, int index) {
     // Get the bloc instance before navigation
     final agreementsBloc = context.read<AgreementsBloc>();
@@ -229,6 +243,34 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
             ),
       ),
     );
+  }
+
+  // Navigate to the first unsigned mandatory agreement
+  void _navigateToFirstUnsignedAgreement(List<AgreementModel> agreements) {
+    final firstUnsignedIndex = _findFirstUnsignedMandatoryAgreement(agreements);
+    if (firstUnsignedIndex != null && mounted) {
+      final agreement = agreements[firstUnsignedIndex];
+      final agreementsBloc = context.read<AgreementsBloc>();
+      agreementsBloc.add(GoToAgreement(firstUnsignedIndex));
+      final isLastAgreement =
+          firstUnsignedIndex == agreementsBloc.state.agreements.length - 1;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => BlocProvider.value(
+                value: agreementsBloc,
+                child: AgreementDetailScreen(
+                  agreement: agreement,
+                  isLastAgreement: isLastAgreement,
+                  onComplete: widget.onComplete,
+                  comeFrom: 'mandatory',
+                ),
+              ),
+        ),
+      );
+    }
   }
 
   void _showLogoutConfirmation(BuildContext context) {
@@ -314,6 +356,43 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
         ),
         body: BlocConsumer<AgreementsBloc, AgreementsState>(
           listener: (context, state) {
+            // Auto-navigate to first unsigned agreement when agreements are loaded
+            if (state.status == AgreementsStatus.loaded &&
+                state.agreements.isNotEmpty) {
+              final mandatoryAgreements =
+                  state.agreements.where((a) => a.isMandatory).toList();
+              if (mandatoryAgreements.isNotEmpty) {
+                final unsignedMandatory =
+                    mandatoryAgreements
+                        .where((a) => a.status == AgreementStatus.pending)
+                        .toList();
+                if (unsignedMandatory.isNotEmpty &&
+                    !_hasNavigatedToFirstAgreement) {
+                  _hasNavigatedToFirstAgreement = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _navigateToFirstUnsignedAgreement(state.agreements);
+                    }
+                  });
+                }
+              }
+            }
+
+            // Auto-navigate to next agreement when current one is signed
+            if (state.status == AgreementsStatus.showNextAgreement) {
+              // Reset flag to allow navigation to next agreement
+              _hasNavigatedToFirstAgreement = false;
+              // Small delay to ensure we're back on this screen, then reload and navigate
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  if (mounted) {
+                    // Reload agreements to get updated status
+                    context.read<AgreementsBloc>().add(const LoadAgreements());
+                  }
+                });
+              });
+            }
+
             if (state.allMandatoryAgreementsSigned &&
                 widget.onComplete != null) {
               widget.onComplete!();
@@ -389,6 +468,12 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
                     : signedMandatoryAgreements.length /
                         mandatoryAgreements.length;
 
+            // Check if all mandatory agreements are signed
+            final unsignedMandatory =
+                mandatoryAgreements
+                    .where((a) => a.status == AgreementStatus.pending)
+                    .toList();
+
             if (mandatoryAgreements.isNotEmpty) {
               if (isMandatoryDialogShown == false) {
                 _handleShowDialog();
@@ -396,22 +481,57 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
               }
             }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<AgreementsBloc>().add(const LoadAgreements());
-              },
-              child: Column(
-                children: [
-                  _buildProgressIndicator(
-                    progress,
-                    signedMandatoryAgreements.length,
-                    mandatoryAgreements.length,
+            // For mandatory agreements, always show loading/auto-navigate (no list view)
+            return Column(
+              children: [
+                _buildProgressIndicator(
+                  progress,
+                  signedMandatoryAgreements.length,
+                  mandatoryAgreements.length,
+                ),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (unsignedMandatory.isEmpty)
+                          Column(
+                            children: [
+                              const Icon(
+                                Icons.check_circle_outline,
+                                size: 64,
+                                color: Colors.green,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'All agreements have been signed!',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Column(
+                            children: [
+                              const CircularProgressIndicator(),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Opening agreement ${signedMandatoryAgreements.length + 1} of ${mandatoryAgreements.length}...',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
                   ),
-                  Expanded(
-                    child: _buildUnsignedAgreementsList(state.agreements),
-                  ),
-                ],
-              ),
+                ),
+              ],
             );
           },
         ),
