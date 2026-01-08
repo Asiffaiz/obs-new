@@ -13,8 +13,9 @@ import '../../../../config/routes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final String userName;
   final String userEmail;
 
@@ -25,11 +26,36 @@ class ProfileScreen extends StatelessWidget {
   });
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoggingOut = false;
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [_buildProfileHeader(context), _buildProfileOptions(context)],
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) {
+        // Only listen when logout is in progress and state changes to unauthenticated
+        return _isLoggingOut &&
+            current.status == AuthStatus.unauthenticated &&
+            previous.status != AuthStatus.unauthenticated;
+      },
+      listener: (context, state) {
+        // Reset logout flag
+        _isLoggingOut = false;
+        // Navigate to sign in screen only after logout is complete
+        // This prevents race condition where splash screen redirects to dashboard
+        // because the auth state and SharedPreferences are cleared before navigation
+        if (mounted) {
+          context.go(AppRoutes.signIn);
+        }
+      },
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [_buildProfileHeader(context), _buildProfileOptions(context)],
+        ),
       ),
     );
   }
@@ -77,7 +103,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      userEmail,
+                      widget.userEmail,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey.shade600,
@@ -228,6 +254,11 @@ class ProfileScreen extends StatelessWidget {
                 onPressed: () async {
                   Navigator.of(context).pop();
 
+                  // Set flag to indicate logout is in progress
+                  setState(() {
+                    _isLoggingOut = true;
+                  });
+
                   // Clear user data from SharedPreferences and sign out from both Firebase and API
                   final authBloc = context.read<AuthBloc>();
 
@@ -237,8 +268,10 @@ class ProfileScreen extends StatelessWidget {
                   // Then handle general sign out for any other auth sessions
                   authBloc.add(const SignOutRequested());
 
-                  // Navigate to sign in screen
-                  context.go(AppRoutes.signIn);
+                  // Don't navigate immediately - let BlocListener handle navigation
+                  // after state changes to unauthenticated
+                  // This prevents race condition where splash screen redirects to dashboard
+                  // because the auth state and SharedPreferences are cleared before navigation
                 },
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text('Logout'),

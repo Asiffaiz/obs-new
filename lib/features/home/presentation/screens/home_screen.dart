@@ -7,6 +7,7 @@ import '../../../../core/constants/breakpoints.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../widgets/dashboard_card.dart';
 import '../widgets/usage_chart.dart';
 
@@ -19,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  bool _isLoggingOut = false;
 
   final List<Map<String, dynamic>> _dashboardItems = [
     {
@@ -55,12 +57,75 @@ class _HomeScreenState extends State<HomeScreen> {
     },
   ];
 
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Logout Confirmation'),
+        content: const Text('Are you sure you want to logout?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+
+              // Set flag to indicate logout is in progress
+              setState(() {
+                _isLoggingOut = true;
+              });
+
+              // Clear user data from SharedPreferences and sign out from both Firebase and API
+              final authBloc = context.read<AuthBloc>();
+
+              // First handle API logout to clear SharedPreferences
+              authBloc.add(const ApiLogoutRequested());
+
+              // Then handle general sign out for any other auth sessions
+              authBloc.add(const SignOutRequested());
+
+              // Don't navigate immediately - let BlocListener handle navigation
+              // after state changes to unauthenticated
+              // This prevents race condition where splash screen redirects to dashboard
+              // because the auth state and SharedPreferences are cleared before navigation
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth >= Breakpoints.tablet;
 
-    return Scaffold(
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) {
+        // Only listen when logout is in progress and state changes to unauthenticated
+        return _isLoggingOut &&
+            current.status == AuthStatus.unauthenticated &&
+            previous.status != AuthStatus.unauthenticated;
+      },
+      listener: (context, state) {
+        // Reset logout flag
+        _isLoggingOut = false;
+        // Navigate to sign in screen only after logout is complete
+        // This prevents race condition where splash screen redirects to dashboard
+        // because the auth state and SharedPreferences are cleared before navigation
+        if (mounted) {
+          context.go(AppRoutes.signIn);
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Telecom Dashboard'),
         actions: [
@@ -73,8 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              context.read<AuthBloc>().add(const SignOutRequested());
-              context.go(AppRoutes.signIn);
+              _showLogoutConfirmation(context);
             },
           ),
         ],
@@ -151,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
+      ),
       ),
     );
   }

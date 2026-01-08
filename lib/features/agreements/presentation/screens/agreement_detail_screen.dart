@@ -31,6 +31,7 @@ class AgreementDetailScreen extends StatefulWidget {
   final bool isLastAgreement;
   final VoidCallback? onComplete;
   final VoidCallback? onRefreshOptionalAgreements;
+  final VoidCallback? onRefreshOnboarding;
   final String comeFrom;
   const AgreementDetailScreen({
     super.key,
@@ -39,6 +40,7 @@ class AgreementDetailScreen extends StatefulWidget {
     this.onComplete,
     required this.comeFrom,
     this.onRefreshOptionalAgreements,
+    this.onRefreshOnboarding,
   });
 
   @override
@@ -729,6 +731,11 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                               }
                             } else if (widget.comeFrom == 'mandatory') {
                               context.go(AppRoutes.agreements);
+                            } else if (widget.comeFrom == 'onboarding') {
+                              context.pop();
+                              if (widget.onRefreshOnboarding != null) {
+                                widget.onRefreshOnboarding!();
+                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -790,10 +797,17 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
             if (widget.onRefreshOptionalAgreements != null) {
               widget.onRefreshOptionalAgreements!();
             }
+      
           } else if (widget.comeFrom == 'mandatory') {
             AppState.instance.isShowMandatoryDialog = false;
             // context.go(AppRoutes.agreements);
             context.pushReplacement(AppRoutes.agreements);
+          }
+          else if (widget.comeFrom == 'onboarding') {
+            context.pop();
+            if (widget.onRefreshOnboarding != null) {
+              widget.onRefreshOnboarding!();
+            }
           }
         }
       },

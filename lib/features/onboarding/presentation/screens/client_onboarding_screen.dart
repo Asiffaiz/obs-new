@@ -17,6 +17,7 @@ import 'package:voicealerts_obs/features/agreements/domain/models/signed_agreeme
 import 'package:voicealerts_obs/features/agreements/presentation/screens/agreement_detail_screen.dart';
 import 'package:voicealerts_obs/features/auth/data/services/auth_service.dart';
 import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_state.dart';
 import 'package:voicealerts_obs/features/auth/presentation/bloc/auth_event.dart';
 import 'package:voicealerts_obs/features/forms/presentation/screens/form_submissions_screen.dart';
 import 'package:voicealerts_obs/features/onboarding/presentation/bloc/onboarding_agreements_bloc.dart';
@@ -721,68 +722,86 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        title: const Text('Welcome Onboarding'),
-        actions: [
-          // TextButton(
-          //   onPressed: _completeOnboarding,
-          //   child: const Text('Skip', style: TextStyle(color: Colors.white)),
-          // ),
-          IconButton(
-            onPressed: () {
-              _showLogoutConfirmation(context);
-            },
-            icon: const Icon(Icons.logout_outlined),
-          ),
-        ],
-        centerTitle: true,
-      ),
-      body:
-          _isLoading || _stepNames.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4.0,
-                        vertical: 8.0,
-                      ), // Reduced horizontal padding
-                      child: _CustomStepper(
-                        steps: _stepper(),
-                        currentStep: _currentStep,
-                        stepCompleted: _stepCompleted,
-                        scrollController: _scrollController,
-                        stepKeys: _stepKeys,
-                        onStepTapped: (step) {
-                          // Validate if user can navigate to this step
-                          if (_canNavigateToStep(step)) {
-                            setState(() {
-                              _currentStep = step;
-                            });
-                            // Smoothly scroll to the tapped step
-                            _scrollToStep(step);
-                          } else {
-                            // Show error message
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Please complete or skip the current step before proceeding.',
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) {
+        // Only listen when logout is in progress and state changes to unauthenticated
+        return _isLoggingOut &&
+            current.status == AuthStatus.unauthenticated &&
+            previous.status != AuthStatus.unauthenticated;
+      },
+      listener: (context, state) {
+        // Reset logout flag
+        _isLoggingOut = false;
+        // Navigate to sign in screen only after logout is complete
+        // This prevents race condition where splash screen redirects to dashboard
+        // because the auth state and SharedPreferences are cleared before navigation
+        if (mounted) {
+          context.go(AppRoutes.signIn);
+        }
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar(
+          title: const Text('Welcome Onboarding'),
+          actions: [
+            // TextButton(
+            //   onPressed: _completeOnboarding,
+            //   child: const Text('Skip', style: TextStyle(color: Colors.white)),
+            // ),
+            IconButton(
+              onPressed: () {
+                _showLogoutConfirmation(context);
+              },
+              icon: const Icon(Icons.logout_outlined),
+            ),
+          ],
+          centerTitle: true,
+        ),
+        body:
+            _isLoading || _stepNames.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4.0,
+                          vertical: 8.0,
+                        ), // Reduced horizontal padding
+                        child: _CustomStepper(
+                          steps: _stepper(),
+                          currentStep: _currentStep,
+                          stepCompleted: _stepCompleted,
+                          scrollController: _scrollController,
+                          stepKeys: _stepKeys,
+                          onStepTapped: (step) {
+                            // Validate if user can navigate to this step
+                            if (_canNavigateToStep(step)) {
+                              setState(() {
+                                _currentStep = step;
+                              });
+                              // Smoothly scroll to the tapped step
+                              _scrollToStep(step);
+                            } else {
+                              // Show error message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Please complete or skip the current step before proceeding.',
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                  duration: const Duration(seconds: 2),
                                 ),
-                                backgroundColor: Colors.orange,
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        },
+                              );
+                            }
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+      ),
     );
   }
 
@@ -1727,7 +1746,8 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
               agreement: agreement,
               isLastAgreement: false,
               onComplete: () {},
-              comeFrom: 'optional',
+              comeFrom: 'onboarding',
+              onRefreshOnboarding: _loadOnboardingSettings,
             ),
       ),
     );
