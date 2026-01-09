@@ -469,25 +469,25 @@ class _DynamicStepperFormState extends State<DynamicStepperForm> {
         const SizedBox(height: 8),
         // Step title
         //    commented step title for now
-        // Expanded(
-        //   child: Text(
-        //     _orderedGroups[index].title.isEmpty
-        //         ? 'Step ${index + 1}'
-        //         : _orderedGroups[index].title,
-        //     textAlign: TextAlign.center,
-        //     maxLines: 1,
-        //     overflow: TextOverflow.ellipsis,
-        //     style: TextStyle(
-        //       fontSize: 12,
-        //       fontWeight:
-        //           isActive || isCompleted ? FontWeight.bold : FontWeight.normal,
-        //       color:
-        //           isActive || isCompleted
-        //               ? Theme.of(context).primaryColor
-        //               : Colors.grey.shade600,
-        //     ),
-        //   ),
-        // ),
+        Expanded(
+          child: Text(
+            _orderedGroups[index].title.isEmpty
+                ? 'Step ${index + 1}'
+                : _orderedGroups[index].title,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight:
+                  isActive || isCompleted ? FontWeight.bold : FontWeight.normal,
+              color:
+                  isActive || isCompleted
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey.shade600,
+            ),
+          ),
+        ),
       ],
     );
   }

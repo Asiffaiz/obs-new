@@ -255,6 +255,8 @@ class _UnsignedAgreementsScreenState extends State<UnsignedAgreementsScreen> {
       final isLastAgreement =
           firstUnsignedIndex == agreementsBloc.state.agreements.length - 1;
 
+      // Use push for mandatory agreements
+      // PopScope in AgreementDetailScreen will prevent system back button navigation
       Navigator.push(
         context,
         MaterialPageRoute(

@@ -15,6 +15,9 @@ import '../../domain/models/agreement_model.dart';
 import '../bloc/agreements_bloc.dart';
 import '../bloc/agreements_event.dart';
 import '../bloc/agreements_state.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../widgets/agreement_html_viewer.dart';
 import '../widgets/agreement_signature_pad.dart';
 import 'package:flutter/rendering.dart';
@@ -54,6 +57,7 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
       GlobalKey<AgreementFormWebViewState>();
 
   bool _hasScrolledToBottom = true;
+  bool _isLoggingOut = false;
   AgreementViewMode _currentViewMode = AgreementViewMode.detail;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -375,6 +379,51 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
 
   void _navigateToNextAgreement() {
     context.read<AgreementsBloc>().add(const NextAgreement());
+  }
+
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text('Logout Confirmation'),
+            content: const Text('Are you sure you want to logout?'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop();
+
+                  // Set flag to indicate logout is in progress
+                  setState(() {
+                    _isLoggingOut = true;
+                  });
+
+                  // Clear user data from SharedPreferences and sign out from both Firebase and API
+                  final authBloc = context.read<AuthBloc>();
+
+                  // First handle API logout to clear SharedPreferences
+                  authBloc.add(const ApiLogoutRequested());
+
+                  // Then handle general sign out for any other auth sessions
+                  authBloc.add(const SignOutRequested());
+
+                  // Don't navigate immediately - let BlocListener handle navigation
+                  // after state changes to unauthenticated
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Logout'),
+              ),
+            ],
+          ),
+    );
   }
 
   void _goBack() {
@@ -837,52 +886,89 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
           );
         }
 
-        return Scaffold(
-          resizeToAvoidBottomInset: false,
-          appBar: AppBar(
-            title: Text(widget.agreement.title),
-            elevation: 0,
-            // Hide back button for mandatory agreements
-            automaticallyImplyLeading: widget.comeFrom != 'mandatory',
-            leading:
-                widget.comeFrom == 'mandatory'
-                    ? null
-                    : (_currentViewMode != AgreementViewMode.detail
-                        ? IconButton(
-                          icon: Icon(
-                            Platform.isIOS
-                                ? Icons.arrow_back_ios_new_rounded
-                                : Icons.arrow_back,
-                          ),
-                          onPressed: _goBack,
-                        )
-                        : null),
-            actions: [
-              IconButton(
-                icon: SvgPicture.asset(
-                  'assets/icons/ic_download.svg',
-                  height: 20,
-                  width: 20,
-                  colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                ),
-                onPressed: () {},
-              ),
-            ],
-          ),
-          body: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: isTablet ? 48 : 6,
-                horizontal: isTablet ? 48 : 0.0,
-              ),
-              child: Column(
-                children: [
-                  Expanded(child: _buildContent(state)),
-
-                  if (_isSignatureMode) _buildSignatureSection(isDesktop),
-                  const SizedBox(height: 16),
-                  _buildBottomButtons(state),
+        return BlocListener<AuthBloc, AuthState>(
+          listenWhen: (previous, current) {
+            // Only listen when logout is in progress and state changes to unauthenticated
+            return _isLoggingOut &&
+                current.status == AuthStatus.unauthenticated &&
+                previous.status != AuthStatus.unauthenticated;
+          },
+          listener: (context, state) {
+            // Reset logout flag
+            _isLoggingOut = false;
+            // Navigate to sign in screen only after logout is complete
+            if (mounted) {
+              context.go(AppRoutes.signIn);
+            }
+          },
+          child: PopScope(
+            // Prevent system back button for mandatory agreements
+            canPop: widget.comeFrom != 'mandatory',
+            onPopInvoked: (didPop) {
+              // If system back button is pressed for mandatory agreements, do nothing
+              if (widget.comeFrom == 'mandatory' && didPop) {
+                // Prevent navigation
+              }
+            },
+            child: Scaffold(
+              resizeToAvoidBottomInset: false,
+              appBar: AppBar(
+                title: Text(widget.agreement.title),
+                elevation: 0,
+                // Hide back button for mandatory agreements
+                automaticallyImplyLeading: widget.comeFrom != 'mandatory',
+                leading:
+                    widget.comeFrom == 'mandatory'
+                        ? null
+                        : (_currentViewMode != AgreementViewMode.detail
+                            ? IconButton(
+                              icon: Icon(
+                                Platform.isIOS
+                                    ? Icons.arrow_back_ios_new_rounded
+                                    : Icons.arrow_back,
+                              ),
+                              onPressed: _goBack,
+                            )
+                            : null),
+                actions: [
+                  IconButton(
+                    icon: SvgPicture.asset(
+                      'assets/icons/ic_download.svg',
+                      height: 20,
+                      width: 20,
+                      colorFilter: ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                    onPressed: () {},
+                  ),
+                  // Show logout button for mandatory agreements
+                  if (widget.comeFrom == 'mandatory')
+                    IconButton(
+                      icon: const Icon(Icons.logout_outlined),
+                      onPressed: () {
+                        _showLogoutConfirmation(context);
+                      },
+                    ),
                 ],
+              ),
+              body: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: isTablet ? 48 : 6,
+                    horizontal: isTablet ? 48 : 0.0,
+                  ),
+                  child: Column(
+                    children: [
+                      Expanded(child: _buildContent(state)),
+
+                      if (_isSignatureMode) _buildSignatureSection(isDesktop),
+                      const SizedBox(height: 16),
+                      _buildBottomButtons(state),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
