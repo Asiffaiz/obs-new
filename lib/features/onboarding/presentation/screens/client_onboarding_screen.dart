@@ -1747,7 +1747,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
               isLastAgreement: false,
               onComplete: () {},
               comeFrom: 'onboarding',
-              onRefreshOnboarding: _loadOnboardingSettings,
+              onRefreshOnboarding: _loadOnboardingAgreements,
             ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -296,7 +297,10 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
           _signatureBytes = textImage;
         }
       }
-      print(_signatureBytes);
+      if (kDebugMode) {
+        print(_signatureBytes);
+      }
+
       if (_signatureBytes != null) {
         // Convert signature bytes to base64 string
         final base64Signature = base64Encode(_signatureBytes!);
@@ -345,7 +349,8 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
               payload: payload,
             ),
           );
-        } else if (widget.comeFrom == 'optional') {
+        } else if (widget.comeFrom == 'optional' ||
+            widget.comeFrom == 'onboarding') {
           // Send to the bloc
           context.read<AgreementsBloc>().add(
             SaveOptionalSignature(
