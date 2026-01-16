@@ -190,7 +190,10 @@ class FormsService {
 
       // Create a deep copy of the form content to modify
       final List<dynamic> formResponseData = getFormatedContent(formContent[0]);
-      print(formResponseData);
+      if (kDebugMode) {
+        print(formResponseData);
+      }
+
       // Add answers to the form questions
       for (var block in formResponseData) {
         if (kDebugMode) {

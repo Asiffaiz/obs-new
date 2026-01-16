@@ -399,9 +399,11 @@ class _DynamicStepperFormState extends State<DynamicStepperForm> {
           return Container(
             width:
                 MediaQuery.of(context).size.width *
-                0.2, // 🔹 fixed width for each step
+                0.4, // 🔹 increased width for each step to show more title text
             padding: EdgeInsets.all(0),
-            margin: EdgeInsets.symmetric(horizontal: 0),
+            margin: EdgeInsets.symmetric(
+              horizontal: 8,
+            ), // 🔹 added gap between steps
             child: _buildStepIndicator(index, isActive, isCompleted),
           );
         },
@@ -410,8 +412,8 @@ class _DynamicStepperFormState extends State<DynamicStepperForm> {
   }
 
   Widget _buildStepIndicator(int index, bool isActive, bool isCompleted) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Step circle
         GestureDetector(
@@ -466,16 +468,15 @@ class _DynamicStepperFormState extends State<DynamicStepperForm> {
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        // Step title
-        //    commented step title for now
+        const SizedBox(width: 8),
+        // Step title - shown next to circle with max 2 lines
         Expanded(
           child: Text(
             _orderedGroups[index].title.isEmpty
                 ? 'Step ${index + 1}'
                 : _orderedGroups[index].title,
-            textAlign: TextAlign.center,
-            maxLines: 1,
+            textAlign: TextAlign.start,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 12,
