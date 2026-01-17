@@ -8,6 +8,8 @@ import 'package:voicealerts_obs/features/bussiness%20card/presentation/screens/b
 import 'package:voicealerts_obs/features/bussiness%20card/presentation/screens/business_card_scan_screen.dart';
 import 'package:voicealerts_obs/features/forms/presentation/screens/client_assigned_forms_screen.dart';
 import 'package:voicealerts_obs/features/reports/presentation/screens/reports_screen.dart';
+import 'package:voicealerts_obs/features/rfq/presentation/screens/rfq_submissions_screen.dart';
+import 'package:voicealerts_obs/features/rfq/presentation/screens/rfq_form_screen.dart';
 import 'package:voicealerts_obs/main.dart';
 
 import '../features/auth/presentation/bloc/auth_bloc.dart';
@@ -57,6 +59,8 @@ class AppRoutes {
   static const String cardForm = '/card/:id/form';
   static const String scan = '/scan';
   static const String clientAssignedForms = '/client-assigned-forms';
+  static const String rfqSubmissions = '/rfq-submissions';
+  static const String rfqForm = '/rfq-form';
 }
 
 GoRouter createRouter(AuthBloc authBloc) {
@@ -286,6 +290,64 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder:
             (context, state) =>
                 const ClientAssignedFormsScreen(title: 'Forms', isFrom: ''),
+      ),
+
+      // RFQ Submissions Route
+      GoRoute(
+        path: AppRoutes.rfqSubmissions,
+        pageBuilder: (context, state) {
+          return CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: RfqSubmissionsScreen(
+              onNavigateBack: () => Navigator.of(context).pop(),
+            ),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeOutCubic;
+
+              var tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 300),
+            reverseTransitionDuration: const Duration(milliseconds: 250),
+          );
+        },
+      ),
+
+      // RFQ Form Route
+      GoRoute(
+        path: AppRoutes.rfqForm,
+        pageBuilder: (context, state) {
+          return CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: RfqFormScreen(
+              onNavigateBack: () => Navigator.of(context).pop(),
+            ),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeOutCubic;
+
+              var tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 300),
+            reverseTransitionDuration: const Duration(milliseconds: 250),
+          );
+        },
       ),
     ],
   );

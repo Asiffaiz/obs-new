@@ -140,7 +140,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
                       style: TextStyle(fontSize: 12),
                     ),
                     onPressed: () {
-                      // context.push(AppRoutes.requestQuote);
+                      context.push(AppRoutes.rfqSubmissions);
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.black87,
