@@ -97,6 +97,13 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
           answers: state.answers,
           currentStep: state.currentStep + 1,
           totalSteps: orderedGroups.length + 1, // +1 for additional info step
+          selectedProductIds: state.selectedProductIds.isNotEmpty
+              ? state.selectedProductIds
+              : null,
+          requirementDescription: state.requirementDescription?.isNotEmpty == true
+              ? state.requirementDescription
+              : null,
+          attachmentFile: state.attachmentFile,
         );
 
         emit(state.copyWith(
@@ -143,6 +150,13 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
         answers: state.answers,
         currentStep: state.currentStep + 1,
         totalSteps: state.formDefinition!.orderedGroups.length + 1, // +1 for additional info step
+        selectedProductIds: state.selectedProductIds.isNotEmpty
+            ? state.selectedProductIds
+            : null,
+        requirementDescription: state.requirementDescription?.isNotEmpty == true
+            ? state.requirementDescription
+            : null,
+        attachmentFile: state.attachmentFile,
       );
 
       if (success) {
@@ -174,6 +188,13 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
         answers: state.answers,
         currentStep: state.currentStep + 1,
         totalSteps: state.formDefinition!.orderedGroups.length + 1, // +1 for additional info step
+        selectedProductIds: state.selectedProductIds.isNotEmpty
+            ? state.selectedProductIds
+            : null,
+        requirementDescription: state.requirementDescription?.isNotEmpty == true
+            ? state.requirementDescription
+            : null,
+        attachmentFile: state.attachmentFile,
       );
 
       emit(state.copyWith(status: RfqFormStatus.loaded));

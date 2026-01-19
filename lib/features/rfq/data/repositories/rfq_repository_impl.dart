@@ -23,11 +23,17 @@ class RfqRepositoryImpl implements RfqRepository {
     required Map<String, dynamic> answers,
     required int currentStep,
     required int totalSteps,
+    List<int>? selectedProductIds,
+    String? requirementDescription,
+    String? attachmentFile,
   }) async {
     return await _rfqService.submitRfqForm(
       answers: answers,
       currentStep: currentStep,
       totalSteps: totalSteps,
+      selectedProductIds: selectedProductIds,
+      requirementDescription: requirementDescription,
+      attachmentFile: attachmentFile,
     );
   }
 
@@ -36,11 +42,17 @@ class RfqRepositoryImpl implements RfqRepository {
     required Map<String, dynamic> answers,
     required int currentStep,
     required int totalSteps,
+    List<int>? selectedProductIds,
+    String? requirementDescription,
+    String? attachmentFile,
   }) async {
     return await _rfqService.saveRfqFormAsDraft(
       answers: answers,
       currentStep: currentStep,
       totalSteps: totalSteps,
+      selectedProductIds: selectedProductIds,
+      requirementDescription: requirementDescription,
+      attachmentFile: attachmentFile,
     );
   }
 }

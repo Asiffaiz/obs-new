@@ -13,6 +13,9 @@ abstract class RfqRepository {
     required Map<String, dynamic> answers,
     required int currentStep,
     required int totalSteps,
+    List<int>? selectedProductIds,
+    String? requirementDescription,
+    String? attachmentFile,
   });
 
   /// Save RFQ form as draft
@@ -20,6 +23,9 @@ abstract class RfqRepository {
     required Map<String, dynamic> answers,
     required int currentStep,
     required int totalSteps,
+    List<int>? selectedProductIds,
+    String? requirementDescription,
+    String? attachmentFile,
   });
 }
 
