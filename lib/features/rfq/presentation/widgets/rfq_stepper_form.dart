@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
+import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_model.dart';
+import 'package:voicealerts_obs/features/rfq/domain/models/rfq_product_model.dart';
 import 'package:voicealerts_obs/features/rfq/presentation/bloc/rfq_bloc.dart';
 
 class RfqStepperForm extends StatefulWidget {
@@ -34,7 +36,6 @@ class _RfqStepperFormState extends State<RfqStepperForm>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
@@ -150,23 +151,28 @@ class _RfqStepperFormState extends State<RfqStepperForm>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Group header
-                          if (state.currentGroup != null)
-                            _buildGroupHeader(state.currentGroup!),
+                          // Show additional information step or regular questions
+                          if (state.isAdditionalInformationStep)
+                            _buildAdditionalInformationStep(context, state)
+                          else ...[
+                            // Group header
+                            if (state.currentGroup != null)
+                              _buildGroupHeader(state.currentGroup!),
 
-                          const SizedBox(height: 20),
+                            const SizedBox(height: 20),
 
-                          // Questions
-                          ...state.currentQuestions.map(
-                            (question) => Padding(
-                              padding: const EdgeInsets.only(bottom: 20),
-                              child: _buildQuestionField(
-                                context,
-                                state,
-                                question,
+                            // Questions
+                            ...state.currentQuestions.map(
+                              (question) => Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: _buildQuestionField(
+                                  context,
+                                  state,
+                                  question,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
 
                           const SizedBox(height: 40),
                         ],
@@ -210,16 +216,24 @@ class _RfqStepperFormState extends State<RfqStepperForm>
 
   Widget _buildStepperIndicator(BuildContext context, RfqState state) {
     final orderedGroups = state.formDefinition!.orderedGroups;
+    final totalSteps =
+        orderedGroups.length + 1; // +1 for additional information step
 
     return SizedBox(
       height: 80,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        itemCount: orderedGroups.length,
+        itemCount: totalSteps,
         itemBuilder: (context, index) {
           final isActive = index == state.currentStep;
           final isCompleted = index < state.currentStep;
+
+          // Last step is always "Additional Information"
+          final stepTitle =
+              index < orderedGroups.length
+                  ? orderedGroups[index].groupTitle
+                  : 'Additional Information';
 
           return Container(
             width: MediaQuery.of(context).size.width * 0.4,
@@ -227,7 +241,7 @@ class _RfqStepperFormState extends State<RfqStepperForm>
             child: _buildStepIndicatorItem(
               context,
               index,
-              orderedGroups[index].groupTitle,
+              stepTitle,
               isActive,
               isCompleted,
             ),
@@ -439,6 +453,155 @@ class _RfqStepperFormState extends State<RfqStepperForm>
           },
         );
     }
+  }
+
+  Widget _buildAdditionalInformationStep(BuildContext context, RfqState state) {
+    return FutureBuilder<List<RfqProduct>>(
+      future: RfqService().getRfqProducts(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final products = snapshot.data ?? [];
+        final selectedProductIds = state.selectedProductIds;
+        final selectedProducts =
+            products.where((p) => selectedProductIds.contains(p.id)).toList();
+
+        return ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 0,
+            maxWidth: double.infinity,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Step Title
+              const Text(
+                'Additional Information',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Add Product/Service Section
+              _buildProductSelector(context, products, selectedProductIds),
+              const SizedBox(height: 20),
+
+              // Selected Products List
+              if (selectedProducts.isNotEmpty) ...[
+                _buildSelectedProductsList(context, selectedProducts),
+                const SizedBox(height: 20),
+              ],
+
+              // Additional Information Label
+              const Text(
+                'Additional Information',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Requirement Description Textarea
+              _buildRequirementDescriptionField(context, state),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProductSelector(
+    BuildContext context,
+    List<RfqProduct> products,
+    List<int> selectedProductIds,
+  ) {
+    return _ProductSelectorWidget(
+      products: products,
+      selectedProductIds: selectedProductIds,
+      onAddProduct: (productId) {
+        context.read<RfqBloc>().add(AddProduct(productId));
+      },
+    );
+  }
+
+  Widget _buildSelectedProductsList(
+    BuildContext context,
+    List<RfqProduct> selectedProducts,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Selected Products (${selectedProducts.length})',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...selectedProducts.map(
+          (product) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _SelectedProductTile(
+              product: product,
+              onDelete: () {
+                context.read<RfqBloc>().add(RemoveProduct(product.id));
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRequirementDescriptionField(
+    BuildContext context,
+    RfqState state,
+  ) {
+    return SizedBox(
+      width: double.infinity,
+      child: TextFormField(
+        initialValue: state.requirementDescription ?? '',
+        maxLines: 5,
+        decoration: InputDecoration(
+          hintText: 'Describe Your Requirement',
+          contentPadding: const EdgeInsets.all(16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+              color: Theme.of(context).primaryColor,
+              width: 2,
+            ),
+          ),
+        ),
+        onChanged: (value) {
+          context.read<RfqBloc>().add(UpdateRequirementDescription(value));
+        },
+      ),
+    );
   }
 
   Widget _buildNavigationButtons(BuildContext context, RfqState state) {
@@ -1203,6 +1366,370 @@ class _RfqFileInputFieldState extends State<_RfqFileInputField> {
             ),
           ),
       ],
+    );
+  }
+}
+
+// ===== Additional Information Step Widgets =====
+
+class _ProductSelectorWidget extends StatefulWidget {
+  final List<RfqProduct> products;
+  final List<int> selectedProductIds;
+  final Function(int) onAddProduct;
+
+  const _ProductSelectorWidget({
+    required this.products,
+    required this.selectedProductIds,
+    required this.onAddProduct,
+  });
+
+  @override
+  State<_ProductSelectorWidget> createState() => _ProductSelectorWidgetState();
+}
+
+class _ProductSelectorWidgetState extends State<_ProductSelectorWidget> {
+  int? _selectedProductId;
+
+  @override
+  Widget build(BuildContext context) {
+    final availableProducts =
+        widget.products
+            .where((p) => !widget.selectedProductIds.contains(p.id))
+            .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'Add product/service',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Use ConstrainedBox to ensure proper width constraints
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 0,
+            maxWidth: double.infinity,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    hintText: 'Select a product/service',
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Icon(
+                        Icons.inventory_2_outlined,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  items:
+                      availableProducts
+                          .map(
+                            (product) => DropdownMenuItem(
+                              value: product.id,
+                              child: Text(
+                                product.displayName,
+                                style: const TextStyle(fontSize: 14),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (productId) {
+                    setState(() {
+                      _selectedProductId = productId;
+                    });
+                  },
+                  value: _selectedProductId,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Use ConstrainedBox to set button width constraints
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 90, maxWidth: 120),
+                child: ElevatedButton.icon(
+                  onPressed:
+                      _selectedProductId == null
+                          ? null
+                          : () {
+                            widget.onAddProduct(_selectedProductId!);
+                            setState(() {
+                              _selectedProductId = null;
+                            });
+                          },
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SelectedProductTile extends StatelessWidget {
+  final RfqProduct product;
+  final VoidCallback onDelete;
+
+  const _SelectedProductTile({required this.product, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Product Name
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Product Name',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        product.displayName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                // Delete Icon
+                IconButton(
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: AppColors.errorColor,
+                    size: 20,
+                  ),
+                  onPressed: onDelete,
+                  tooltip: 'Remove product',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Use ConstrainedBox to ensure proper width constraints
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: 0,
+                maxWidth: double.infinity,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Description
+                  Flexible(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Description',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          product.displayDescription,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // View Button - fixed minimum width to prevent overflow
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 80,
+                      maxWidth: 100,
+                    ),
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showProductDetails(context, product),
+                      icon: const Icon(Icons.visibility_outlined, size: 16),
+                      label: const Text('View'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                        side: BorderSide(color: AppColors.primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showProductDetails(BuildContext context, RfqProduct product) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder:
+                (context, scrollController) => SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Handle bar
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Product Name
+                      Text(
+                        product.displayName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      if (product.sku != null && product.sku!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'SKU: ${product.sku}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      // Description
+                      const Text(
+                        'Description',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        product.displayDescription,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade700,
+                          height: 1.5,
+                        ),
+                      ),
+                      if (product.productDesc != null &&
+                          product.productDesc!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Full Description',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _HtmlContent(product.productDesc!),
+                      ],
+                    ],
+                  ),
+                ),
+          ),
     );
   }
 }

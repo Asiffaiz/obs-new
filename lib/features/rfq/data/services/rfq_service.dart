@@ -1,4 +1,5 @@
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_model.dart';
+import 'package:voicealerts_obs/features/rfq/domain/models/rfq_product_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_submission_model.dart';
 
 /// Service for RFQ API calls
@@ -21,6 +22,20 @@ class RfqService {
     // Mock API response - replace with actual API call
     final mockResponse = _getMockRfqData();
     return RfqFormDefinition.fromApiResponse(mockResponse);
+  }
+
+  /// Get available products/services for RFQ
+  Future<List<RfqProduct>> getRfqProducts() async {
+    // Simulate API delay
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Get products from mock data
+    final mockResponse = _getMockRfqData();
+    final servicesList = mockResponse['servicesListing'] as List? ?? [];
+    
+    return servicesList
+        .map((service) => RfqProduct.fromJson(service as Map<String, dynamic>))
+        .toList();
   }
 
   /// Submit RFQ form

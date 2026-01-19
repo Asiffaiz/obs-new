@@ -17,6 +17,8 @@ class RfqState extends Equatable {
   final Map<String, dynamic> answers;
   final Map<String, String> validationErrors;
   final String? errorMessage;
+  final List<int> selectedProductIds; // IDs of selected products
+  final String? requirementDescription; // Additional requirement description
 
   const RfqState({
     this.status = RfqFormStatus.initial,
@@ -25,6 +27,8 @@ class RfqState extends Equatable {
     this.answers = const {},
     this.validationErrors = const {},
     this.errorMessage,
+    this.selectedProductIds = const [],
+    this.requirementDescription,
   });
 
   RfqState copyWith({
@@ -34,6 +38,8 @@ class RfqState extends Equatable {
     Map<String, dynamic>? answers,
     Map<String, String>? validationErrors,
     String? errorMessage,
+    List<int>? selectedProductIds,
+    String? requirementDescription,
   }) {
     return RfqState(
       status: status ?? this.status,
@@ -42,20 +48,32 @@ class RfqState extends Equatable {
       answers: answers ?? this.answers,
       validationErrors: validationErrors ?? this.validationErrors,
       errorMessage: errorMessage ?? this.errorMessage,
+      selectedProductIds: selectedProductIds ?? this.selectedProductIds,
+      requirementDescription: requirementDescription ?? this.requirementDescription,
     );
   }
 
-  /// Check if the form is on the last step
+  /// Check if the form is on the last step (including additional information step)
   bool get isLastStep {
     if (formDefinition == null) return false;
-    return currentStep >= formDefinition!.orderedGroups.length - 1;
+    // Additional information is always the last step
+    return currentStep >= formDefinition!.orderedGroups.length;
   }
 
   /// Check if the form is on the first step
   bool get isFirstStep => currentStep == 0;
 
-  /// Get total number of steps
-  int get totalSteps => formDefinition?.orderedGroups.length ?? 0;
+  /// Get total number of steps (including additional information step)
+  int get totalSteps {
+    if (formDefinition == null) return 0;
+    return formDefinition!.orderedGroups.length + 1; // +1 for additional information step
+  }
+
+  /// Check if current step is the additional information step
+  bool get isAdditionalInformationStep {
+    if (formDefinition == null) return false;
+    return currentStep == formDefinition!.orderedGroups.length;
+  }
 
   /// Get current group
   RfqQuestionGroup? get currentGroup {
@@ -79,6 +97,8 @@ class RfqState extends Equatable {
         answers,
         validationErrors,
         errorMessage,
+        selectedProductIds,
+        requirementDescription,
       ];
 }
 

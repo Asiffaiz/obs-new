@@ -20,6 +20,9 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
     on<SubmitRfqForm>(_onSubmitRfqForm);
     on<SaveRfqFormAsDraft>(_onSaveRfqFormAsDraft);
     on<ValidateCurrentStep>(_onValidateCurrentStep);
+    on<AddProduct>(_onAddProduct);
+    on<RemoveProduct>(_onRemoveProduct);
+    on<UpdateRequirementDescription>(_onUpdateRequirementDescription);
   }
 
   Future<void> _onLoadRfqFormData(
@@ -67,16 +70,23 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
     if (state.formDefinition == null) return;
 
     final orderedGroups = state.formDefinition!.orderedGroups;
-    final isLastStep = state.currentStep >= orderedGroups.length - 1;
+    final isLastDynamicStep = state.currentStep >= orderedGroups.length - 1;
+    final isAdditionalInfoStep = state.currentStep == orderedGroups.length;
 
-    // Validate current step
-    if (!_validateCurrentStep(emit)) {
+    // Validate current step (skip validation for additional info step)
+    if (!isAdditionalInfoStep && !_validateCurrentStep(emit)) {
       return;
     }
 
-    if (isLastStep) {
-      // Submit the form
+    if (isAdditionalInfoStep) {
+      // On additional info step, submit the form
       add(const SubmitRfqForm());
+    } else if (isLastDynamicStep) {
+      // Move from last dynamic step to additional info step
+      emit(state.copyWith(
+        currentStep: state.currentStep + 1,
+        validationErrors: {},
+      ));
     } else {
       // Save as draft and move to next step
       emit(state.copyWith(status: RfqFormStatus.saving));
@@ -85,7 +95,7 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
         await _rfqRepository.saveRfqFormAsDraft(
           answers: state.answers,
           currentStep: state.currentStep + 1,
-          totalSteps: orderedGroups.length,
+          totalSteps: orderedGroups.length + 1, // +1 for additional info step
         );
 
         emit(state.copyWith(
@@ -131,7 +141,7 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
       final success = await _rfqRepository.submitRfqForm(
         answers: state.answers,
         currentStep: state.currentStep + 1,
-        totalSteps: state.formDefinition!.orderedGroups.length,
+        totalSteps: state.formDefinition!.orderedGroups.length + 1, // +1 for additional info step
       );
 
       if (success) {
@@ -162,7 +172,7 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
       await _rfqRepository.saveRfqFormAsDraft(
         answers: state.answers,
         currentStep: state.currentStep + 1,
-        totalSteps: state.formDefinition!.orderedGroups.length,
+        totalSteps: state.formDefinition!.orderedGroups.length + 1, // +1 for additional info step
       );
 
       emit(state.copyWith(status: RfqFormStatus.loaded));
@@ -211,6 +221,33 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
 
     emit(state.copyWith(validationErrors: {}));
     return true;
+  }
+
+  void _onAddProduct(
+    AddProduct event,
+    Emitter<RfqState> emit,
+  ) {
+    final currentProducts = List<int>.from(state.selectedProductIds);
+    if (!currentProducts.contains(event.productId)) {
+      currentProducts.add(event.productId);
+      emit(state.copyWith(selectedProductIds: currentProducts));
+    }
+  }
+
+  void _onRemoveProduct(
+    RemoveProduct event,
+    Emitter<RfqState> emit,
+  ) {
+    final currentProducts = List<int>.from(state.selectedProductIds);
+    currentProducts.remove(event.productId);
+    emit(state.copyWith(selectedProductIds: currentProducts));
+  }
+
+  void _onUpdateRequirementDescription(
+    UpdateRequirementDescription event,
+    Emitter<RfqState> emit,
+  ) {
+    emit(state.copyWith(requirementDescription: event.description));
   }
 }
 

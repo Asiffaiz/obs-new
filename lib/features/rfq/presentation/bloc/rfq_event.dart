@@ -61,3 +61,33 @@ class ValidateCurrentStep extends RfqEvent {
   const ValidateCurrentStep();
 }
 
+/// Add a product to the selection
+class AddProduct extends RfqEvent {
+  final int productId;
+
+  const AddProduct(this.productId);
+
+  @override
+  List<Object?> get props => [productId];
+}
+
+/// Remove a product from the selection
+class RemoveProduct extends RfqEvent {
+  final int productId;
+
+  const RemoveProduct(this.productId);
+
+  @override
+  List<Object?> get props => [productId];
+}
+
+/// Update requirement description
+class UpdateRequirementDescription extends RfqEvent {
+  final String description;
+
+  const UpdateRequirementDescription(this.description);
+
+  @override
+  List<Object?> get props => [description];
+}
+
