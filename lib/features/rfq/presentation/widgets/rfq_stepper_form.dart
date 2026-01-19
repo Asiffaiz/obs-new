@@ -516,6 +516,10 @@ class _RfqStepperFormState extends State<RfqStepperForm>
 
               // Requirement Description Textarea
               _buildRequirementDescriptionField(context, state),
+              const SizedBox(height: 20),
+
+              // Attachment Field
+              _buildAttachmentField(context, state),
             ],
           ),
         );
@@ -601,6 +605,15 @@ class _RfqStepperFormState extends State<RfqStepperForm>
           context.read<RfqBloc>().add(UpdateRequirementDescription(value));
         },
       ),
+    );
+  }
+
+  Widget _buildAttachmentField(BuildContext context, RfqState state) {
+    return _RfqAttachmentField(
+      initialValue: state.attachmentFile,
+      onChanged: (filePath) {
+        context.read<RfqBloc>().add(UpdateAttachmentFile(filePath));
+      },
     );
   }
 
@@ -1730,6 +1743,255 @@ class _SelectedProductTile extends StatelessWidget {
                   ),
                 ),
           ),
+    );
+  }
+}
+
+// ===== Attachment Field Widget =====
+
+class _RfqAttachmentField extends StatefulWidget {
+  final String? initialValue;
+  final ValueChanged<String?> onChanged;
+
+  const _RfqAttachmentField({
+    required this.initialValue,
+    required this.onChanged,
+  });
+
+  @override
+  State<_RfqAttachmentField> createState() => _RfqAttachmentFieldState();
+}
+
+class _RfqAttachmentFieldState extends State<_RfqAttachmentField> {
+  String? _fileName;
+  Uint8List? _fileBytes;
+  bool _isUploading = false;
+
+  static const int maxFileSize = 50 * 1024 * 1024; // 50MB
+  final List<String> _allowedExtensions = [
+    'png',
+    'jpg',
+    'jpeg',
+    'pdf',
+    'doc',
+    'docx',
+    'xls',
+    'xlsx',
+    'csv',
+    'txt',
+    'zip',
+    'rar',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
+      _fileName = widget.initialValue;
+    }
+  }
+
+  Future<void> _pickFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: _allowedExtensions,
+        allowMultiple: false,
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+
+        if (file.size > maxFileSize) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('File is too large. Maximum size is 50MB.'),
+                backgroundColor: AppColors.errorColor,
+              ),
+            );
+          }
+          return;
+        }
+
+        setState(() {
+          _isUploading = true;
+        });
+
+        // Get file bytes
+        Uint8List? bytes = file.bytes;
+        if (bytes == null && file.path != null) {
+          bytes = await File(file.path!).readAsBytes();
+        }
+
+        if (bytes != null) {
+          setState(() {
+            _fileName = file.name;
+            _fileBytes = bytes;
+            _isUploading = false;
+          });
+
+          // Convert to base64 and notify parent
+          final base64Data = base64Encode(bytes);
+          widget.onChanged(base64Data);
+        }
+      }
+    } catch (e) {
+      setState(() => _isUploading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking file: $e'),
+            backgroundColor: AppColors.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+  void _clearFile() {
+    setState(() {
+      _fileName = null;
+      _fileBytes = null;
+    });
+    widget.onChanged(null);
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'Attachment',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        if (_fileName != null)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey.shade50,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.insert_drive_file,
+                  color: Colors.grey.shade600,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _fileName!,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (_fileBytes != null)
+                        Text(
+                          _formatFileSize(_fileBytes!.length),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    color: Colors.grey.shade600,
+                    size: 20,
+                  ),
+                  onPressed: _clearFile,
+                ),
+              ],
+            ),
+          )
+        else
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: 0,
+              maxWidth: double.infinity,
+            ),
+            child: InkWell(
+              onTap: _isUploading ? null : _pickFile,
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Icon(
+                        Icons.attach_file,
+                        color: Colors.grey.shade600,
+                        size: 20,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _isUploading ? 'Uploading...' : 'Select file',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ),
+                    if (_isUploading)
+                      const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+        // File format and size info
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            'Supported formats: PNG, JPG, PDF, DOC, DOCX, XLS, XLSX, CSV, TXT, ZIP, RAR\nMax file size: 50 MB',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

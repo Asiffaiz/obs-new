@@ -19,6 +19,7 @@ class RfqState extends Equatable {
   final String? errorMessage;
   final List<int> selectedProductIds; // IDs of selected products
   final String? requirementDescription; // Additional requirement description
+  final String? attachmentFile; // Attachment file path or base64
 
   const RfqState({
     this.status = RfqFormStatus.initial,
@@ -29,6 +30,7 @@ class RfqState extends Equatable {
     this.errorMessage,
     this.selectedProductIds = const [],
     this.requirementDescription,
+    this.attachmentFile,
   });
 
   RfqState copyWith({
@@ -40,6 +42,7 @@ class RfqState extends Equatable {
     String? errorMessage,
     List<int>? selectedProductIds,
     String? requirementDescription,
+    String? attachmentFile,
   }) {
     return RfqState(
       status: status ?? this.status,
@@ -50,6 +53,7 @@ class RfqState extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
       selectedProductIds: selectedProductIds ?? this.selectedProductIds,
       requirementDescription: requirementDescription ?? this.requirementDescription,
+      attachmentFile: attachmentFile ?? this.attachmentFile,
     );
   }
 
@@ -99,6 +103,7 @@ class RfqState extends Equatable {
         errorMessage,
         selectedProductIds,
         requirementDescription,
+        attachmentFile,
       ];
 }
 

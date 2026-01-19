@@ -91,3 +91,13 @@ class UpdateRequirementDescription extends RfqEvent {
   List<Object?> get props => [description];
 }
 
+/// Update attachment file
+class UpdateAttachmentFile extends RfqEvent {
+  final String? filePath;
+
+  const UpdateAttachmentFile(this.filePath);
+
+  @override
+  List<Object?> get props => [filePath];
+}
+

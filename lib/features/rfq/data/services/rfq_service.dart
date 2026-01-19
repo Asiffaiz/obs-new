@@ -33,9 +33,84 @@ class RfqService {
     final mockResponse = _getMockRfqData();
     final servicesList = mockResponse['servicesListing'] as List? ?? [];
     
-    return servicesList
+    final products = servicesList
         .map((service) => RfqProduct.fromJson(service as Map<String, dynamic>))
         .toList();
+
+    // Add additional dummy products
+    products.addAll(_getAdditionalDummyProducts());
+    
+    return products;
+  }
+
+  /// Get additional dummy products for testing
+  List<RfqProduct> _getAdditionalDummyProducts() {
+    return [
+      RfqProduct(
+        id: 200,
+        serviceTitle: 'Cloud Infrastructure Services',
+        productTitle: 'Cloud Services',
+        productDesc: '<p>Comprehensive cloud infrastructure solutions for scalable business operations.</p>',
+        productSummary: 'Enterprise-grade cloud infrastructure with 99.9% uptime guarantee',
+        sku: 'CLOUD-001',
+      ),
+      RfqProduct(
+        id: 201,
+        serviceTitle: 'Data Analytics Platform',
+        productTitle: 'Analytics Platform',
+        productDesc: '<p>Advanced data analytics and business intelligence platform.</p>',
+        productSummary: 'Real-time data analytics with AI-powered insights',
+        sku: 'DATA-001',
+      ),
+      RfqProduct(
+        id: 202,
+        serviceTitle: 'Cybersecurity Solutions',
+        productTitle: 'Security Services',
+        productDesc: '<p>Enterprise cybersecurity solutions to protect your digital assets.</p>',
+        productSummary: '24/7 security monitoring and threat protection',
+        sku: 'SEC-001',
+      ),
+      RfqProduct(
+        id: 203,
+        serviceTitle: 'API Integration Services',
+        productTitle: 'Integration Services',
+        productDesc: '<p>Seamless API integration services for connecting your systems.</p>',
+        productSummary: 'Custom API integrations with third-party services',
+        sku: 'API-001',
+      ),
+      RfqProduct(
+        id: 204,
+        serviceTitle: 'Customer Support Portal',
+        productTitle: 'Support Portal',
+        productDesc: '<p>Dedicated customer support portal with ticketing system.</p>',
+        productSummary: 'Multi-channel customer support with automated ticketing',
+        sku: 'SUPPORT-001',
+      ),
+      RfqProduct(
+        id: 205,
+        serviceTitle: 'E-commerce Platform',
+        productTitle: 'E-commerce Solution',
+        productDesc: '<p>Complete e-commerce platform with payment gateway integration.</p>',
+        productSummary: 'Full-featured e-commerce solution with inventory management',
+        sku: 'ECOMM-001',
+      ),
+      RfqProduct(
+        id: 206,
+        serviceTitle: 'Content Management System',
+        productTitle: 'CMS Platform',
+        productDesc: '<p>Enterprise content management system for digital content.</p>',
+        productSummary: 'Flexible CMS with multi-site management capabilities',
+        sku: 'CMS-001',
+      ),
+      RfqProduct(
+        id: 207,
+        serviceTitle: 'Project Management Tool',
+        productTitle: 'PM Software',
+        productDesc: '<p>Comprehensive project management and collaboration platform.</p>',
+        productSummary: 'Agile project management with team collaboration features',
+        sku: 'PM-001',
+      ),
+    ];
   }
 
   /// Submit RFQ form

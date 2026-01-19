@@ -23,6 +23,7 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
     on<AddProduct>(_onAddProduct);
     on<RemoveProduct>(_onRemoveProduct);
     on<UpdateRequirementDescription>(_onUpdateRequirementDescription);
+    on<UpdateAttachmentFile>(_onUpdateAttachmentFile);
   }
 
   Future<void> _onLoadRfqFormData(
@@ -248,6 +249,13 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
     Emitter<RfqState> emit,
   ) {
     emit(state.copyWith(requirementDescription: event.description));
+  }
+
+  void _onUpdateAttachmentFile(
+    UpdateAttachmentFile event,
+    Emitter<RfqState> emit,
+  ) {
+    emit(state.copyWith(attachmentFile: event.filePath));
   }
 }
 
