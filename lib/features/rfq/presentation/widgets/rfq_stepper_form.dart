@@ -34,6 +34,7 @@ class _RfqStepperFormState extends State<RfqStepperForm>
   void initState() {
     super.initState();
     _animationController = AnimationController(
+      
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
