@@ -282,115 +282,119 @@ class _RfqSubmissionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row with ID and Status
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // RFQ Account No (ID)
-                Row(
-                  children: [
-                    Text(
-                      'ID: ',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade600,
+      child: InkWell(
+        onTap: onViewDetails,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row with ID and Status
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // RFQ Account No (ID)
+                  Row(
+                    children: [
+                      Text(
+                        'ID: ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
-                    ),
-                    Text(
-                      submission.rfqAccountNo,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                      Text(
+                        submission.rfqAccountNo,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                // Status badge
-                _buildStatusBadge(),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Created Date
-            _buildInfoRow(
-              icon: Icons.calendar_today_outlined,
-              label: 'Created Date',
-              value: _formatDate(submission.createdAt),
-            ),
-            const SizedBox(height: 12),
-
-            // Attachment
-            _buildInfoRow(
-              icon: Icons.attach_file,
-              label: 'Attachment',
-              value: submission.hasAttachment ? 'Attached' : 'No Attachment',
-              isEmpty: !submission.hasAttachment,
-            ),
-            const SizedBox(height: 12),
-
-            // Updated At (if available)
-            if (submission.dateUpdated != null) ...[
-              _buildInfoRow(
-                icon: Icons.update,
-                label: 'Updated At',
-                value: _formatDate(submission.dateUpdated!),
+                    ],
+                  ),
+                  // Status badge
+                  _buildStatusBadge(),
+                ],
               ),
               const SizedBox(height: 16),
-            ] else
-              const SizedBox(height: 16),
 
-            // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onViewDetails,
-                    icon: const Icon(Icons.visibility_outlined, size: 16),
-                    label: const Text(
-                      'RFQ Details',
-                      style: TextStyle(fontSize: 13),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      side: BorderSide(color: AppColors.primaryColor),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
+              // Created Date
+              _buildInfoRow(
+                icon: Icons.calendar_today_outlined,
+                label: 'Created Date',
+                value: _formatDate(submission.createdAt),
+              ),
+              const SizedBox(height: 12),
+
+              // Attachment
+              _buildInfoRow(
+                icon: Icons.attach_file,
+                label: 'Attachment',
+                value: submission.hasAttachment ? 'Attached' : 'No Attachment',
+                isEmpty: !submission.hasAttachment,
+              ),
+              const SizedBox(height: 12),
+
+              // Updated At (if available)
+              if (submission.dateUpdated != null) ...[
+                _buildInfoRow(
+                  icon: Icons.update,
+                  label: 'Updated At',
+                  value: _formatDate(submission.dateUpdated!),
                 ),
-                // Only show Edit button if status is not completed
-                if (submission.status.toLowerCase() != 'completed') ...[
-                  const SizedBox(width: 12),
+                const SizedBox(height: 16),
+              ] else
+                const SizedBox(height: 16),
+
+              // Action buttons
+              Row(
+                children: [
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: onEdit,
-                      icon: const Icon(Icons.edit_outlined, size: 16),
+                    child: OutlinedButton.icon(
+                      onPressed: onViewDetails,
+                      icon: const Icon(Icons.visibility_outlined, size: 16),
                       label: const Text(
-                        'Edit RFQ',
+                        'RFQ Details',
                         style: TextStyle(fontSize: 13),
                       ),
-                      style: ElevatedButton.styleFrom(
+                      style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        backgroundColor: AppColors.primaryColor,
-                        foregroundColor: Colors.white,
+                        side: BorderSide(color: AppColors.primaryColor),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
                   ),
+                  // Only show Edit button if status is not completed
+                  if (submission.status.toLowerCase() != 'completed') ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit_outlined, size: 16),
+                        label: const Text(
+                          'Edit RFQ',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          backgroundColor: AppColors.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
