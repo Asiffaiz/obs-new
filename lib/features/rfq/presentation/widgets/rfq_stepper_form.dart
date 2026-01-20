@@ -31,6 +31,7 @@ class _RfqStepperFormState extends State<RfqStepperForm>
   late Animation<Offset> _slideAnimation;
 
   int _previousStep = 0;
+  Future<List<RfqProduct>>? _productsFuture; // Cache products future
 
   @override
   void initState() {
@@ -456,10 +457,15 @@ class _RfqStepperFormState extends State<RfqStepperForm>
   }
 
   Widget _buildAdditionalInformationStep(BuildContext context, RfqState state) {
+    // Load products only once and cache the future
+    _productsFuture ??= RfqService().getRfqProducts();
+
     return FutureBuilder<List<RfqProduct>>(
-      future: RfqService().getRfqProducts(),
+      future: _productsFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        // Show loading only on initial load, not on every rebuild
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(32.0),
