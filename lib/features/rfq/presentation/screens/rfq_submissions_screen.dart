@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/rfq/data/repositories/rfq_repository_impl.dart';
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_submission_model.dart';
 import 'package:voicealerts_obs/features/rfq/presentation/bloc/rfq_submissions_bloc.dart';
-import 'package:voicealerts_obs/features/rfq/presentation/screens/rfq_form_screen.dart';
 
 /// RFQ Submissions Listing Screen
 class RfqSubmissionsScreen extends StatelessWidget {
@@ -49,7 +50,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
             if (onNavigateBack != null) {
               onNavigateBack!();
             } else {
-              Navigator.of(context).pop();
+              context.pop();
             }
           },
         ),
@@ -227,33 +228,10 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
   }
 
   void _navigateToRfqForm(BuildContext context) {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => RfqFormScreen(
-          onNavigateBack: () {
-            Navigator.of(context).pop();
-            // Refresh the list when returning
-            context.read<RfqSubmissionsBloc>().add(const RefreshRfqSubmissions());
-          },
-        ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(1.0, 0.0);
-          const end = Offset.zero;
-          const curve = Curves.easeOutCubic;
-
-          var tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
-
-          return SlideTransition(
-            position: animation.drive(tween),
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 300),
-        reverseTransitionDuration: const Duration(milliseconds: 250),
-      ),
-    );
+    context.push(AppRoutes.rfqForm).then((_) {
+      // Refresh the list when returning from form
+      context.read<RfqSubmissionsBloc>().add(const RefreshRfqSubmissions());
+    });
   }
 }
 

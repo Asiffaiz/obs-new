@@ -298,17 +298,21 @@ GoRouter createRouter(AuthBloc authBloc) {
         pageBuilder: (context, state) {
           return CustomTransitionPage<void>(
             key: state.pageKey,
-            child: RfqSubmissionsScreen(
-              onNavigateBack: () => Navigator.of(context).pop(),
-            ),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            child: RfqSubmissionsScreen(onNavigateBack: () => context.pop()),
+            transitionsBuilder: (
+              context,
+              animation,
+              secondaryAnimation,
+              child,
+            ) {
               const begin = Offset(1.0, 0.0);
               const end = Offset.zero;
               const curve = Curves.easeOutCubic;
 
-              var tween = Tween(begin: begin, end: end).chain(
-                CurveTween(curve: curve),
-              );
+              var tween = Tween(
+                begin: begin,
+                end: end,
+              ).chain(CurveTween(curve: curve));
 
               return SlideTransition(
                 position: animation.drive(tween),
@@ -327,17 +331,21 @@ GoRouter createRouter(AuthBloc authBloc) {
         pageBuilder: (context, state) {
           return CustomTransitionPage<void>(
             key: state.pageKey,
-            child: RfqFormScreen(
-              onNavigateBack: () => Navigator.of(context).pop(),
-            ),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            child: RfqFormScreen(onNavigateBack: () => context.pop()),
+            transitionsBuilder: (
+              context,
+              animation,
+              secondaryAnimation,
+              child,
+            ) {
               const begin = Offset(1.0, 0.0);
               const end = Offset.zero;
               const curve = Curves.easeOutCubic;
 
-              var tween = Tween(begin: begin, end: end).chain(
-                CurveTween(curve: curve),
-              );
+              var tween = Tween(
+                begin: begin,
+                end: end,
+              ).chain(CurveTween(curve: curve));
 
               return SlideTransition(
                 position: animation.drive(tween),

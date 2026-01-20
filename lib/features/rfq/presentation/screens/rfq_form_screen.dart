@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/rfq/data/repositories/rfq_repository_impl.dart';
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
@@ -47,7 +48,7 @@ class _RfqFormScreenContent extends StatelessWidget {
             if (onNavigateBack != null) {
               onNavigateBack!();
             } else {
-              Navigator.of(context).pop();
+              context.pop();
             }
           },
         ),

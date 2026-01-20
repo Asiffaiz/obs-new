@@ -102,7 +102,10 @@ class _RfqStepperFormState extends State<RfqStepperForm>
               backgroundColor: AppColors.successColor,
             ),
           );
-          widget.onSubmitSuccess?.call();
+          // Use postFrameCallback to ensure navigation happens after the frame is built
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            widget.onSubmitSuccess?.call();
+          });
         }
 
         if (state.status == RfqFormStatus.error && state.errorMessage != null) {
