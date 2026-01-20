@@ -1,77 +1,51 @@
 /// Model for RFQ submission listing
 class RfqSubmission {
-  final int id;
-  final String submissionId;
+  final String rfqAccountNo;
+  final DateTime createdAt;
+  final String? rfqAttachment;
   final String status;
-  final DateTime submittedAt;
-  final DateTime? updatedAt;
-  final String? title;
-  final int totalSteps;
-  final int completedSteps;
-  final Map<String, dynamic>? answers;
+  final DateTime? dateUpdated;
 
   RfqSubmission({
-    required this.id,
-    required this.submissionId,
+    required this.rfqAccountNo,
+    required this.createdAt,
+    this.rfqAttachment,
     required this.status,
-    required this.submittedAt,
-    this.updatedAt,
-    this.title,
-    required this.totalSteps,
-    required this.completedSteps,
-    this.answers,
+    this.dateUpdated,
   });
 
   factory RfqSubmission.fromJson(Map<String, dynamic> json) {
     return RfqSubmission(
-      id: json['id'] as int? ?? 0,
-      submissionId: (json['submission_id'] ?? '').toString(),
-      status: (json['status'] ?? 'draft').toString(),
-      submittedAt: DateTime.tryParse(json['submitted_at'] ?? '') ?? DateTime.now(),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'])
-          : null,
-      title: json['title']?.toString(),
-      totalSteps: json['total_steps'] as int? ?? 0,
-      completedSteps: json['completed_steps'] as int? ?? 0,
-      answers: json['answers'] as Map<String, dynamic>?,
+      rfqAccountNo: (json['rfq_accountno'] ?? '').toString(),
+      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      rfqAttachment: json['rfq_attachement']?.toString(),
+      status: (json['status'] ?? 'pending').toString(),
+      dateUpdated:
+          json['dateUpdated'] != null
+              ? DateTime.tryParse(json['dateUpdated'])
+              : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'submission_id': submissionId,
-        'status': status,
-        'submitted_at': submittedAt.toIso8601String(),
-        'updated_at': updatedAt?.toIso8601String(),
-        'title': title,
-        'total_steps': totalSteps,
-        'completed_steps': completedSteps,
-        'answers': answers,
-      };
+    'rfq_accountno': rfqAccountNo,
+    'createdAt': createdAt.toIso8601String(),
+    'rfq_attachement': rfqAttachment,
+    'status': status,
+    'dateUpdated': dateUpdated?.toIso8601String(),
+  };
 
-  /// Check if the submission is a draft
-  bool get isDraft => status.toLowerCase() == 'draft';
-
-  /// Check if the submission is completed
-  bool get isCompleted => status.toLowerCase() == 'completed' || status.toLowerCase() == 'submitted';
-
-  /// Get progress percentage
-  double get progressPercentage {
-    if (totalSteps == 0) return 0;
-    return (completedSteps / totalSteps) * 100;
-  }
+  /// Check if attachment exists
+  bool get hasAttachment => rfqAttachment != null && rfqAttachment!.isNotEmpty;
 
   /// Get display status
   String get displayStatus {
     switch (status.toLowerCase()) {
-      case 'draft':
-        return 'Draft';
-      case 'submitted':
-      case 'completed':
-        return 'Submitted';
       case 'pending':
         return 'Pending Review';
+      case 'submitted':
+      case 'completed':
+        return 'Completed';
       case 'approved':
         return 'Approved';
       case 'rejected':
@@ -81,4 +55,3 @@ class RfqSubmission {
     }
   }
 }
-

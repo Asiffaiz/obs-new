@@ -30,14 +30,6 @@ class RfqSubmissionsState extends Equatable {
     );
   }
 
-  /// Get drafts
-  List<RfqSubmission> get drafts =>
-      submissions.where((s) => s.isDraft).toList();
-
-  /// Get submitted RFQs
-  List<RfqSubmission> get submitted =>
-      submissions.where((s) => !s.isDraft).toList();
-
   @override
   List<Object?> get props => [status, submissions, errorMessage];
 }

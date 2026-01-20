@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:voicealerts_obs/config/routes.dart';
+import 'package:voicealerts_obs/core/constants/breakpoints.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/rfq/data/repositories/rfq_repository_impl.dart';
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
@@ -209,22 +210,52 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
   }
 
   Widget _buildSubmissionsList(BuildContext context, RfqSubmissionsState state) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: state.submissions.length,
-      itemBuilder: (context, index) {
-        final submission = state.submissions[index];
-        return _RfqSubmissionCard(
-          submission: submission,
-          onTap: () {
-            // TODO: Handle tap - open detail or continue draft
-            if (submission.isDraft) {
+    // Check if device is tablet (width >= tablet breakpoint)
+    final isTablet = MediaQuery.of(context).size.width >= Breakpoints.tablet;
+
+    if (isTablet) {
+      // Grid layout for tablet (2 columns)
+      return GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 0.75,
+        ),
+        itemCount: state.submissions.length,
+        itemBuilder: (context, index) {
+          final submission = state.submissions[index];
+          return _RfqSubmissionCard(
+            submission: submission,
+            onViewDetails: () {
+              // TODO: Navigate to RFQ Details screen
+            },
+            onEdit: () {
               _navigateToRfqForm(context);
-            }
-          },
-        );
-      },
-    );
+            },
+          );
+        },
+      );
+    } else {
+      // List layout for mobile (1 column)
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: state.submissions.length,
+        itemBuilder: (context, index) {
+          final submission = state.submissions[index];
+          return _RfqSubmissionCard(
+            submission: submission,
+            onViewDetails: () {
+              // TODO: Navigate to RFQ Details screen
+            },
+            onEdit: () {
+              _navigateToRfqForm(context);
+            },
+          );
+        },
+      );
+    }
   }
 
   void _navigateToRfqForm(BuildContext context) {
@@ -238,11 +269,13 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
 /// RFQ Submission Card Widget
 class _RfqSubmissionCard extends StatelessWidget {
   final RfqSubmission submission;
-  final VoidCallback onTap;
+  final VoidCallback onViewDetails;
+  final VoidCallback onEdit;
 
   const _RfqSubmissionCard({
     required this.submission,
-    required this.onTap,
+    required this.onViewDetails,
+    required this.onEdit,
   });
 
   @override
@@ -254,99 +287,161 @@ class _RfqSubmissionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row with ID and Status
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // RFQ Account No (ID)
+                Row(
+                  children: [
+                    Text(
+                      'ID: ',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    Text(
+                      submission.rfqAccountNo,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                // Status badge
+                _buildStatusBadge(),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Created Date
+            _buildInfoRow(
+              icon: Icons.calendar_today_outlined,
+              label: 'Created Date',
+              value: _formatDate(submission.createdAt),
+            ),
+            const SizedBox(height: 12),
+
+            // Attachment
+            _buildInfoRow(
+              icon: Icons.attach_file,
+              label: 'Attachment',
+              value: submission.hasAttachment ? 'Attached' : 'No Attachment',
+              isEmpty: !submission.hasAttachment,
+            ),
+            const SizedBox(height: 12),
+
+            // Updated At (if available)
+            if (submission.dateUpdated != null) ...[
+              _buildInfoRow(
+                icon: Icons.update,
+                label: 'Updated At',
+                value: _formatDate(submission.dateUpdated!),
+              ),
+              const SizedBox(height: 16),
+            ] else
+              const SizedBox(height: 16),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onViewDetails,
+                    icon: const Icon(Icons.visibility_outlined, size: 16),
+                    label: const Text(
+                      'RFQ Details',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      side: BorderSide(color: AppColors.primaryColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                // Only show Edit button if status is not completed
+                if (submission.status.toLowerCase() != 'completed') ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      label: const Text(
+                        'Edit RFQ',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        backgroundColor: AppColors.primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isEmpty = false,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 16,
+          color: isEmpty ? Colors.grey.shade400 : Colors.grey.shade600,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Submission ID
-                  Text(
-                    submission.submissionId,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  // Status badge
-                  _buildStatusBadge(),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Title
               Text(
-                submission.title ?? 'Untitled RFQ',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
-
-              // Progress bar for drafts
-              if (submission.isDraft) ...[
-                _buildProgressBar(),
-                const SizedBox(height: 12),
-              ],
-
-              // Footer row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Date
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: Colors.grey.shade500,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _formatDate(submission.submittedAt),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Action indicator
-                  Row(
-                    children: [
-                      Text(
-                        submission.isDraft ? 'Continue' : 'View',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 12,
-                        color: AppColors.primaryColor,
-                      ),
-                    ],
-                  ),
-                ],
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isEmpty ? Colors.grey.shade400 : Colors.black87,
+                  fontStyle: isEmpty ? FontStyle.italic : FontStyle.normal,
+                ),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -355,14 +450,10 @@ class _RfqSubmissionCard extends StatelessWidget {
     Color textColor;
 
     switch (submission.status.toLowerCase()) {
-      case 'draft':
-        backgroundColor = Colors.orange.shade50;
-        textColor = Colors.orange.shade700;
-        break;
       case 'submitted':
       case 'completed':
-        backgroundColor = Colors.blue.shade50;
-        textColor = Colors.blue.shade700;
+        backgroundColor = Colors.green;
+        textColor = Colors.white;
         break;
       case 'pending':
         backgroundColor = Colors.amber.shade50;
@@ -398,60 +489,8 @@ class _RfqSubmissionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressBar() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Progress',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            Text(
-              '${submission.completedSteps}/${submission.totalSteps} steps',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: submission.progressPercentage / 100,
-            minHeight: 6,
-            backgroundColor: Colors.grey.shade200,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
-          ),
-        ),
-      ],
-    );
-  }
-
   String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        return '${difference.inMinutes} min ago';
-      }
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    }
-
-    return DateFormat('MMM d, yyyy').format(date);
+    return DateFormat('MMM d, yyyy h:mm a').format(date);
   }
 }
 
