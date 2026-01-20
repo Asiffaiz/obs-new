@@ -111,8 +111,13 @@ class RfqService {
       }
 
       if (response.statusCode == 200 && response.data['status'] == 200) {
-        // Extract products from servicesListing in the response
+        // Extract products from servicesListing in the API response
+        // This uses the actual servicesListing array from the API, not dummy data
         final servicesList = response.data['servicesListing'] as List? ?? [];
+
+        if (kDebugMode && servicesList.isEmpty) {
+          print('Warning: servicesListing is empty in API response');
+        }
 
         final products =
             servicesList
@@ -121,6 +126,10 @@ class RfqService {
                       RfqProduct.fromJson(service as Map<String, dynamic>),
                 )
                 .toList();
+
+        if (kDebugMode) {
+          print('Parsed ${products.length} products from servicesListing');
+        }
 
         return products;
       } else {
