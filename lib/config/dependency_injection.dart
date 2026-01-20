@@ -92,11 +92,21 @@ Future<void> initializeDependencies() async {
     // Firebase is already initialized in main.dart
 
     // External
+    // Convoso Google Sign In Client ID
+
     // getIt.registerLazySingleton(() => FirebaseAuth.instance);
+    // getIt.registerLazySingleton(
+    //   () => GoogleSignIn(
+    //     serverClientId:
+    //         '670668615517-8l9qcinrhtgrfoagl2ioo6kneanmhm4d.apps.googleusercontent.com',
+    //   ),
+    // );
+
+    // OBS Google Sign In Client ID
     getIt.registerLazySingleton(
       () => GoogleSignIn(
         serverClientId:
-            '670668615517-8l9qcinrhtgrfoagl2ioo6kneanmhm4d.apps.googleusercontent.com',
+            '616659347689-h18jsfil8hjifee02djfsv8ce8d60514.apps.googleusercontent.com',
       ),
     );
 
@@ -141,9 +151,7 @@ Future<void> initializeDependencies() async {
   );
 
   getIt.registerLazySingleton<OnboardingSettingsRepository>(
-    () => OnboardingSettingsRepositoryImpl(
-      getIt<OnboardingSettingsService>(),
-    ),
+    () => OnboardingSettingsRepositoryImpl(getIt<OnboardingSettingsService>()),
   );
 
   // BLoCs
