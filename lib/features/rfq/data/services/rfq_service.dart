@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/core/network/api_client.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
+import 'package:voicealerts_obs/features/rfq/data/utils/rfq_payload_builder.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_product_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_submission_model.dart';
@@ -148,29 +151,43 @@ class RfqService {
 
   /// Submit RFQ form
   Future<bool> submitRfqForm({
+    required RfqFormDefinition formDefinition,
     required Map<String, dynamic> answers,
     required int currentStep,
     required int totalSteps,
-    List<int>? selectedProductIds,
+    required List<int> selectedProductIds,
+    required List<RfqProduct> allProducts,
     String? requirementDescription,
     String? attachmentFile,
+    String? fileName,
   }) async {
     try {
-      final email = await getUserEmail();
       final accountNo = await getAccountNo();
 
-      final response = await _apiClient.post(ApiEndpoints.submitRfqForm, {
-        'email': email,
-        'accountno': accountNo,
-        'answers': answers,
-        'currentStep': currentStep,
-        'totalSteps': totalSteps,
-        if (selectedProductIds != null)
-          'selectedProductIds': selectedProductIds,
-        if (requirementDescription != null)
-          'requirementDescription': requirementDescription,
-        if (attachmentFile != null) 'attachmentFile': attachmentFile,
-      });
+      // Fetch all products if not provided (fallback)
+      final products =
+          allProducts.isNotEmpty ? allProducts : await getRfqProducts();
+
+      // Build the payload using the payload builder
+      final payload = RfqPayloadBuilder.buildSubmitPayload(
+        accountNo: accountNo,
+        answers: answers,
+        formDefinition: formDefinition,
+        selectedProductIds: selectedProductIds,
+        allProducts: products,
+        requirementDescription: requirementDescription,
+        attachmentFile: attachmentFile,
+        fileName: fileName,
+      );
+
+      if (kDebugMode) {
+        print('Submit RFQ Form Payload: ${jsonEncode(payload)}');
+      }
+
+      final response = await _apiClient.post(
+        ApiEndpoints.submitRfqForm,
+        payload,
+      );
 
       if (kDebugMode) {
         print('Submit RFQ Form Response: ${response.data}');

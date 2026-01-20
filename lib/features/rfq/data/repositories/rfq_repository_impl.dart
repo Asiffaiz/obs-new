@@ -1,5 +1,6 @@
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_model.dart';
+import 'package:voicealerts_obs/features/rfq/domain/models/rfq_product_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_submission_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/repositories/rfq_repository.dart';
 
@@ -20,20 +21,26 @@ class RfqRepositoryImpl implements RfqRepository {
 
   @override
   Future<bool> submitRfqForm({
+    required RfqFormDefinition formDefinition,
     required Map<String, dynamic> answers,
     required int currentStep,
     required int totalSteps,
-    List<int>? selectedProductIds,
+    required List<int> selectedProductIds,
+    required List<RfqProduct> allProducts,
     String? requirementDescription,
     String? attachmentFile,
+    String? fileName,
   }) async {
     return await _rfqService.submitRfqForm(
+      formDefinition: formDefinition,
       answers: answers,
       currentStep: currentStep,
       totalSteps: totalSteps,
       selectedProductIds: selectedProductIds,
+      allProducts: allProducts,
       requirementDescription: requirementDescription,
       attachmentFile: attachmentFile,
+      fileName: fileName,
     );
   }
 

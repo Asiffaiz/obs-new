@@ -1,4 +1,5 @@
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_model.dart';
+import 'package:voicealerts_obs/features/rfq/domain/models/rfq_product_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_submission_model.dart';
 
 abstract class RfqRepository {
@@ -10,12 +11,15 @@ abstract class RfqRepository {
 
   /// Submit RFQ form
   Future<bool> submitRfqForm({
+    required RfqFormDefinition formDefinition,
     required Map<String, dynamic> answers,
     required int currentStep,
     required int totalSteps,
-    List<int>? selectedProductIds,
+    required List<int> selectedProductIds,
+    required List<RfqProduct> allProducts,
     String? requirementDescription,
     String? attachmentFile,
+    String? fileName,
   });
 
   /// Save RFQ form as draft

@@ -69,7 +69,7 @@ class ApiEndpoints {
   // RFQ endpoints
   static final String getRfqInitialDetails =
       '$baseUrl/appApis/get_rfq_initial_details';
-  static final String submitRfqForm = '$baseUrl/appApis/submit_rfq_form';
+  static final String submitRfqForm = '$baseUrl/appApis/submit_rfq';
   static final String saveRfqFormAsDraft =
       '$baseUrl/appApis/save_rfq_form_as_draft';
   static final String getRfqSubmissions =
