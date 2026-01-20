@@ -591,6 +591,8 @@ class _RfqStepperFormState extends State<RfqStepperForm>
       child: TextFormField(
         initialValue: state.requirementDescription ?? '',
         maxLines: 5,
+        textInputAction: TextInputAction.done,
+        keyboardType: TextInputType.multiline,
         decoration: InputDecoration(
           hintText: 'Describe Your Requirement',
           contentPadding: const EdgeInsets.all(16),
@@ -612,6 +614,10 @@ class _RfqStepperFormState extends State<RfqStepperForm>
         ),
         onChanged: (value) {
           context.read<RfqBloc>().add(UpdateRequirementDescription(value));
+        },
+        onFieldSubmitted: (_) {
+          // Dismiss keyboard when Done is pressed
+          FocusScope.of(context).unfocus();
         },
       ),
     );
@@ -894,6 +900,8 @@ class _RfqTextAreaFieldState extends State<_RfqTextAreaField> {
         TextFormField(
           controller: _controller,
           maxLines: 5,
+          textInputAction: TextInputAction.done,
+          keyboardType: TextInputType.multiline,
           decoration: InputDecoration(
             hintText: widget.question.questionTitle,
             errorText: widget.hasError ? 'This field is required' : null,
@@ -919,6 +927,10 @@ class _RfqTextAreaFieldState extends State<_RfqTextAreaField> {
             ),
           ),
           onChanged: widget.onChanged,
+          onFieldSubmitted: (_) {
+            // Dismiss keyboard when Done is pressed
+            FocusScope.of(context).unfocus();
+          },
         ),
       ],
     );
