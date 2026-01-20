@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voicealerts_obs/core/constants/network_urls.dart';
 import 'package:voicealerts_obs/core/network/api_client.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
+import 'package:voicealerts_obs/core/services/token_service.dart';
 import 'package:voicealerts_obs/features/rfq/data/utils/rfq_payload_builder.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_product_model.dart';
@@ -12,6 +16,7 @@ import 'package:voicealerts_obs/features/rfq/domain/models/rfq_submission_model.
 /// Service for RFQ API calls
 class RfqService {
   final ApiClient _apiClient = ApiClient();
+  final TokenService _tokenService = TokenService();
 
   // Keys for shared preferences
   static const String _accountNoKey = 'client_acn__';
@@ -149,7 +154,7 @@ class RfqService {
     }
   }
 
-  /// Submit RFQ form
+  /// Submit RFQ form as FormData (multipart/form-data)
   Future<bool> submitRfqForm({
     required RfqFormDefinition formDefinition,
     required Map<String, dynamic> answers,
@@ -163,13 +168,18 @@ class RfqService {
   }) async {
     try {
       final accountNo = await getAccountNo();
+      final token = await _tokenService.getAccessToken();
+
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
 
       // Fetch all products if not provided (fallback)
       final products =
           allProducts.isNotEmpty ? allProducts : await getRfqProducts();
 
-      // Build the payload using the payload builder
-      final payload = RfqPayloadBuilder.buildSubmitPayload(
+      // Build the payload data using the payload builder
+      final payloadData = RfqPayloadBuilder.buildSubmitPayload(
         accountNo: accountNo,
         answers: answers,
         formDefinition: formDefinition,
@@ -180,25 +190,91 @@ class RfqService {
         fileName: fileName,
       );
 
-      if (kDebugMode) {
-        print('Submit RFQ Form Payload: ${jsonEncode(payload)}');
-      }
-
-      final response = await _apiClient.post(
-        ApiEndpoints.submitRfqForm,
-        payload,
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiEndpoints.submitRfqForm),
       );
 
-      if (kDebugMode) {
-        print('Submit RFQ Form Response: ${response.data}');
+      // Add headers
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      // Add form fields
+      request.fields['token'] = NetworkUrls.reactAppApiToken;
+      request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
+      request.fields['accountno'] = accountNo;
+      request.fields['rfq_comments'] = requirementDescription ?? '';
+      request.fields['rfq_accountno'] = payloadData['rfq_accountno'] as String;
+
+      // Add JSON stringified arrays
+      request.fields['rfq_questions_rows'] = jsonEncode(
+        payloadData['rfq_questions_rows'],
+      );
+      request.fields['services_rows'] = jsonEncode(
+        payloadData['services_rows'],
+      );
+
+      // Handle file attachment
+      if (attachmentFile != null && attachmentFile.isNotEmpty) {
+        try {
+          // Decode base64 to bytes
+          Uint8List fileBytes;
+          String processedBase64 = attachmentFile;
+
+          // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+          if (attachmentFile.contains(',')) {
+            processedBase64 = attachmentFile.split(',')[1];
+          }
+
+          fileBytes = base64Decode(processedBase64);
+
+          // Use fileName if provided, otherwise use a default name
+          final fileFieldName = fileName ?? 'attachment';
+
+          // Add file as multipart file
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'file',
+              fileBytes,
+              filename: fileFieldName,
+            ),
+          );
+
+          // Add fileName field
+          if (fileName != null && fileName.isNotEmpty) {
+            request.fields['fileName'] = fileName;
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error processing file attachment: $e');
+          }
+          // Continue without file if there's an error
+        }
       }
 
-      if (response.statusCode == 200 && response.data['status'] == 200) {
+      if (kDebugMode) {
+        print('Submit RFQ Form - Sending FormData');
+        print('Fields: ${request.fields}');
+        print('Files: ${request.files.length}');
+      }
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (kDebugMode) {
+        print('Submit RFQ Form Response Status: ${response.statusCode}');
+        print('Submit RFQ Form Response Body: ${response.body}');
+      }
+
+      // Parse response
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['status'] == 200) {
         return true;
       } else {
-        throw Exception(
-          response.data['message'] ?? 'Failed to submit RFQ form',
-        );
+        throw Exception(responseData['message'] ?? 'Failed to submit RFQ form');
       }
     } catch (e) {
       if (kDebugMode) {
