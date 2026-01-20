@@ -9,6 +9,7 @@ import 'package:voicealerts_obs/core/network/api_client.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
 import 'package:voicealerts_obs/core/services/token_service.dart';
 import 'package:voicealerts_obs/features/rfq/data/utils/rfq_payload_builder.dart';
+import 'package:voicealerts_obs/features/rfq/domain/models/rfq_detail_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_product_model.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_submission_model.dart';
@@ -282,6 +283,41 @@ class RfqService {
       }
       throw Exception(
         'An error occurred while submitting RFQ form: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Get single RFQ details
+  Future<RfqDetail> getSingleRfq(String rfqAccountNo) async {
+    try {
+      final accountNo = await getAccountNo();
+
+      final response = await _apiClient.post(ApiEndpoints.getSingleRfq, {
+        'accountno': accountNo,
+        'rfq_accountno': rfqAccountNo,
+      });
+
+      if (kDebugMode) {
+        print('Get Single RFQ Response: ${response.data}');
+      }
+
+      if (response.statusCode == 200 && response.data['status'] == 200) {
+        final List<dynamic> dataList = response.data['data'] as List? ?? [];
+        if (dataList.isEmpty) {
+          throw Exception('No RFQ details found');
+        }
+        return RfqDetail.fromJson(dataList[0] as Map<String, dynamic>);
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Failed to get RFQ details',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching single RFQ: $e');
+      }
+      throw Exception(
+        'An error occurred while fetching RFQ details: ${e.toString()}',
       );
     }
   }

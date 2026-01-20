@@ -9,24 +9,21 @@ import 'package:voicealerts_obs/features/rfq/data/repositories/rfq_repository_im
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_submission_model.dart';
 import 'package:voicealerts_obs/features/rfq/presentation/bloc/rfq_submissions_bloc.dart';
+import 'package:voicealerts_obs/features/rfq/presentation/widgets/rfq_details_bottom_sheet.dart';
 
 /// RFQ Submissions Listing Screen
 class RfqSubmissionsScreen extends StatelessWidget {
   final VoidCallback? onNavigateBack;
 
-  const RfqSubmissionsScreen({
-    super.key,
-    this.onNavigateBack,
-  });
+  const RfqSubmissionsScreen({super.key, this.onNavigateBack});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => RfqSubmissionsBloc(
-        rfqRepository: RfqRepositoryImpl(
-          rfqService: RfqService(),
-        ),
-      )..add(const LoadRfqSubmissions()),
+      create:
+          (context) => RfqSubmissionsBloc(
+            rfqRepository: RfqRepositoryImpl(rfqService: RfqService()),
+          )..add(const LoadRfqSubmissions()),
       child: _RfqSubmissionsScreenContent(onNavigateBack: onNavigateBack),
     );
   }
@@ -77,11 +74,14 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
 
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<RfqSubmissionsBloc>().add(const RefreshRfqSubmissions());
+              context.read<RfqSubmissionsBloc>().add(
+                const RefreshRfqSubmissions(),
+              );
             },
-            child: state.submissions.isEmpty
-                ? _buildEmptyState(context)
-                : _buildSubmissionsList(context, state),
+            child:
+                state.submissions.isEmpty
+                    ? _buildEmptyState(context)
+                    : _buildSubmissionsList(context, state),
           );
         },
       ),
@@ -104,11 +104,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: AppColors.errorColor,
-            ),
+            Icon(Icons.error_outline, size: 64, color: AppColors.errorColor),
             const SizedBox(height: 16),
             Text(
               'Failed to load submissions',
@@ -122,15 +118,14 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
             Text(
               errorMessage ?? 'Please try again later',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
-                context.read<RfqSubmissionsBloc>().add(const LoadRfqSubmissions());
+                context.read<RfqSubmissionsBloc>().add(
+                  const LoadRfqSubmissions(),
+                );
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
@@ -182,10 +177,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
                 Text(
                   'Create your first Request for Quotation to get started',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton.icon(
@@ -209,7 +201,10 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSubmissionsList(BuildContext context, RfqSubmissionsState state) {
+  Widget _buildSubmissionsList(
+    BuildContext context,
+    RfqSubmissionsState state,
+  ) {
     // Check if device is tablet (width >= tablet breakpoint)
     final isTablet = MediaQuery.of(context).size.width >= Breakpoints.tablet;
 
@@ -229,7 +224,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
           return _RfqSubmissionCard(
             submission: submission,
             onViewDetails: () {
-              // TODO: Navigate to RFQ Details screen
+              RfqDetailsBottomSheet.show(context, submission.rfqAccountNo);
             },
             onEdit: () {
               _navigateToRfqForm(context);
@@ -247,7 +242,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
           return _RfqSubmissionCard(
             submission: submission,
             onViewDetails: () {
-              // TODO: Navigate to RFQ Details screen
+              RfqDetailsBottomSheet.show(context, submission.rfqAccountNo);
             },
             onEdit: () {
               _navigateToRfqForm(context);
@@ -493,4 +488,3 @@ class _RfqSubmissionCard extends StatelessWidget {
     return DateFormat('MMM d, yyyy h:mm a').format(date);
   }
 }
-
