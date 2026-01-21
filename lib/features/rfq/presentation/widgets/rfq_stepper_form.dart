@@ -533,6 +533,7 @@ class _RfqStepperFormState extends State<RfqStepperForm>
 
       case 'fileinput':
         return _RfqFileInputField(
+          key: ValueKey('fileinput_${question.id}'), // Unique key per question
           question: question,
           initialValue: currentAnswer?.toString(),
           hasError: hasError,
@@ -1294,6 +1295,7 @@ class _RfqFileInputField extends StatefulWidget {
   final ValueChanged<String?> onChanged;
 
   const _RfqFileInputField({
+    super.key,
     required this.question,
     required this.initialValue,
     required this.hasError,
@@ -1325,6 +1327,19 @@ class _RfqFileInputFieldState extends State<_RfqFileInputField> {
   @override
   void initState() {
     super.initState();
+    _updateFileNameFromInitialValue();
+  }
+
+  @override
+  void didUpdateWidget(_RfqFileInputField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update fileName when initialValue changes (e.g., when navigating between steps)
+    if (oldWidget.initialValue != widget.initialValue) {
+      _updateFileNameFromInitialValue();
+    }
+  }
+
+  void _updateFileNameFromInitialValue() {
     if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
       // Check if it's a URL or just a filename
       if (widget.initialValue!.startsWith('http://') ||
@@ -1333,6 +1348,8 @@ class _RfqFileInputFieldState extends State<_RfqFileInputField> {
       } else {
         _fileName = widget.initialValue;
       }
+    } else {
+      _fileName = null;
     }
   }
 
