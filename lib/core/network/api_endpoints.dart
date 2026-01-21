@@ -74,6 +74,7 @@ class ApiEndpoints {
       '$baseUrl/appApis/save_rfq_form_as_draft';
   static final String getRfqSubmissions = '$baseUrl/appApis/list_rfqs';
   static final String getSingleRfq = '$baseUrl/appApis/get_single_rfq';
+  static final String rfqFileResponse = '$baseUrl/appApis/rfq_file_response';
 
   // Profile endpoints
   static final String updateClientProfile =

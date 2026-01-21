@@ -20,7 +20,6 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
     on<NextStep>(_onNextStep);
     on<PreviousStep>(_onPreviousStep);
     on<SubmitRfqForm>(_onSubmitRfqForm);
-    on<SaveRfqFormAsDraft>(_onSaveRfqFormAsDraft);
     on<ValidateCurrentStep>(_onValidateCurrentStep);
     on<AddProduct>(_onAddProduct);
     on<RemoveProduct>(_onRemoveProduct);
@@ -85,40 +84,13 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
         ),
       );
     } else {
-      // Save as draft and move to next step
-      emit(state.copyWith(status: RfqFormStatus.saving));
-
-      try {
-        await _rfqRepository.saveRfqFormAsDraft(
-          answers: state.answers,
+      // Move to next step (no draft saving)
+      emit(
+        state.copyWith(
           currentStep: state.currentStep + 1,
-          totalSteps: orderedGroups.length + 1, // +1 for additional info step
-          selectedProductIds:
-              state.selectedProductIds.isNotEmpty
-                  ? state.selectedProductIds
-                  : null,
-          requirementDescription:
-              state.requirementDescription?.isNotEmpty == true
-                  ? state.requirementDescription
-                  : null,
-          attachmentFile: state.attachmentFile,
-        );
-
-        emit(
-          state.copyWith(
-            status: RfqFormStatus.loaded,
-            currentStep: state.currentStep + 1,
-            validationErrors: {},
-          ),
-        );
-      } catch (e) {
-        emit(
-          state.copyWith(
-            status: RfqFormStatus.loaded,
-            currentStep: state.currentStep + 1,
-          ),
-        );
-      }
+          validationErrors: {},
+        ),
+      );
     }
   }
 
@@ -192,40 +164,6 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
           ),
         );
       }
-    } catch (e) {
-      emit(
-        state.copyWith(status: RfqFormStatus.error, errorMessage: e.toString()),
-      );
-    }
-  }
-
-  Future<void> _onSaveRfqFormAsDraft(
-    SaveRfqFormAsDraft event,
-    Emitter<RfqState> emit,
-  ) async {
-    if (state.formDefinition == null) return;
-
-    emit(state.copyWith(status: RfqFormStatus.saving));
-
-    try {
-      await _rfqRepository.saveRfqFormAsDraft(
-        answers: state.answers,
-        currentStep: state.currentStep + 1,
-        totalSteps:
-            state.formDefinition!.orderedGroups.length +
-            1, // +1 for additional info step
-        selectedProductIds:
-            state.selectedProductIds.isNotEmpty
-                ? state.selectedProductIds
-                : null,
-        requirementDescription:
-            state.requirementDescription?.isNotEmpty == true
-                ? state.requirementDescription
-                : null,
-        attachmentFile: state.attachmentFile,
-      );
-
-      emit(state.copyWith(status: RfqFormStatus.loaded));
     } catch (e) {
       emit(
         state.copyWith(status: RfqFormStatus.error, errorMessage: e.toString()),

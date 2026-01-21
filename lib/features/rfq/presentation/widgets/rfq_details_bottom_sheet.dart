@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:voicealerts_obs/core/constants/breakpoints.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
@@ -205,6 +206,10 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
                   'Description',
                   _rfqDetail!.rfqComments!,
                 ),
+                // Show attachment if available
+                if (_rfqDetail!.rfqAttachment != null &&
+                    _rfqDetail!.rfqAttachment!.isNotEmpty)
+                  _buildAttachmentRow(context, _rfqDetail!.rfqAttachment!),
               ],
               isTablet,
             ),
@@ -261,8 +266,10 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
                 answerableQuestions.map((question) {
                   final answer = question.getParsedAnswer(_rfqDetail!.allAnswers);
                   return _buildQuestionAnswerRow(
+                    context,
                     question.question,
                     answer ?? '—',
+                    question.questionType,
                     isTablet,
                   );
                 }).toList(),
@@ -374,7 +381,17 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
     );
   }
 
-  Widget _buildQuestionAnswerRow(String question, String answer, bool isTablet) {
+  Widget _buildQuestionAnswerRow(
+    BuildContext context,
+    String question,
+    String answer,
+    String questionType,
+    bool isTablet,
+  ) {
+    // Check if answer is a URL (for fileinput questions)
+    final isUrl = answer.startsWith('http://') || answer.startsWith('https://');
+    final isFileInput = questionType == 'fileinput';
+
     return Padding(
       padding: EdgeInsets.all(isTablet ? 16 : 12),
       child: Row(
@@ -398,11 +415,150 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
           ),
           Expanded(
             flex: 3,
+            child: isFileInput && isUrl
+                ? _buildFileLink(context, answer, isTablet)
+                : Text(
+                    answer,
+                    style: TextStyle(
+                      fontSize: isTablet ? 14 : 13,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFileLink(BuildContext context, String url, bool isTablet) {
+    final fileName = url.split('/').last;
+    return InkWell(
+      onTap: () async {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Could not open file: $url'),
+                backgroundColor: AppColors.errorColor,
+              ),
+            );
+          }
+        }
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.insert_drive_file,
+            size: isTablet ? 20 : 18,
+            color: AppColors.primaryColor,
+          ),
+          const SizedBox(width: 8),
+          Flexible(
             child: Text(
-              answer,
+              fileName,
               style: TextStyle(
                 fontSize: isTablet ? 14 : 13,
-                color: Colors.grey.shade700,
+                color: AppColors.primaryColor,
+                decoration: TextDecoration.underline,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.open_in_new,
+            size: isTablet ? 16 : 14,
+            color: AppColors.primaryColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttachmentRow(BuildContext context, String attachmentUrl) {
+    final fileName = attachmentUrl.split('/').last;
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.attach_file,
+                  size: 16,
+                  color: Colors.grey.shade600,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Attachment',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            color: Colors.grey.shade300,
+          ),
+          Expanded(
+            flex: 3,
+            child: InkWell(
+              onTap: () async {
+                final uri = Uri.parse(attachmentUrl);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } else {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not open attachment: $attachmentUrl'),
+                        backgroundColor: AppColors.errorColor,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.insert_drive_file,
+                    size: 18,
+                    color: AppColors.primaryColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      fileName,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.primaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.open_in_new,
+                    size: 14,
+                    color: AppColors.primaryColor,
+                  ),
+                ],
               ),
             ),
           ),

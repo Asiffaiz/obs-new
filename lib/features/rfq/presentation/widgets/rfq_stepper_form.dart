@@ -6,6 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:go_router/go_router.dart';
+import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_model.dart';
@@ -96,15 +98,9 @@ class _RfqStepperFormState extends State<RfqStepperForm>
         }
 
         if (state.status == RfqFormStatus.submitted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('RFQ submitted successfully!'),
-              backgroundColor: AppColors.successColor,
-            ),
-          );
-          // Use postFrameCallback to ensure navigation happens after the frame is built
+          // Show success dialog
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            widget.onSubmitSuccess?.call();
+            _showSuccessDialog(context);
           });
         }
 
@@ -190,6 +186,108 @@ class _RfqStepperFormState extends State<RfqStepperForm>
             // Navigation buttons
             _buildNavigationButtons(context, state),
           ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Success Icon with Animation
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.elasticOut,
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: AppColors.successColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.check_circle,
+                          size: 50,
+                          color: AppColors.successColor,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+
+                // Success Title
+                const Text(
+                  'Success!',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Success Message
+                Text(
+                  'Your RFQ has been submitted successfully!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // OK Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close dialog
+                      // Navigate to submissions listing screen
+                      context.go(AppRoutes.rfqSubmissions);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'View Submissions',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -1209,6 +1307,7 @@ class _RfqFileInputField extends StatefulWidget {
 class _RfqFileInputFieldState extends State<_RfqFileInputField> {
   String? _fileName;
   bool _isUploading = false;
+  final RfqService _rfqService = RfqService();
 
   static const int maxFileSize = 10 * 1024 * 1024; // 10MB
   final List<String> _allowedExtensions = [
@@ -1227,7 +1326,13 @@ class _RfqFileInputFieldState extends State<_RfqFileInputField> {
   void initState() {
     super.initState();
     if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
-      _fileName = widget.initialValue;
+      // Check if it's a URL or just a filename
+      if (widget.initialValue!.startsWith('http://') ||
+          widget.initialValue!.startsWith('https://')) {
+        _fileName = widget.initialValue!.split('/').last;
+      } else {
+        _fileName = widget.initialValue;
+      }
     }
   }
 
@@ -1248,6 +1353,7 @@ class _RfqFileInputFieldState extends State<_RfqFileInputField> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('File is too large. Maximum size is 10MB.'),
+                backgroundColor: AppColors.errorColor,
               ),
             );
           }
@@ -1265,22 +1371,39 @@ class _RfqFileInputFieldState extends State<_RfqFileInputField> {
         }
 
         if (bytes != null) {
-          setState(() {
-            _fileName = file.name;
-            _isUploading = false;
-          });
+          try {
+            // Upload file and get URL
+            final fileUrl = await _rfqService.uploadRfqFile(bytes, file.name);
 
-          // Convert to base64 and notify parent
-          final base64Data = base64Encode(bytes);
-          widget.onChanged(base64Data);
+            setState(() {
+              _fileName = file.name;
+              _isUploading = false;
+            });
+
+            // Store URL in answer
+            widget.onChanged(fileUrl);
+          } catch (e) {
+            setState(() => _isUploading = false);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error uploading file: $e'),
+                  backgroundColor: AppColors.errorColor,
+                ),
+              );
+            }
+          }
         }
       }
     } catch (e) {
       setState(() => _isUploading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking file: $e'),
+            backgroundColor: AppColors.errorColor,
+          ),
+        );
       }
     }
   }

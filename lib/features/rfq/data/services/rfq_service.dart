@@ -50,6 +50,17 @@ class RfqService {
         print('RFQ Submissions Response: ${response.data}');
       }
 
+      // Handle 404 with "no_record" - return empty list
+      if (response.statusCode == 404 ||
+          (response.data['status'] == 404 &&
+              (response.data['errors'] == 'no_record' ||
+                  response.data['message'] == 'no_record'))) {
+        if (kDebugMode) {
+          print('No RFQ submissions found - returning empty list');
+        }
+        return [];
+      }
+
       if (response.statusCode == 200 && response.data['status'] == 200) {
         final List<dynamic> submissionsData =
             response.data['data'] as List? ?? [];
@@ -205,7 +216,7 @@ class RfqService {
       request.fields['token'] = NetworkUrls.reactAppApiToken;
       request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
       request.fields['accountno'] = accountNo;
-      request.fields['rfq_comments'] = requirementDescription ?? '';
+      request.fields['rfq_comments'] = requirementDescription ?? ' ';
       request.fields['rfq_accountno'] = payloadData['rfq_accountno'] as String;
 
       // Add JSON stringified arrays
@@ -283,6 +294,68 @@ class RfqService {
       }
       throw Exception(
         'An error occurred while submitting RFQ form: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Upload RFQ file and get URL
+  Future<String> uploadRfqFile(Uint8List fileBytes, String fileName) async {
+    try {
+      final accountNo = await getAccountNo();
+      final token = await _tokenService.getAccessToken();
+
+      if (token == null) {
+        throw Exception('Authentication token not available.');
+      }
+
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiEndpoints.rfqFileResponse),
+      );
+
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      // Add account number
+      request.fields['accountno'] = accountNo;
+
+      // Add file
+      request.files.add(
+        http.MultipartFile.fromBytes('file', fileBytes, filename: fileName),
+      );
+
+      if (kDebugMode) {
+        print('Upload RFQ File URL: ${ApiEndpoints.rfqFileResponse}');
+        print('Upload RFQ File Filename: $fileName');
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (kDebugMode) {
+        print('Upload RFQ File Response Status: ${response.statusCode}');
+        print('Upload RFQ File Response Body: ${response.body}');
+      }
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['status'] == 200) {
+        final fileName = responseData['default'] as String? ?? '';
+        if (fileName.isEmpty) {
+          throw Exception('File upload failed: No filename returned');
+        }
+        // Construct full URL
+        final fileUrl = '${NetworkUrls.apiBaseUrl}/$fileName';
+        return fileUrl;
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to upload file');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error uploading RFQ file: $e');
+      }
+      throw Exception(
+        'An error occurred while uploading file: ${e.toString()}',
       );
     }
   }

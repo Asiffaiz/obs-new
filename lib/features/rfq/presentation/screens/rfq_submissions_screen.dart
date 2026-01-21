@@ -85,14 +85,28 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _navigateToRfqForm(context),
-        backgroundColor: AppColors.primaryColor,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'New RFQ',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-        ),
+      floatingActionButton: BlocBuilder<
+        RfqSubmissionsBloc,
+        RfqSubmissionsState
+      >(
+        builder: (context, state) {
+          // Hide FAB when there are no submissions (empty state has its own button)
+          if (state.submissions.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          return FloatingActionButton.extended(
+            onPressed: () => _navigateToRfqForm(context),
+            backgroundColor: AppColors.primaryColor,
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text(
+              'New RFQ',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
