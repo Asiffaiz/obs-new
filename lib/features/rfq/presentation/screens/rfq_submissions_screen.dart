@@ -371,48 +371,79 @@ class _RfqSubmissionCard extends StatelessWidget {
                 const SizedBox(height: 16),
 
               // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onViewDetails,
-                      icon: const Icon(Icons.visibility_outlined, size: 16),
-                      label: const Text(
-                        'RFQ Details',
-                        style: TextStyle(fontSize: 13),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        side: BorderSide(color: AppColors.primaryColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Only show Edit button if status is not completed
-                  if (submission.status.toLowerCase() != 'completed') ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: onEdit,
-                        icon: const Icon(Icons.edit_outlined, size: 16),
-                        label: const Text(
-                          'Edit RFQ',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          backgroundColor: AppColors.primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+              Builder(
+                builder: (context) {
+                  // Check if mobile (screen width < tablet breakpoint)
+                  final isMobile =
+                      MediaQuery.of(context).size.width < Breakpoints.tablet;
+                  final iconSize = isMobile ? 14.0 : 16.0;
+                  final fontSize = isMobile ? 12.0 : 13.0;
+                  final buttonPadding =
+                      isMobile
+                          ? const EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 8,
+                          )
+                          : const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 12,
+                          );
+                  final buttonSpacing = isMobile ? 8.0 : 12.0;
+                  final buttonHeight = isMobile ? 36.0 : 40.0;
+
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: buttonHeight,
+                          child: OutlinedButton.icon(
+                            onPressed: onViewDetails,
+                            icon: Icon(
+                              Icons.visibility_outlined,
+                              size: iconSize,
+                            ),
+                            label: Text(
+                              'RFQ Details',
+                              style: TextStyle(fontSize: fontSize),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: buttonPadding,
+                              side: BorderSide(color: AppColors.primaryColor),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ],
+                      // Only show Edit button if status is not completed
+                      if (submission.status.toLowerCase() != 'completed') ...[
+                        SizedBox(width: buttonSpacing),
+                        Expanded(
+                          child: SizedBox(
+                            height: buttonHeight,
+                            child: ElevatedButton.icon(
+                              onPressed: onEdit,
+                              icon: Icon(Icons.edit_outlined, size: iconSize),
+                              label: Text(
+                                'Edit RFQ',
+                                style: TextStyle(fontSize: fontSize),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                padding: buttonPadding,
+                                backgroundColor: AppColors.primaryColor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
             ],
           ),

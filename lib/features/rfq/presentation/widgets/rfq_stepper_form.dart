@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voicealerts_obs/config/routes.dart';
+import 'package:voicealerts_obs/core/constants/breakpoints.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_model.dart';
@@ -745,8 +746,18 @@ class _RfqStepperFormState extends State<RfqStepperForm>
         state.status == RfqFormStatus.saving ||
         state.status == RfqFormStatus.submitting;
 
+    // Check if mobile (screen width < tablet breakpoint)
+    final isMobile = MediaQuery.of(context).size.width < Breakpoints.tablet;
+    final buttonPadding =
+        isMobile
+            ? const EdgeInsets.symmetric(vertical: 10, horizontal: 12)
+            : const EdgeInsets.symmetric(vertical: 14, horizontal: 16);
+    final buttonFontSize = isMobile ? 13.0 : 15.0;
+    final containerPadding = isMobile ? 12.0 : 16.0;
+    final buttonSpacing = isMobile ? 12.0 : 16.0;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(containerPadding),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -762,60 +773,69 @@ class _RfqStepperFormState extends State<RfqStepperForm>
           // Back button
           if (!state.isFirstStep)
             Expanded(
-              child: OutlinedButton(
+              child: SizedBox(
+                height: isMobile ? 44 : 48,
+                child: OutlinedButton(
+                  onPressed:
+                      isLoading
+                          ? null
+                          : () =>
+                              context.read<RfqBloc>().add(const PreviousStep()),
+                  style: OutlinedButton.styleFrom(
+                    padding: buttonPadding,
+                    side: BorderSide(color: Theme.of(context).primaryColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Back',
+                    style: TextStyle(
+                      fontSize: buttonFontSize,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          if (!state.isFirstStep) SizedBox(width: buttonSpacing),
+
+          // Next/Submit button
+          Expanded(
+            child: SizedBox(
+              height: isMobile ? 44 : 48,
+              child: ElevatedButton(
                 onPressed:
                     isLoading
                         ? null
-                        : () =>
-                            context.read<RfqBloc>().add(const PreviousStep()),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(color: Theme.of(context).primaryColor),
+                        : () => context.read<RfqBloc>().add(const NextStep()),
+                style: ElevatedButton.styleFrom(
+                  padding: buttonPadding,
+                  backgroundColor: Theme.of(context).primaryColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('Back'),
-              ),
-            ),
-
-          if (!state.isFirstStep) const SizedBox(width: 16),
-
-          // Next/Submit button
-          Expanded(
-            child: ElevatedButton(
-              onPressed:
-                  isLoading
-                      ? null
-                      : () => context.read<RfqBloc>().add(const NextStep()),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                backgroundColor: Theme.of(context).primaryColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child:
-                  isLoading
-                      ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
+                child:
+                    isLoading
+                        ? const CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             Colors.white,
                           ),
+                        )
+                        : Text(
+                          state.isLastStep
+                              ? (state.isEditMode ? 'Edit RFQ' : 'Submit')
+                              : 'Next',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: buttonFontSize,
+                          ),
                         ),
-                      )
-                      : Text(
-                        state.isLastStep
-                            ? (state.isEditMode ? 'Edit RFQ' : 'Submit')
-                            : 'Next',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+              ),
             ),
           ),
         ],
@@ -1704,34 +1724,53 @@ class _ProductSelectorWidgetState extends State<_ProductSelectorWidget> {
                   value: _selectedProductId,
                 ),
               ),
-              const SizedBox(width: 12),
-              // Use ConstrainedBox to set button width constraints
-              ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 90, maxWidth: 120),
-                child: ElevatedButton.icon(
-                  onPressed:
-                      _selectedProductId == null
-                          ? null
-                          : () {
-                            widget.onAddProduct(_selectedProductId!);
-                            setState(() {
-                              _selectedProductId = null;
-                            });
-                          },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
+              Builder(
+                builder: (context) {
+                  final isMobile =
+                      MediaQuery.of(context).size.width < Breakpoints.tablet;
+                  return SizedBox(width: isMobile ? 8 : 12);
+                },
+              ),
+              // Use ConstrainedBox to set button width constraints - smaller on mobile
+              Builder(
+                builder: (context) {
+                  final isMobile =
+                      MediaQuery.of(context).size.width < Breakpoints.tablet;
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: isMobile ? 70 : 90,
+                      maxWidth: isMobile ? 90 : 120,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          _selectedProductId == null
+                              ? null
+                              : () {
+                                widget.onAddProduct(_selectedProductId!);
+                                setState(() {
+                                  _selectedProductId = null;
+                                });
+                              },
+                      icon: Icon(Icons.add, size: isMobile ? 16 : 18),
+                      label: const Text('Add'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 8 : 12,
+                          vertical: isMobile ? 8 : 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        textStyle: TextStyle(
+                          fontSize: isMobile ? 12 : 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ],
           ),
