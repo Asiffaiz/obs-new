@@ -196,96 +196,105 @@ class _RfqStepperFormState extends State<RfqStepperForm>
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
+        return PopScope(
+          canPop: false, // Prevent back button from dismissing the dialog
+          onPopInvoked: (didPop) {
+            // Explicitly prevent pop - do nothing, dialog should not close
+            if (didPop) {
+              // This should never happen since canPop is false
+            }
+          },
+          child: Dialog(
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              color: Colors.white,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Success Icon with Animation
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.elasticOut,
-                  builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: AppColors.successColor.withOpacity(0.1),
-                          shape: BoxShape.circle,
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.white,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Success Icon with Animation
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: AppColors.successColor.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.check_circle,
+                            size: 50,
+                            color: AppColors.successColor,
+                          ),
                         ),
-                        child: Icon(
-                          Icons.check_circle,
-                          size: 50,
-                          color: AppColors.successColor,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Success Title
-                const Text(
-                  'Success!',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Success Message
-                Text(
-                  'Your RFQ has been submitted successfully!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // OK Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Close dialog
-                      // Navigate to submissions listing screen
-                      context.go(AppRoutes.rfqSubmissions);
+                      );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Success Title
+                  const Text(
+                    'Success!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
-                    child: const Text(
-                      'View Submissions',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Success Message
+                  Text(
+                    'Your RFQ has been submitted successfully!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade700,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // OK Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close dialog
+                        // Navigate to submissions listing screen
+                        context.go(AppRoutes.rfqSubmissions);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'View Submissions',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
