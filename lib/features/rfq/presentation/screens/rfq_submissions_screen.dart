@@ -81,7 +81,10 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
             child:
                 state.submissions.isEmpty
                     ? _buildEmptyState(context)
-                    : _buildSubmissionsList(context, state),
+                    : Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: _buildSubmissionsList(context, state),
+                    ),
           );
         },
       ),
@@ -94,17 +97,10 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
           if (state.submissions.isEmpty) {
             return const SizedBox.shrink();
           }
-          return FloatingActionButton.extended(
+          return FloatingActionButton(
             onPressed: () => _navigateToRfqForm(context),
-            backgroundColor: AppColors.primaryColor,
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text(
-              'New RFQ',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            backgroundColor: Colors.white,
+            child: Icon(Icons.add, color: AppColors.primaryColor),
           );
         },
       ),
@@ -299,6 +295,7 @@ class _RfqSubmissionCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
+      color: AppColors.cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
