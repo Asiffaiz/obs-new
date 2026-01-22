@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voicealerts_obs/core/constants/breakpoints.dart';
-import 'package:voicealerts_obs/core/constants/network_urls.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_detail_model.dart';
@@ -223,10 +222,17 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
             final questions = entry.value;
 
             // Filter out label and simple_text questions (they don't have answers)
+            // Include fileinput questions even if they have empty answers
             final answerableQuestions = questions.where((q) {
-              return q.questionType != 'label' &&
-                  q.questionType != 'simple_text' &&
-                  q.getParsedAnswer(_rfqDetail!.allAnswers) != null;
+              if (q.questionType == 'label' || q.questionType == 'simple_text') {
+                return false;
+              }
+              // For fileinput questions, always show them (even if empty)
+              if (q.questionType == 'fileinput') {
+                return true;
+              }
+              // For other questions, only show if they have an answer
+              return q.getParsedAnswer(_rfqDetail!.allAnswers) != null;
             }).toList();
 
             if (answerableQuestions.isEmpty) {
@@ -266,10 +272,14 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
                 groupTitle,
                 answerableQuestions.map((question) {
                   final answer = question.getParsedAnswer(_rfqDetail!.allAnswers);
+                  // For fileinput questions, show "No file uploaded" if answer is empty
+                  final displayAnswer = question.questionType == 'fileinput' && (answer == null || answer.isEmpty)
+                      ? 'No file uploaded'
+                      : (answer ?? '—');
                   return _buildQuestionAnswerRow(
                     context,
                     question.question,
-                    answer ?? '—',
+                    displayAnswer,
                     question.questionType,
                     isTablet,
                   );
@@ -392,7 +402,7 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
     // Check if answer is a filename or URL (for fileinput questions)
     final isFileInput = questionType == 'fileinput';
     final isUrl = answer.startsWith('http://') || answer.startsWith('https://');
-    final isFilename = isFileInput && !isUrl && answer.isNotEmpty;
+    final isFilename = isFileInput && !isUrl && answer.isNotEmpty && answer != 'No file uploaded';
 
     return Padding(
       padding: EdgeInsets.all(isTablet ? 16 : 12),
@@ -423,7 +433,12 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
                     answer,
                     style: TextStyle(
                       fontSize: isTablet ? 14 : 13,
-                      color: Colors.grey.shade700,
+                      color: isFileInput && answer == 'No file uploaded'
+                          ? Colors.grey.shade500
+                          : Colors.grey.shade700,
+                      fontStyle: isFileInput && answer == 'No file uploaded'
+                          ? FontStyle.italic
+                          : FontStyle.normal,
                     ),
                   ),
           ),
@@ -437,14 +452,17 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
     final String fullUrl;
     final String fileName;
     
+    // Base path for RFQ attachments
+    const String rfqAttachmentBaseUrl = 'https://dev-agents.onboardsoft.me/files_data/rfq/';
+    
     if (filePathOrUrl.startsWith('http://') || filePathOrUrl.startsWith('https://')) {
       // Already a full URL
       fullUrl = filePathOrUrl;
       fileName = filePathOrUrl.split('/').last;
     } else {
-      // Just a filename, construct full URL
+      // Just a filename, construct full URL using the RFQ attachment base path
       fileName = filePathOrUrl;
-      fullUrl = '${NetworkUrls.apiBaseUrl}/$filePathOrUrl';
+      fullUrl = '$rfqAttachmentBaseUrl$filePathOrUrl';
     }
     
     return InkWell(
@@ -500,14 +518,17 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
     final String fullUrl;
     final String fileName;
     
+    // Base path for RFQ attachments
+    const String rfqAttachmentBaseUrl = 'https://dev-agents.onboardsoft.me/files_data/rfq/';
+    
     if (attachmentPathOrUrl.startsWith('http://') || attachmentPathOrUrl.startsWith('https://')) {
       // Already a full URL
       fullUrl = attachmentPathOrUrl;
       fileName = attachmentPathOrUrl.split('/').last;
     } else {
-      // Just a filename, construct full URL
+      // Just a filename, construct full URL using the RFQ attachment base path
       fileName = attachmentPathOrUrl;
-      fullUrl = '${NetworkUrls.apiBaseUrl}/$attachmentPathOrUrl';
+      fullUrl = '$rfqAttachmentBaseUrl$attachmentPathOrUrl';
     }
     
     return Padding(
