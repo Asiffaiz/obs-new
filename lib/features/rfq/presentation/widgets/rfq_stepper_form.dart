@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -130,6 +129,11 @@ class _RfqStepperFormState extends State<RfqStepperForm>
 
         if (state.formDefinition == null) {
           return _buildEmptyState();
+        }
+
+        // Pre-load products when form definition is available
+        if (_productsFuture == null && state.formDefinition != null) {
+          _productsFuture = RfqService().getRfqProducts();
         }
 
         return Column(
@@ -569,23 +573,13 @@ class _RfqStepperFormState extends State<RfqStepperForm>
   }
 
   Widget _buildAdditionalInformationStep(BuildContext context, RfqState state) {
-    // Load products only once and cache the future
+    // Load products only once and cache the future - load when form first loads
     _productsFuture ??= RfqService().getRfqProducts();
 
     return FutureBuilder<List<RfqProduct>>(
       future: _productsFuture,
       builder: (context, snapshot) {
-        // Show loading only on initial load, not on every rebuild
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            !snapshot.hasData) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
+        // Don't show loader - just use empty list if not loaded yet
         final products = snapshot.data ?? [];
         final selectedProductIds = state.selectedProductIds;
         final selectedProducts =
@@ -1736,11 +1730,9 @@ class _ProductSelectorWidgetState extends State<_ProductSelectorWidget> {
                 builder: (context) {
                   final isMobile =
                       MediaQuery.of(context).size.width < Breakpoints.tablet;
-                  return ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: isMobile ? 70 : 90,
-                      maxWidth: isMobile ? 90 : 120,
-                    ),
+                  return SizedBox(
+                    height: isMobile ? 44 : 48,
+                    width: isMobile ? 70 : 90,
                     child: ElevatedButton.icon(
                       onPressed:
                           _selectedProductId == null
@@ -1751,20 +1743,20 @@ class _ProductSelectorWidgetState extends State<_ProductSelectorWidget> {
                                   _selectedProductId = null;
                                 });
                               },
-                      icon: Icon(Icons.add, size: isMobile ? 16 : 18),
+                      icon: Icon(Icons.add, size: isMobile ? 14 : 16),
                       label: const Text('Add'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 8 : 12,
-                          vertical: isMobile ? 8 : 12,
+                          horizontal: isMobile ? 6 : 8,
+                          vertical: isMobile ? 6 : 8,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                         textStyle: TextStyle(
-                          fontSize: isMobile ? 12 : 14,
+                          fontSize: isMobile ? 11 : 12,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -2020,8 +2012,8 @@ class _RfqAttachmentField extends StatefulWidget {
 
 class _RfqAttachmentFieldState extends State<_RfqAttachmentField> {
   String? _fileName;
-  Uint8List? _fileBytes;
   bool _isUploading = false;
+  final RfqService _rfqService = RfqService();
 
   static const int maxFileSize = 50 * 1024 * 1024; // 50MB
   final List<String> _allowedExtensions = [
@@ -2042,9 +2034,7 @@ class _RfqAttachmentFieldState extends State<_RfqAttachmentField> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
-      _fileName = widget.initialValue;
-    }
+    _updateFileNameFromInitialValue();
   }
 
   @override
@@ -2052,11 +2042,21 @@ class _RfqAttachmentFieldState extends State<_RfqAttachmentField> {
     super.didUpdateWidget(oldWidget);
     // Update fileName when initialValue changes (e.g., when edit data loads)
     if (oldWidget.initialValue != widget.initialValue) {
-      if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
-        _fileName = widget.initialValue;
+      _updateFileNameFromInitialValue();
+    }
+  }
+
+  void _updateFileNameFromInitialValue() {
+    if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
+      // Check if it's a URL or just a filename
+      if (widget.initialValue!.startsWith('http://') ||
+          widget.initialValue!.startsWith('https://')) {
+        _fileName = widget.initialValue!.split('/').last;
       } else {
-        _fileName = null;
+        _fileName = widget.initialValue;
       }
+    } else {
+      _fileName = null;
     }
   }
 
@@ -2095,15 +2095,31 @@ class _RfqAttachmentFieldState extends State<_RfqAttachmentField> {
         }
 
         if (bytes != null) {
-          setState(() {
-            _fileName = file.name;
-            _fileBytes = bytes;
-            _isUploading = false;
-          });
+          try {
+            // Upload file immediately and get filename (not full URL)
+            final uploadedFileName = await _rfqService.uploadRfqFile(
+              bytes,
+              file.name,
+            );
 
-          // Convert to base64 and notify parent
-          final base64Data = base64Encode(bytes);
-          widget.onChanged(base64Data);
+            setState(() {
+              _fileName = file.name;
+              _isUploading = false;
+            });
+
+            // Store only the filename (not full URL) in answer
+            widget.onChanged(uploadedFileName);
+          } catch (e) {
+            setState(() => _isUploading = false);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error uploading file: $e'),
+                  backgroundColor: AppColors.errorColor,
+                ),
+              );
+            }
+          }
         }
       }
     } catch (e) {
@@ -2122,15 +2138,8 @@ class _RfqAttachmentFieldState extends State<_RfqAttachmentField> {
   void _clearFile() {
     setState(() {
       _fileName = null;
-      _fileBytes = null;
     });
     widget.onChanged(null);
-  }
-
-  String _formatFileSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
   @override
@@ -2178,14 +2187,6 @@ class _RfqAttachmentFieldState extends State<_RfqAttachmentField> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (_fileBytes != null)
-                        Text(
-                          _formatFileSize(_fileBytes!.length),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
                     ],
                   ),
                 ),

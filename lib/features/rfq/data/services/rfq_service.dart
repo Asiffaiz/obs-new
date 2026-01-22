@@ -364,43 +364,13 @@ class RfqService {
         payloadData['services_rows'],
       );
 
-      // Handle file attachment
-      if (attachmentFile != null && attachmentFile.isNotEmpty) {
-        try {
-          // Decode base64 to bytes
-          Uint8List fileBytes;
-          String processedBase64 = attachmentFile;
-
-          // Remove data URL prefix if present (e.g., "data:image/png;base64,")
-          if (attachmentFile.contains(',')) {
-            processedBase64 = attachmentFile.split(',')[1];
-          }
-
-          fileBytes = base64Decode(processedBase64);
-
-          // Use fileName if provided, otherwise use a default name
-          final fileFieldName = fileName ?? 'attachment';
-
-          // Add file as multipart file
-          request.files.add(
-            http.MultipartFile.fromBytes(
-              'file',
-              fileBytes,
-              filename: fileFieldName,
-            ),
-          );
-
-          // Add fileName field
-          if (fileName != null && fileName.isNotEmpty) {
-            request.fields['fileName'] = fileName;
-          }
-        } catch (e) {
-          if (kDebugMode) {
-            print('Error processing file attachment: $e');
-          }
-          // Continue without file if there's an error
-        }
-      }
+      // Handle file attachment - always include file and fileName keys
+      // The file is already uploaded via rfq_file_response API, so we only send the filename
+      // file is always null (file already uploaded), fileName contains the uploaded filename
+      request.fields['file'] =
+          ''; // Always null/empty since file is already uploaded
+      request.fields['fileName'] =
+          attachmentFile ?? ''; // Filename from uploadRfqFile API or empty
 
       if (kDebugMode) {
         print('Update RFQ Form - Sending FormData');
@@ -499,43 +469,13 @@ class RfqService {
         payloadData['services_rows'],
       );
 
-      // Handle file attachment
-      if (attachmentFile != null && attachmentFile.isNotEmpty) {
-        try {
-          // Decode base64 to bytes
-          Uint8List fileBytes;
-          String processedBase64 = attachmentFile;
-
-          // Remove data URL prefix if present (e.g., "data:image/png;base64,")
-          if (attachmentFile.contains(',')) {
-            processedBase64 = attachmentFile.split(',')[1];
-          }
-
-          fileBytes = base64Decode(processedBase64);
-
-          // Use fileName if provided, otherwise use a default name
-          final fileFieldName = fileName ?? 'attachment';
-
-          // Add file as multipart file
-          request.files.add(
-            http.MultipartFile.fromBytes(
-              'file',
-              fileBytes,
-              filename: fileFieldName,
-            ),
-          );
-
-          // Add fileName field
-          if (fileName != null && fileName.isNotEmpty) {
-            request.fields['fileName'] = fileName;
-          }
-        } catch (e) {
-          if (kDebugMode) {
-            print('Error processing file attachment: $e');
-          }
-          // Continue without file if there's an error
-        }
-      }
+      // Handle file attachment - always include file and fileName keys
+      // The file is already uploaded via rfq_file_response API, so we only send the filename
+      // file is always null (file already uploaded), fileName contains the uploaded filename
+      request.fields['file'] =
+          ''; // Always null/empty since file is already uploaded
+      request.fields['fileName'] =
+          attachmentFile ?? ''; // Filename from uploadRfqFile API or empty
 
       if (kDebugMode) {
         print('Submit RFQ Form - Sending FormData');
