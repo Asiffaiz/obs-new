@@ -12,6 +12,16 @@ class LoadRfqFormData extends RfqEvent {
   const LoadRfqFormData();
 }
 
+/// Load RFQ form data for editing (pre-filled with existing answers)
+class LoadRfqFormDataForEdit extends RfqEvent {
+  final String rfqAccountNo;
+
+  const LoadRfqFormDataForEdit(this.rfqAccountNo);
+
+  @override
+  List<Object?> get props => [rfqAccountNo];
+}
+
 /// Update the current step
 class UpdateCurrentStep extends RfqEvent {
   final int step;

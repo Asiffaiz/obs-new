@@ -7,7 +7,8 @@ import 'package:voicealerts_obs/features/rfq/domain/repositories/rfq_repository.
 class RfqRepositoryImpl implements RfqRepository {
   final RfqService _rfqService;
 
-  RfqRepositoryImpl({required RfqService rfqService}) : _rfqService = rfqService;
+  RfqRepositoryImpl({required RfqService rfqService})
+    : _rfqService = rfqService;
 
   @override
   Future<List<RfqSubmission>> getRfqSubmissions() async {
@@ -17,6 +18,13 @@ class RfqRepositoryImpl implements RfqRepository {
   @override
   Future<RfqFormDefinition> getRfqFormData() async {
     return await _rfqService.getRfqFormData();
+  }
+
+  @override
+  Future<Map<String, dynamic>> getRfqFormDataForEdit(
+    String rfqAccountNo,
+  ) async {
+    return await _rfqService.getRfqFormDataForEdit(rfqAccountNo);
   }
 
   @override
@@ -63,4 +71,3 @@ class RfqRepositoryImpl implements RfqRepository {
     );
   }
 }
-

@@ -241,7 +241,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
               RfqDetailsBottomSheet.show(context, submission.rfqAccountNo);
             },
             onEdit: () {
-              _navigateToRfqForm(context);
+              _navigateToRfqFormForEdit(context, submission.rfqAccountNo);
             },
           );
         },
@@ -259,7 +259,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
               RfqDetailsBottomSheet.show(context, submission.rfqAccountNo);
             },
             onEdit: () {
-              _navigateToRfqForm(context);
+              _navigateToRfqFormForEdit(context, submission.rfqAccountNo);
             },
           );
         },
@@ -269,6 +269,13 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
 
   void _navigateToRfqForm(BuildContext context) {
     context.push(AppRoutes.rfqForm).then((_) {
+      // Refresh the list when returning from form
+      context.read<RfqSubmissionsBloc>().add(const RefreshRfqSubmissions());
+    });
+  }
+
+  void _navigateToRfqFormForEdit(BuildContext context, String rfqAccountNo) {
+    context.push('${AppRoutes.rfqForm}?rfqAccountNo=$rfqAccountNo').then((_) {
       // Refresh the list when returning from form
       context.read<RfqSubmissionsBloc>().add(const RefreshRfqSubmissions());
     });

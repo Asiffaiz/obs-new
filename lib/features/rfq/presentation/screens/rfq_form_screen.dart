@@ -10,20 +10,31 @@ import 'package:voicealerts_obs/features/rfq/presentation/widgets/rfq_stepper_fo
 /// RFQ Form Screen - Main screen for displaying the RFQ dynamic form
 class RfqFormScreen extends StatelessWidget {
   final VoidCallback? onNavigateBack;
+  final String? rfqAccountNo; // Optional: for edit mode
 
   const RfqFormScreen({
     super.key,
     this.onNavigateBack,
+    this.rfqAccountNo,
   });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => RfqBloc(
-        rfqRepository: RfqRepositoryImpl(
-          rfqService: RfqService(),
-        ),
-      )..add(const LoadRfqFormData()),
+      create: (context) {
+        final bloc = RfqBloc(
+          rfqRepository: RfqRepositoryImpl(
+            rfqService: RfqService(),
+          ),
+        );
+        // Load form data based on mode
+        if (rfqAccountNo != null && rfqAccountNo!.isNotEmpty) {
+          bloc.add(LoadRfqFormDataForEdit(rfqAccountNo!));
+        } else {
+          bloc.add(const LoadRfqFormData());
+        }
+        return bloc;
+      },
       child: _RfqFormScreenContent(onNavigateBack: onNavigateBack),
     );
   }

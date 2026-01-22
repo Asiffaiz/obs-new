@@ -115,6 +115,138 @@ class RfqService {
     }
   }
 
+  /// Get RFQ form data for editing (pre-filled with existing answers)
+  /// Returns a map with formDefinition and pre-filled data
+  Future<Map<String, dynamic>> getRfqFormDataForEdit(
+    String rfqAccountNo,
+  ) async {
+    try {
+      final email = await getUserEmail();
+      final accountNo = await getAccountNo();
+
+      final response = await _apiClient.post(ApiEndpoints.getRfqEditDetails, {
+        'email': email,
+        'accountno': accountNo,
+        'rfq_accountno': rfqAccountNo,
+      });
+
+      if (kDebugMode) {
+        print('RFQ Edit Details Response: ${response.data}');
+      }
+
+      if (response.statusCode == 200 && response.data['status'] == 200) {
+        // Parse API response into RfqFormDefinition
+        final formDefinition = RfqFormDefinition.fromApiResponse(response.data);
+
+        // Extract pre-filled answers from questions
+        final Map<String, dynamic> preFilledAnswers = {};
+        final List<int> preFilledProductIds = [];
+        String? preFilledRequirementDescription;
+        String? preFilledAttachment;
+
+        // Parse answers from rfqQuestionsListing (using answer_id field)
+        final questionsList =
+            response.data['rfqQuestionsListing'] as List? ?? [];
+        for (final questionJson in questionsList) {
+          final questionMap = questionJson as Map<String, dynamic>;
+          final questionId = (questionMap['id'] ?? '').toString();
+          final answerId = questionMap['answer_id'];
+
+          // Check if answer_id exists and is not empty
+          if (answerId != null && answerId.toString().isNotEmpty) {
+            final questionType =
+                (questionMap['question_type'] ?? '').toString();
+
+            // Handle different question types
+            if (questionType == 'checkbox') {
+              // Checkbox answers are JSON array strings like "[\"Option 1\", \"Option 2\"]"
+              if (answerId is String) {
+                try {
+                  final List<dynamic> answerList = jsonDecode(answerId);
+                  // Convert to List<String> for checkbox fields
+                  preFilledAnswers[questionId] =
+                      answerList.map((e) => e.toString()).toList();
+                } catch (e) {
+                  if (kDebugMode) {
+                    print(
+                      'Error parsing checkbox answer for question $questionId: $e',
+                    );
+                  }
+                  // If parsing fails, store as empty list
+                  preFilledAnswers[questionId] = [];
+                }
+              } else if (answerId is List) {
+                preFilledAnswers[questionId] =
+                    answerId.map((e) => e.toString()).toList();
+              } else {
+                preFilledAnswers[questionId] = [];
+              }
+            } else {
+              // For other question types (textfield, textarea, dropdown, radio, fileinput)
+              // Store the answer_id directly
+              preFilledAnswers[questionId] = answerId.toString();
+            }
+          }
+        }
+
+        // Extract selected products/services from rfqServices array
+        final rfqServicesList = response.data['rfqServices'] as List? ?? [];
+        for (final service in rfqServicesList) {
+          if (service is Map<String, dynamic>) {
+            // Check for 'id' field (service ID)
+            final serviceId = service['id'] as int?;
+            if (serviceId != null) {
+              preFilledProductIds.add(serviceId);
+            }
+            // Also check for 'service_id' or 'product_id' as fallback
+            final productId =
+                service['product_id'] as int? ?? service['service_id'] as int?;
+            if (productId != null && !preFilledProductIds.contains(productId)) {
+              preFilledProductIds.add(productId);
+            }
+          } else if (service is int) {
+            preFilledProductIds.add(service);
+          }
+        }
+
+        // Extract requirement description and attachment from rfqDetails array
+        final rfqDetailsList = response.data['rfqDetails'] as List? ?? [];
+        if (rfqDetailsList.isNotEmpty) {
+          final rfqDetail = rfqDetailsList[0] as Map<String, dynamic>;
+          preFilledRequirementDescription =
+              rfqDetail['rfq_comments']?.toString();
+          preFilledAttachment = rfqDetail['rfq_attachement']?.toString();
+        }
+
+        if (kDebugMode) {
+          print('Pre-filled Answers: $preFilledAnswers');
+          print('Pre-filled Product IDs: $preFilledProductIds');
+          print('Pre-filled Requirement: $preFilledRequirementDescription');
+          print('Pre-filled Attachment: $preFilledAttachment');
+        }
+
+        return {
+          'formDefinition': formDefinition,
+          'answers': preFilledAnswers,
+          'selectedProductIds': preFilledProductIds,
+          'requirementDescription': preFilledRequirementDescription,
+          'attachmentFile': preFilledAttachment,
+        };
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Failed to get RFQ edit details',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching RFQ edit form data: $e');
+      }
+      throw Exception(
+        'An error occurred while fetching RFQ edit form data: ${e.toString()}',
+      );
+    }
+  }
+
   /// Get available products/services for RFQ
   Future<List<RfqProduct>> getRfqProducts() async {
     try {
@@ -217,7 +349,9 @@ class RfqService {
       request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
       request.fields['accountno'] = accountNo;
       request.fields['rfq_comments'] =
-          requirementDescription!.isEmpty ? " " : requirementDescription ?? ' ';
+          (requirementDescription?.isEmpty ?? true)
+              ? " "
+              : requirementDescription!;
       request.fields['rfq_accountno'] = payloadData['rfq_accountno'] as String;
 
       // Add JSON stringified arrays

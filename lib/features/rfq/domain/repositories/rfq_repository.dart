@@ -9,6 +9,10 @@ abstract class RfqRepository {
   /// Get RFQ form data
   Future<RfqFormDefinition> getRfqFormData();
 
+  /// Get RFQ form data for editing (pre-filled with existing answers)
+  /// Returns a map with formDefinition and pre-filled data (answers, products, etc.)
+  Future<Map<String, dynamic>> getRfqFormDataForEdit(String rfqAccountNo);
+
   /// Submit RFQ form
   Future<bool> submitRfqForm({
     required RfqFormDefinition formDefinition,

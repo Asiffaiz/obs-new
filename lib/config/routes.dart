@@ -329,9 +329,14 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppRoutes.rfqForm,
         pageBuilder: (context, state) {
+          // Extract rfqAccountNo from query parameters for edit mode
+          final rfqAccountNo = state.uri.queryParameters['rfqAccountNo'];
           return CustomTransitionPage<void>(
             key: state.pageKey,
-            child: RfqFormScreen(onNavigateBack: () => context.pop()),
+            child: RfqFormScreen(
+              onNavigateBack: () => context.pop(),
+              rfqAccountNo: rfqAccountNo,
+            ),
             transitionsBuilder: (
               context,
               animation,

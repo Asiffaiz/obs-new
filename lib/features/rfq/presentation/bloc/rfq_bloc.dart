@@ -15,6 +15,7 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
     : _rfqRepository = rfqRepository,
       super(const RfqState()) {
     on<LoadRfqFormData>(_onLoadRfqFormData);
+    on<LoadRfqFormDataForEdit>(_onLoadRfqFormDataForEdit);
     on<UpdateCurrentStep>(_onUpdateCurrentStep);
     on<UpdateAnswer>(_onUpdateAnswer);
     on<NextStep>(_onNextStep);
@@ -41,6 +42,48 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
           formDefinition: formDefinition,
           currentStep: 0,
           answers: {},
+          isEditMode: false,
+          rfqAccountNo: null,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(status: RfqFormStatus.error, errorMessage: e.toString()),
+      );
+    }
+  }
+
+  Future<void> _onLoadRfqFormDataForEdit(
+    LoadRfqFormDataForEdit event,
+    Emitter<RfqState> emit,
+  ) async {
+    emit(state.copyWith(status: RfqFormStatus.loading));
+
+    try {
+      final editData = await _rfqRepository.getRfqFormDataForEdit(
+        event.rfqAccountNo,
+      );
+
+      final formDefinition = editData['formDefinition'] as RfqFormDefinition;
+      final preFilledAnswers =
+          editData['answers'] as Map<String, dynamic>? ?? {};
+      final preFilledProductIds =
+          (editData['selectedProductIds'] as List?)?.cast<int>() ?? [];
+      final preFilledRequirementDescription =
+          editData['requirementDescription'] as String?;
+      final preFilledAttachment = editData['attachmentFile'] as String?;
+
+      emit(
+        state.copyWith(
+          status: RfqFormStatus.loaded,
+          formDefinition: formDefinition,
+          currentStep: 0,
+          answers: preFilledAnswers,
+          selectedProductIds: preFilledProductIds,
+          requirementDescription: preFilledRequirementDescription,
+          attachmentFile: preFilledAttachment,
+          isEditMode: true,
+          rfqAccountNo: event.rfqAccountNo,
         ),
       );
     } catch (e) {

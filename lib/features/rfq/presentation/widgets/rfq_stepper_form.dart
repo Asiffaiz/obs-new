@@ -808,7 +808,9 @@ class _RfqStepperFormState extends State<RfqStepperForm>
                         ),
                       )
                       : Text(
-                        state.isLastStep ? 'Submit' : 'Next',
+                        state.isLastStep
+                            ? (state.isEditMode ? 'Edit RFQ' : 'Submit')
+                            : 'Next',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -914,6 +916,15 @@ class _RfqTextFieldState extends State<_RfqTextField> {
   }
 
   @override
+  void didUpdateWidget(_RfqTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update controller when initialValue changes (e.g., when edit data loads)
+    if (oldWidget.initialValue != widget.initialValue) {
+      _controller.text = widget.initialValue;
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -993,6 +1004,15 @@ class _RfqTextAreaFieldState extends State<_RfqTextAreaField> {
   }
 
   @override
+  void didUpdateWidget(_RfqTextAreaField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update controller when initialValue changes (e.g., when edit data loads)
+    if (oldWidget.initialValue != widget.initialValue) {
+      _controller.text = widget.initialValue;
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -1069,6 +1089,15 @@ class _RfqDropdownFieldState extends State<_RfqDropdownField> {
   void initState() {
     super.initState();
     _selectedValue = widget.initialValue;
+  }
+
+  @override
+  void didUpdateWidget(_RfqDropdownField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update selected value when initialValue changes (e.g., when edit data loads)
+    if (oldWidget.initialValue != widget.initialValue) {
+      _selectedValue = widget.initialValue;
+    }
   }
 
   @override
@@ -1165,6 +1194,15 @@ class _RfqRadioFieldState extends State<_RfqRadioField> {
   }
 
   @override
+  void didUpdateWidget(_RfqRadioField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update selected value when initialValue changes (e.g., when edit data loads)
+    if (oldWidget.initialValue != widget.initialValue) {
+      _selectedValue = widget.initialValue;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1237,6 +1275,15 @@ class _RfqCheckboxFieldState extends State<_RfqCheckboxField> {
   void initState() {
     super.initState();
     _selectedValues = List.from(widget.initialValue);
+  }
+
+  @override
+  void didUpdateWidget(_RfqCheckboxField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update selected values when initialValue changes (e.g., when edit data loads)
+    if (oldWidget.initialValue != widget.initialValue) {
+      _selectedValues = List.from(widget.initialValue);
+    }
   }
 
   @override
@@ -1958,6 +2005,19 @@ class _RfqAttachmentFieldState extends State<_RfqAttachmentField> {
     super.initState();
     if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
       _fileName = widget.initialValue;
+    }
+  }
+
+  @override
+  void didUpdateWidget(_RfqAttachmentField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update fileName when initialValue changes (e.g., when edit data loads)
+    if (oldWidget.initialValue != widget.initialValue) {
+      if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
+        _fileName = widget.initialValue;
+      } else {
+        _fileName = null;
+      }
     }
   }
 

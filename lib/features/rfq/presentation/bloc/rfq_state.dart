@@ -20,6 +20,8 @@ class RfqState extends Equatable {
   final List<int> selectedProductIds; // IDs of selected products
   final String? requirementDescription; // Additional requirement description
   final String? attachmentFile; // Attachment file path or base64
+  final bool isEditMode; // Whether we're in edit mode
+  final String? rfqAccountNo; // RFQ account number when editing
 
   const RfqState({
     this.status = RfqFormStatus.initial,
@@ -31,6 +33,8 @@ class RfqState extends Equatable {
     this.selectedProductIds = const [],
     this.requirementDescription,
     this.attachmentFile,
+    this.isEditMode = false,
+    this.rfqAccountNo,
   });
 
   RfqState copyWith({
@@ -43,6 +47,8 @@ class RfqState extends Equatable {
     List<int>? selectedProductIds,
     String? requirementDescription,
     String? attachmentFile,
+    bool? isEditMode,
+    String? rfqAccountNo,
   }) {
     return RfqState(
       status: status ?? this.status,
@@ -54,6 +60,8 @@ class RfqState extends Equatable {
       selectedProductIds: selectedProductIds ?? this.selectedProductIds,
       requirementDescription: requirementDescription ?? this.requirementDescription,
       attachmentFile: attachmentFile ?? this.attachmentFile,
+      isEditMode: isEditMode ?? this.isEditMode,
+      rfqAccountNo: rfqAccountNo ?? this.rfqAccountNo,
     );
   }
 
@@ -104,6 +112,8 @@ class RfqState extends Equatable {
         selectedProductIds,
         requirementDescription,
         attachmentFile,
+        isEditMode,
+        rfqAccountNo,
       ];
 }
 
