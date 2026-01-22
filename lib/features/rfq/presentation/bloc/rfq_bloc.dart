@@ -183,19 +183,36 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
       final rfqService = RfqService();
       final allProducts = await rfqService.getRfqProducts();
 
-      final success = await _rfqRepository.submitRfqForm(
-        formDefinition: state.formDefinition!,
-        answers: state.answers,
-        currentStep: state.currentStep + 1,
-        totalSteps:
-            state.formDefinition!.orderedGroups.length +
-            1, // +1 for additional info step
-        selectedProductIds: state.selectedProductIds,
-        allProducts: allProducts,
-        requirementDescription: state.requirementDescription,
-        attachmentFile: state.attachmentFile,
-        fileName: null, // TODO: Store fileName in state if needed
-      );
+      // Use update endpoint if in edit mode, otherwise use submit endpoint
+      final success =
+          state.isEditMode && state.rfqAccountNo != null
+              ? await _rfqRepository.updateRfqForm(
+                rfqAccountNo: state.rfqAccountNo!,
+                formDefinition: state.formDefinition!,
+                answers: state.answers,
+                currentStep: state.currentStep + 1,
+                totalSteps:
+                    state.formDefinition!.orderedGroups.length +
+                    1, // +1 for additional info step
+                selectedProductIds: state.selectedProductIds,
+                allProducts: allProducts,
+                requirementDescription: state.requirementDescription,
+                attachmentFile: state.attachmentFile,
+                fileName: null, // TODO: Store fileName in state if needed
+              )
+              : await _rfqRepository.submitRfqForm(
+                formDefinition: state.formDefinition!,
+                answers: state.answers,
+                currentStep: state.currentStep + 1,
+                totalSteps:
+                    state.formDefinition!.orderedGroups.length +
+                    1, // +1 for additional info step
+                selectedProductIds: state.selectedProductIds,
+                allProducts: allProducts,
+                requirementDescription: state.requirementDescription,
+                attachmentFile: state.attachmentFile,
+                fileName: null, // TODO: Store fileName in state if needed
+              );
 
       if (success) {
         emit(state.copyWith(status: RfqFormStatus.submitted));
@@ -203,7 +220,10 @@ class RfqBloc extends Bloc<RfqEvent, RfqState> {
         emit(
           state.copyWith(
             status: RfqFormStatus.error,
-            errorMessage: 'Failed to submit form',
+            errorMessage:
+                state.isEditMode
+                    ? 'Failed to update form'
+                    : 'Failed to submit form',
           ),
         );
       }

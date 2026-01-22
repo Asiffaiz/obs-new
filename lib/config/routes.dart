@@ -298,7 +298,13 @@ GoRouter createRouter(AuthBloc authBloc) {
         pageBuilder: (context, state) {
           return CustomTransitionPage<void>(
             key: state.pageKey,
-            child: RfqSubmissionsScreen(onNavigateBack: () => context.pop()),
+            child: RfqSubmissionsScreen(
+              onNavigateBack: () {
+                if (context.canPop()) {
+                  context.pop();
+                }
+              },
+            ),
             transitionsBuilder: (
               context,
               animation,
@@ -334,7 +340,11 @@ GoRouter createRouter(AuthBloc authBloc) {
           return CustomTransitionPage<void>(
             key: state.pageKey,
             child: RfqFormScreen(
-              onNavigateBack: () => context.pop(),
+              onNavigateBack: () {
+                if (context.canPop()) {
+                  context.pop();
+                }
+              },
               rfqAccountNo: rfqAccountNo,
             ),
             transitionsBuilder: (

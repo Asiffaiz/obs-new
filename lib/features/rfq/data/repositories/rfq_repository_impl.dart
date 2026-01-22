@@ -53,6 +53,33 @@ class RfqRepositoryImpl implements RfqRepository {
   }
 
   @override
+  Future<bool> updateRfqForm({
+    required String rfqAccountNo,
+    required RfqFormDefinition formDefinition,
+    required Map<String, dynamic> answers,
+    required int currentStep,
+    required int totalSteps,
+    required List<int> selectedProductIds,
+    required List<RfqProduct> allProducts,
+    String? requirementDescription,
+    String? attachmentFile,
+    String? fileName,
+  }) async {
+    return await _rfqService.updateRfqForm(
+      rfqAccountNo: rfqAccountNo,
+      formDefinition: formDefinition,
+      answers: answers,
+      currentStep: currentStep,
+      totalSteps: totalSteps,
+      selectedProductIds: selectedProductIds,
+      allProducts: allProducts,
+      requirementDescription: requirementDescription,
+      attachmentFile: attachmentFile,
+      fileName: fileName,
+    );
+  }
+
+  @override
   Future<bool> saveRfqFormAsDraft({
     required Map<String, dynamic> answers,
     required int currentStep,

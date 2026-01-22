@@ -298,6 +298,143 @@ class RfqService {
     }
   }
 
+  /// Update RFQ form as FormData (multipart/form-data) - for edit mode
+  Future<bool> updateRfqForm({
+    required String rfqAccountNo,
+    required RfqFormDefinition formDefinition,
+    required Map<String, dynamic> answers,
+    required int currentStep,
+    required int totalSteps,
+    required List<int> selectedProductIds,
+    required List<RfqProduct> allProducts,
+    String? requirementDescription,
+    String? attachmentFile,
+    String? fileName,
+  }) async {
+    try {
+      final accountNo = await getAccountNo();
+      final token = await _tokenService.getAccessToken();
+
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+
+      // Fetch all products if not provided (fallback)
+      final products =
+          allProducts.isNotEmpty ? allProducts : await getRfqProducts();
+
+      // Build the payload data using the payload builder
+      final payloadData = RfqPayloadBuilder.buildSubmitPayload(
+        accountNo: accountNo,
+        answers: answers,
+        formDefinition: formDefinition,
+        selectedProductIds: selectedProductIds,
+        allProducts: products,
+        requirementDescription: requirementDescription,
+        attachmentFile: attachmentFile,
+        fileName: fileName,
+      );
+
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiEndpoints.updateRfq),
+      );
+
+      // Add headers
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      // Add form fields
+      request.fields['token'] = NetworkUrls.reactAppApiToken;
+      request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
+      request.fields['accountno'] = accountNo;
+      request.fields['rfq_accountno'] =
+          rfqAccountNo; // Use existing rfq_accountno for update
+      request.fields['rfq_comments'] =
+          (requirementDescription?.isEmpty ?? true)
+              ? " "
+              : requirementDescription!;
+
+      // Add JSON stringified arrays
+      request.fields['rfq_questions_rows'] = jsonEncode(
+        payloadData['rfq_questions_rows'],
+      );
+      request.fields['services_rows'] = jsonEncode(
+        payloadData['services_rows'],
+      );
+
+      // Handle file attachment
+      if (attachmentFile != null && attachmentFile.isNotEmpty) {
+        try {
+          // Decode base64 to bytes
+          Uint8List fileBytes;
+          String processedBase64 = attachmentFile;
+
+          // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+          if (attachmentFile.contains(',')) {
+            processedBase64 = attachmentFile.split(',')[1];
+          }
+
+          fileBytes = base64Decode(processedBase64);
+
+          // Use fileName if provided, otherwise use a default name
+          final fileFieldName = fileName ?? 'attachment';
+
+          // Add file as multipart file
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'file',
+              fileBytes,
+              filename: fileFieldName,
+            ),
+          );
+
+          // Add fileName field
+          if (fileName != null && fileName.isNotEmpty) {
+            request.fields['fileName'] = fileName;
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error processing file attachment: $e');
+          }
+          // Continue without file if there's an error
+        }
+      }
+
+      if (kDebugMode) {
+        print('Update RFQ Form - Sending FormData');
+        print('Fields: ${request.fields}');
+        print('Files: ${request.files.length}');
+      }
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (kDebugMode) {
+        print('Update RFQ Form Response Status: ${response.statusCode}');
+        print('Update RFQ Form Response Body: ${response.body}');
+      }
+
+      // Parse response
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['status'] == 200) {
+        return true;
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to update RFQ form');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating RFQ form: $e');
+      }
+      throw Exception(
+        'An error occurred while updating RFQ form: ${e.toString()}',
+      );
+    }
+  }
+
   /// Submit RFQ form as FormData (multipart/form-data)
   Future<bool> submitRfqForm({
     required RfqFormDefinition formDefinition,

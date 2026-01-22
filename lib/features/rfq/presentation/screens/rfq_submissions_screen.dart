@@ -47,7 +47,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
           onPressed: () {
             if (onNavigateBack != null) {
               onNavigateBack!();
-            } else {
+            } else if (context.canPop()) {
               context.pop();
             }
           },

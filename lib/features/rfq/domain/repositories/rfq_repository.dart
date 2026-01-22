@@ -26,6 +26,20 @@ abstract class RfqRepository {
     String? fileName,
   });
 
+  /// Update RFQ form (for edit mode)
+  Future<bool> updateRfqForm({
+    required String rfqAccountNo,
+    required RfqFormDefinition formDefinition,
+    required Map<String, dynamic> answers,
+    required int currentStep,
+    required int totalSteps,
+    required List<int> selectedProductIds,
+    required List<RfqProduct> allProducts,
+    String? requirementDescription,
+    String? attachmentFile,
+    String? fileName,
+  });
+
   /// Save RFQ form as draft
   Future<bool> saveRfqFormAsDraft({
     required Map<String, dynamic> answers,
