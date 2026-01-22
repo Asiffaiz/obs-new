@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voicealerts_obs/core/constants/breakpoints.dart';
+import 'package:voicealerts_obs/core/constants/network_urls.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_detail_model.dart';
@@ -388,9 +389,10 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
     String questionType,
     bool isTablet,
   ) {
-    // Check if answer is a URL (for fileinput questions)
-    final isUrl = answer.startsWith('http://') || answer.startsWith('https://');
+    // Check if answer is a filename or URL (for fileinput questions)
     final isFileInput = questionType == 'fileinput';
+    final isUrl = answer.startsWith('http://') || answer.startsWith('https://');
+    final isFilename = isFileInput && !isUrl && answer.isNotEmpty;
 
     return Padding(
       padding: EdgeInsets.all(isTablet ? 16 : 12),
@@ -415,7 +417,7 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
           ),
           Expanded(
             flex: 3,
-            child: isFileInput && isUrl
+            child: (isFileInput && (isUrl || isFilename))
                 ? _buildFileLink(context, answer, isTablet)
                 : Text(
                     answer,
@@ -430,18 +432,31 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
     );
   }
 
-  Widget _buildFileLink(BuildContext context, String url, bool isTablet) {
-    final fileName = url.split('/').last;
+  Widget _buildFileLink(BuildContext context, String filePathOrUrl, bool isTablet) {
+    // Construct full URL if it's just a filename
+    final String fullUrl;
+    final String fileName;
+    
+    if (filePathOrUrl.startsWith('http://') || filePathOrUrl.startsWith('https://')) {
+      // Already a full URL
+      fullUrl = filePathOrUrl;
+      fileName = filePathOrUrl.split('/').last;
+    } else {
+      // Just a filename, construct full URL
+      fileName = filePathOrUrl;
+      fullUrl = '${NetworkUrls.apiBaseUrl}/$filePathOrUrl';
+    }
+    
     return InkWell(
       onTap: () async {
-        final uri = Uri.parse(url);
+        final uri = Uri.parse(fullUrl);
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } else {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Could not open file: $url'),
+                content: Text('Could not open file: $fullUrl'),
                 backgroundColor: AppColors.errorColor,
               ),
             );
@@ -480,8 +495,21 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
     );
   }
 
-  Widget _buildAttachmentRow(BuildContext context, String attachmentUrl) {
-    final fileName = attachmentUrl.split('/').last;
+  Widget _buildAttachmentRow(BuildContext context, String attachmentPathOrUrl) {
+    // Construct full URL if it's just a filename
+    final String fullUrl;
+    final String fileName;
+    
+    if (attachmentPathOrUrl.startsWith('http://') || attachmentPathOrUrl.startsWith('https://')) {
+      // Already a full URL
+      fullUrl = attachmentPathOrUrl;
+      fileName = attachmentPathOrUrl.split('/').last;
+    } else {
+      // Just a filename, construct full URL
+      fileName = attachmentPathOrUrl;
+      fullUrl = '${NetworkUrls.apiBaseUrl}/$attachmentPathOrUrl';
+    }
+    
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -517,14 +545,14 @@ class _RfqDetailsBottomSheetState extends State<RfqDetailsBottomSheet> {
             flex: 3,
             child: InkWell(
               onTap: () async {
-                final uri = Uri.parse(attachmentUrl);
+                final uri = Uri.parse(fullUrl);
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 } else {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Could not open attachment: $attachmentUrl'),
+                        content: Text('Could not open attachment: $fullUrl'),
                         backgroundColor: AppColors.errorColor,
                       ),
                     );

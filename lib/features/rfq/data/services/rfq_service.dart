@@ -216,7 +216,8 @@ class RfqService {
       request.fields['token'] = NetworkUrls.reactAppApiToken;
       request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
       request.fields['accountno'] = accountNo;
-      request.fields['rfq_comments'] = requirementDescription ?? ' ';
+      request.fields['rfq_comments'] =
+          requirementDescription!.isEmpty ? " " : requirementDescription ?? ' ';
       request.fields['rfq_accountno'] = payloadData['rfq_accountno'] as String;
 
       // Add JSON stringified arrays
@@ -344,9 +345,8 @@ class RfqService {
         if (fileName.isEmpty) {
           throw Exception('File upload failed: No filename returned');
         }
-        // Construct full URL
-        final fileUrl = '${NetworkUrls.apiBaseUrl}/$fileName';
-        return fileUrl;
+        // Return only the filename (without base URL)
+        return fileName;
       } else {
         throw Exception(responseData['message'] ?? 'Failed to upload file');
       }
