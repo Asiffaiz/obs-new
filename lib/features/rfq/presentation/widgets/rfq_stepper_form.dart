@@ -197,10 +197,13 @@ class _RfqStepperFormState extends State<RfqStepperForm>
   }
 
   void _showSuccessDialog(BuildContext context) {
+    // Capture the form screen's context before showing dialog
+    final formScreenContext = context;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return PopScope(
           canPop: false, // Prevent back button from dismissing the dialog
           onPopInvoked: (didPop) {
@@ -276,9 +279,18 @@ class _RfqStepperFormState extends State<RfqStepperForm>
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); // Close dialog
-                        // Navigate to submissions listing screen
-                        context.go(AppRoutes.rfqSubmissions);
+                        Navigator.of(dialogContext).pop(); // Close dialog
+                        // Use form screen context to pop back to submissions
+                        // Wait for dialog to close before popping form screen
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (formScreenContext.mounted &&
+                              formScreenContext.canPop()) {
+                            formScreenContext.pop();
+                          } else {
+                            // Fallback: navigate to submissions if can't pop
+                            formScreenContext.go(AppRoutes.rfqSubmissions);
+                          }
+                        });
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,
