@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/agreements_repository.dart';
-import '../../domain/models/agreement_model.dart';
 import 'agreements_event.dart';
 import 'agreements_state.dart';
 
@@ -23,6 +22,7 @@ class AgreementsBloc extends Bloc<AgreementsEvent, AgreementsState> {
     on<LoadSignedAgreements>(_onLoadSignedAgreements);
     on<LoadArchivedAgreements>(_onLoadArchivedAgreements);
     on<LoadOptionalAgreements>(_onLoadOptionalAgreements);
+    on<LoadAllAgreements>(_onLoadAllAgreements);
   }
 
   Future<void> _onLoadAgreements(
@@ -415,6 +415,35 @@ class AgreementsBloc extends Bloc<AgreementsEvent, AgreementsState> {
           status: AgreementsStatus.loadedOptionalAgreements,
           agreements: agreements,
           viewMode: AgreementViewMode.list,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: AgreementsStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onLoadAllAgreements(
+    LoadAllAgreements event,
+    Emitter<AgreementsState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(status: AgreementsStatus.loadingAllAgreements));
+
+      final response = await _agreementsRepository.getAllAgreements(
+        accountNo: event.accountNo,
+        email: event.email,
+      );
+
+      emit(
+        state.copyWith(
+          status: AgreementsStatus.loadedAllAgreements,
+          allSignedAgreements: response.signedAgreements,
+          allOptionalAgreements: response.optionalAgreements,
         ),
       );
     } catch (e) {

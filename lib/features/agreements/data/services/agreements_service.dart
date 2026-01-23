@@ -268,4 +268,39 @@ class AgreementService {
       return false;
     }
   }
+
+  // Get all agreements (signed and optional) - same API as onboarding
+  Future<Map<String, dynamic>> getAllAgreements({
+    required String accountNo,
+    required String email,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.getClientAgreementsListingAll,
+        {'accountno': accountNo, 'email': email},
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == 200) {
+        return response.data;
+      } else if (response.statusCode == 200 && response.data['status'] == 404) {
+        // Return empty lists if no agreements found
+        return {
+          'status': 200,
+          'data': {
+            'signed_agreements': [],
+            'optional_agreements': [],
+          },
+        };
+      } else {
+        throw Exception(
+          response.data['message']?.toString() ??
+              'Failed to get all agreements',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'An error occurred while fetching all agreements: ${e.toString()}',
+      );
+    }
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:voicealerts_obs/features/agreements/domain/models/archived_agreement_modal.dart';
+import 'package:voicealerts_obs/features/agreements/domain/models/all_agreements_response_model.dart';
 
 import '../models/agreement_model.dart';
 import '../models/signed_agreement_model.dart';
@@ -18,6 +19,12 @@ abstract class AgreementsRepository {
 
   /// Get all signed agreements
   Future<List<SignedAgreementModel>> getSignedAgreements();
+
+  /// Get all agreements (signed and optional) - same API as onboarding
+  Future<AllAgreementsResponseModel> getAllAgreements({
+    required String accountNo,
+    required String email,
+  });
 
   /// Check if all mandatory agreements are signed and approved
   Future<bool> areAllMandatoryAgreementsSigned();

@@ -272,7 +272,10 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
 
   void _acceptAgreement() async {
     filledAgreementContent = await _getTextFromChild();
-    print(filledAgreementContent);
+    if (kDebugMode) {
+      print('filledAgreementContent: $filledAgreementContent');
+    }
+
     if (filledAgreementContent.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -354,6 +357,7 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
             ),
           );
         } else if (widget.comeFrom == 'optional' ||
+            widget.comeFrom == 'signed_agreements' ||
             widget.comeFrom == 'onboarding') {
           // Send to the bloc
           context.read<AgreementsBloc>().add(
@@ -777,7 +781,8 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                             Navigator.of(context).pop();
                             // context.go(AppRoutes.optionalAgreements);
 
-                            if (widget.comeFrom == 'optional') {
+                            if (widget.comeFrom == 'optional' ||
+                                widget.comeFrom == 'signed_agreements') {
                               context.pop();
                               // context.pop();
                               if (widget.onRefreshOptionalAgreements != null) {
@@ -845,7 +850,8 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
           // Show success popup for sent to signee
           _showSentToSigneeSuccessDialog(context);
         } else if (state.status == AgreementsStatus.showNextAgreement) {
-          if (widget.comeFrom == 'optional') {
+          if (widget.comeFrom == 'optional' ||
+              widget.comeFrom == 'signed_agreements') {
             context.pop();
             // context.pop();
             if (widget.onRefreshOptionalAgreements != null) {
@@ -1500,7 +1506,7 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
         child: Padding(
           padding: EdgeInsets.symmetric(
             vertical: 2,
-            horizontal: isTablet ? 48.0 : 24.0,
+            horizontal: isTablet ? 16.0 : 16.0,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -23,6 +23,19 @@ class LoadOptionalAgreements extends AgreementsEvent {
   const LoadOptionalAgreements();
 }
 
+class LoadAllAgreements extends AgreementsEvent {
+  final String accountNo;
+  final String email;
+
+  const LoadAllAgreements({
+    required this.accountNo,
+    required this.email,
+  });
+
+  @override
+  List<Object?> get props => [accountNo, email];
+}
+
 class SignAgreement extends AgreementsEvent {
   final String agreementId;
   final String signature;

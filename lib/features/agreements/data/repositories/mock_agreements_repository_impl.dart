@@ -1,5 +1,6 @@
 import 'package:voicealerts_obs/features/agreements/data/services/agreements_service.dart';
 import 'package:voicealerts_obs/features/agreements/domain/models/archived_agreement_modal.dart';
+import 'package:voicealerts_obs/features/agreements/domain/models/all_agreements_response_model.dart';
 import '../../domain/models/agreement_model.dart';
 import '../../domain/models/signed_agreement_model.dart';
 import '../../domain/repositories/agreements_repository.dart';
@@ -44,6 +45,18 @@ class MockAgreementsRepositoryImpl implements AgreementsRepository {
   @override
   Future<List<SignedAgreementModel>> getSignedAgreements() async {
     return await _agreementsService.getSignedAgreements();
+  }
+
+  @override
+  Future<AllAgreementsResponseModel> getAllAgreements({
+    required String accountNo,
+    required String email,
+  }) async {
+    final response = await _agreementsService.getAllAgreements(
+      accountNo: accountNo,
+      email: email,
+    );
+    return AllAgreementsResponseModel.fromJson(response);
   }
 
   @override

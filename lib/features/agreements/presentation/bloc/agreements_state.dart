@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:voicealerts_obs/features/agreements/domain/models/archived_agreement_modal.dart';
+import 'package:voicealerts_obs/features/onboarding/domain/models/onboarding_signed_agreement_model.dart';
+import 'package:voicealerts_obs/features/onboarding/domain/models/onboarding_optional_agreement_model.dart';
 import '../../domain/models/agreement_model.dart';
 import '../../domain/models/signed_agreement_model.dart';
 
@@ -24,6 +26,8 @@ enum AgreementsStatus {
   loadedOptionalAgreements,
   loadingArchivedAgreements,
   loadedArchivedAgreements,
+  loadingAllAgreements,
+  loadedAllAgreements,
 }
 
 enum AgreementViewMode { list, detail, sign, sendToSignee }
@@ -33,6 +37,8 @@ class AgreementsState extends Equatable {
   final List<AgreementModel> agreements;
   final List<SignedAgreementModel> signedAgreements;
   final List<ArchivedAgreementModel> archivedAgreements;
+  final List<OnboardingSignedAgreementModel> allSignedAgreements;
+  final List<OnboardingOptionalAgreementModel> allOptionalAgreements;
   final String? errorMessage;
   final int currentAgreementIndex;
   final bool allMandatoryAgreementsSigned;
@@ -44,6 +50,8 @@ class AgreementsState extends Equatable {
     this.agreements = const [],
     this.signedAgreements = const [],
     this.archivedAgreements = const [],
+    this.allSignedAgreements = const [],
+    this.allOptionalAgreements = const [],
     this.errorMessage,
     this.currentAgreementIndex = 0,
     this.allMandatoryAgreementsSigned = false,
@@ -56,6 +64,8 @@ class AgreementsState extends Equatable {
     List<AgreementModel>? agreements,
     List<SignedAgreementModel>? signedAgreements,
     List<ArchivedAgreementModel>? archivedAgreements,
+    List<OnboardingSignedAgreementModel>? allSignedAgreements,
+    List<OnboardingOptionalAgreementModel>? allOptionalAgreements,
     String? errorMessage,
     int? currentAgreementIndex,
     bool? allMandatoryAgreementsSigned,
@@ -67,6 +77,8 @@ class AgreementsState extends Equatable {
       agreements: agreements ?? this.agreements,
       signedAgreements: signedAgreements ?? this.signedAgreements,
       archivedAgreements: archivedAgreements ?? this.archivedAgreements,
+      allSignedAgreements: allSignedAgreements ?? this.allSignedAgreements,
+      allOptionalAgreements: allOptionalAgreements ?? this.allOptionalAgreements,
       errorMessage: errorMessage,
       currentAgreementIndex:
           currentAgreementIndex ?? this.currentAgreementIndex,
@@ -91,6 +103,10 @@ class AgreementsState extends Equatable {
   List<Object?> get props => [
     status,
     agreements,
+    signedAgreements,
+    archivedAgreements,
+    allSignedAgreements,
+    allOptionalAgreements,
     errorMessage,
     currentAgreementIndex,
     allMandatoryAgreementsSigned,
