@@ -368,9 +368,13 @@ class RfqService {
       // The file is already uploaded via rfq_file_response API, so we only send the filename
       // file is always null (file already uploaded), fileName contains the uploaded filename
       request.fields['file'] =
-          ''; // Always null/empty since file is already uploaded
+          attachmentFile != null && attachmentFile.isNotEmpty
+              ? 'https://dev-agents.onboardsoft.me/files_data/rfq/$attachmentFile'
+              : '';
       request.fields['fileName'] =
-          attachmentFile ?? ''; // Filename from uploadRfqFile API or empty
+          attachmentFile != null && attachmentFile.isNotEmpty
+              ? attachmentFile
+              : '';
 
       if (kDebugMode) {
         print('Update RFQ Form - Sending FormData');
@@ -472,10 +476,20 @@ class RfqService {
       // Handle file attachment - always include file and fileName keys
       // The file is already uploaded via rfq_file_response API, so we only send the filename
       // file is always null (file already uploaded), fileName contains the uploaded filename
+      // request.fields['file'] =
+      //     attachmentFile ??
+      //     ''; // Always null/empty since file is already uploaded
+      // request.fields['fileName'] =
+      //     attachmentFile ?? ''; // Filename from uploadRfqFile API or empty
+
       request.fields['file'] =
-          ''; // Always null/empty since file is already uploaded
+          attachmentFile != null && attachmentFile.isNotEmpty
+              ? 'https://dev-agents.onboardsoft.me/files_data/rfq/$attachmentFile'
+              : '';
       request.fields['fileName'] =
-          attachmentFile ?? ''; // Filename from uploadRfqFile API or empty
+          attachmentFile != null && attachmentFile.isNotEmpty
+              ? attachmentFile
+              : '';
 
       if (kDebugMode) {
         print('Submit RFQ Form - Sending FormData');
