@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/core/constants/breakpoints.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
+import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
 import 'package:voicealerts_obs/features/rfq/data/repositories/rfq_repository_impl.dart';
 import 'package:voicealerts_obs/features/rfq/data/services/rfq_service.dart';
 import 'package:voicealerts_obs/features/rfq/domain/models/rfq_submission_model.dart';
@@ -348,12 +350,14 @@ class _RfqSubmissionCard extends StatelessWidget {
               const SizedBox(height: 12),
 
               // Attachment
-              _buildInfoRow(
-                icon: Icons.attach_file,
-                label: 'Attachment',
-                value: submission.hasAttachment ? 'Attached' : 'No Attachment',
-                isEmpty: !submission.hasAttachment,
-              ),
+              submission.hasAttachment
+                  ? _buildAttachmentRow(context)
+                  : _buildInfoRow(
+                    icon: Icons.attach_file,
+                    label: 'Attachment',
+                    value: 'No Attachment',
+                    isEmpty: true,
+                  ),
               const SizedBox(height: 12),
 
               // Updated At (if available)
@@ -539,5 +543,116 @@ class _RfqSubmissionCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return DateFormat('MMM d, yyyy h:mm a').format(date);
+  }
+
+  Widget _buildAttachmentRow(BuildContext context) {
+    // Base path for RFQ attachments
+    const String rfqAttachmentBaseUrl =
+        'https://dev-agents.onboardsoft.me/files_data/rfq/';
+
+    final filePathOrUrl = submission.rfqAttachment ?? '';
+    String fullUrl;
+    String fileName;
+
+    if (filePathOrUrl.startsWith('http://') ||
+        filePathOrUrl.startsWith('https://')) {
+      // Already a full URL
+      fullUrl = filePathOrUrl;
+      fileName = filePathOrUrl.split('/').last;
+    } else {
+      // Just a filename, construct full URL using the RFQ attachment base path
+      fileName = filePathOrUrl;
+      fullUrl = '$rfqAttachmentBaseUrl$filePathOrUrl';
+    }
+
+    // Check if it's a PDF file
+    final isPdf = fileName.toLowerCase().endsWith('.pdf');
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.attach_file, size: 16, color: Colors.grey.shade600),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Attachment',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              InkWell(
+                onTap: () async {
+                  if (isPdf) {
+                    // Open PDF in PDF viewer
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                CustomPdfViewer(url: fullUrl, title: fileName),
+                      ),
+                    );
+                  } else {
+                    // Open other file types externally
+                    final uri = Uri.parse(fullUrl);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Could not open file: $fullUrl'),
+                            backgroundColor: AppColors.errorColor,
+                          ),
+                        );
+                      }
+                    }
+                  }
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isPdf ? Icons.picture_as_pdf : Icons.insert_drive_file,
+                      size: 14,
+                      color: AppColors.primaryColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        fileName,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primaryColor,
+                          decoration: TextDecoration.underline,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.open_in_new,
+                      size: 12,
+                      color: AppColors.primaryColor,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
