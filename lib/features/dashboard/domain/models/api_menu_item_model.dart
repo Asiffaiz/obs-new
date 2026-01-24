@@ -72,27 +72,27 @@ class ApiMenuItemModel {
       if (alt == "Agreements") {
         // For the Agreements menu, we need to add the Unsigned Agreements option
         // if it doesn't already exist in the submenu
-        bool hasUnsignedAgreements = submenu.any(
-          (item) => item.alt.toLowerCase() == 'unsigned agreements',
-        );
+        // bool hasUnsignedAgreements = submenu.any(
+        //   (item) => item.alt.toLowerCase() == 'unsigned agreements',
+        // );
 
-        if (!hasUnsignedAgreements) {
-          children.add(
-            MenuItemModel(
-              id: 'unsigned_agreements',
-              title: 'Unsigned Agreements',
-              icon: Icons.assignment,
-              url: null,
-            ),
-          );
-        }
+        // if (!hasUnsignedAgreements) {
+        //   children.add(
+        //     MenuItemModel(
+        //       id: 'unsigned_agreements',
+        //       title: 'Unsigned Agreements',
+        //       icon: Icons.assignment,
+        //       url: null,
+        //     ),
+        //   );
+        // }
 
         return MenuItemModel(
           id: id,
           title: alt,
           icon: icon,
           url: link == "#" ? null : link,
-          children: children,
+          // children: children,
         );
       }
     }

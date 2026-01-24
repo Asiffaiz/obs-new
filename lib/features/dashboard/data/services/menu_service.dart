@@ -97,52 +97,53 @@ class MenuService {
           id: 'agreements',
           title: 'Agreements',
           icon: Icons.description,
-          children: [
-            MenuItemModel(
-              id: 'signed_agreements',
-              title: 'Signed Agreements',
-              icon: Icons.check_circle_outline,
-              url: null,
-            ),
-            MenuItemModel(
-              id: 'unsigned_agreements',
-              title: 'Unsigned Agreements',
-              icon: Icons.assignment,
-              url: null,
-            ),
-          ],
+          // children: [
+          //   MenuItemModel(
+          //     id: 'signed_agreements',
+          //     title: 'Signed Agreements',
+          //     icon: Icons.check_circle_outline,
+          //     url: null,
+          //   ),
+          //   MenuItemModel(
+          //     id: 'unsigned_agreements',
+          //     title: 'Unsigned Agreements',
+          //     icon: Icons.assignment,
+          //     url: null,
+          //   ),
+          // ],
         ),
       );
-    } else {
-      // Make sure agreements has both signed and unsigned
-      MenuItemModel agreements = menuItems.firstWhere(
-        (item) => item.id == 'agreements',
-      );
-      if (!agreements.children.any(
-        (child) => child.id == 'signed_agreements',
-      )) {
-        agreements.children.add(
-          MenuItemModel(
-            id: 'signed_agreements',
-            title: 'Signed Agreements',
-            icon: Icons.check_circle_outline,
-            url: null,
-          ),
-        );
-      }
-      if (!agreements.children.any(
-        (child) => child.id == 'unsigned_agreements',
-      )) {
-        agreements.children.add(
-          MenuItemModel(
-            id: 'unsigned_agreements',
-            title: 'Unsigned Agreements',
-            icon: Icons.assignment,
-            url: null,
-          ),
-        );
-      }
     }
+    // else {
+    //   // Make sure agreements has both signed and unsigned
+    //   MenuItemModel agreements = menuItems.firstWhere(
+    //     (item) => item.id == 'agreements',
+    //   );
+    //   if (!agreements.children.any(
+    //     (child) => child.id == 'signed_agreements',
+    //   )) {
+    //     agreements.children.add(
+    //       MenuItemModel(
+    //         id: 'signed_agreements',
+    //         title: 'Signed Agreements',
+    //         icon: Icons.check_circle_outline,
+    //         url: null,
+    //       ),
+    //     );
+    //   }
+    //   if (!agreements.children.any(
+    //     (child) => child.id == 'unsigned_agreements',
+    //   )) {
+    //     agreements.children.add(
+    //       MenuItemModel(
+    //         id: 'unsigned_agreements',
+    //         title: 'Unsigned Agreements',
+    //         icon: Icons.assignment,
+    //         url: null,
+    //       ),
+    //     );
+    //   }
+    // }
 
     // Make sure we have reports
     if (!menuItems.any((item) => item.id == 'reports')) {

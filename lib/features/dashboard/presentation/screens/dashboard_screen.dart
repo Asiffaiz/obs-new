@@ -149,20 +149,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           id: 'agreements',
           title: 'Agreements',
           icon: Icons.description,
-          children: [
-            MenuItemModel(
-              id: 'signed_agreements',
-              title: 'Signed Agreements',
-              icon: Icons.check_circle_outline,
-              url: null,
-            ),
-            MenuItemModel(
-              id: 'unsigned_agreements',
-              title: 'Unsigned Agreements',
-              icon: Icons.assignment,
-              url: null,
-            ),
-          ],
+          // children: [
+          //   MenuItemModel(
+          //     id: 'signed_agreements',
+          //     title: 'Signed Agreements',
+          //     icon: Icons.check_circle_outline,
+          //     url: null,
+          //   ),
+          //   MenuItemModel(
+          //     id: 'unsigned_agreements',
+          //     title: 'Unsigned Agreements',
+          //     icon: Icons.assignment,
+          //     url: null,
+          //   ),
+          // ],
         ),
         MenuItemModel(
           id: 'credit_application',
@@ -232,21 +232,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
         print(item.id);
         // Handle special menu items by navigating to their routes
-        if (item.id == 'signed_agreements') {
+        if (item.id == 'agreements') {
           setState(() {
             _selectedMenuId = 'dashboard';
             _currentContent = _buildDashboardHomeContent();
           });
           context.push(AppRoutes.signedAgreements);
           return;
-        } else if (item.id == 'unsigned_agreements') {
-          setState(() {
-            _selectedMenuId = 'dashboard';
-            _currentContent = _buildDashboardHomeContent();
-          });
-          context.push(AppRoutes.optionalAgreements);
-          return;
-        } else if (item.id == 'reports') {
+        }
+        // if (item.id == 'signed_agreements') {
+        //   setState(() {
+        //     _selectedMenuId = 'dashboard';
+        //     _currentContent = _buildDashboardHomeContent();
+        //   });
+        //   context.push(AppRoutes.signedAgreements);
+        //   return;
+        // } else if (item.id == 'unsigned_agreements') {
+        //   setState(() {
+        //     _selectedMenuId = 'dashboard';
+        //     _currentContent = _buildDashboardHomeContent();
+        //   });
+        //   context.push(AppRoutes.optionalAgreements);
+        //   return;
+        // } else
+        if (item.id == 'reports') {
           setState(() {
             _selectedMenuId = 'dashboard';
             _currentContent = _buildDashboardHomeContent();
