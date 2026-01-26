@@ -121,7 +121,10 @@ class AgreementService {
             : ApiEndpoints.signAgreementWithChose,
         requestData,
       );
-      print(response);
+      if (kDebugMode) {
+        print("signAgreement response: $response");
+      }
+
       return response.statusCode == 200 && response.data['status'] == 200;
 
       // Future.delayed(const Duration(milliseconds: 1000));
@@ -286,10 +289,7 @@ class AgreementService {
         // Return empty lists if no agreements found
         return {
           'status': 200,
-          'data': {
-            'signed_agreements': [],
-            'optional_agreements': [],
-          },
+          'data': {'signed_agreements': [], 'optional_agreements': []},
         };
       } else {
         throw Exception(
