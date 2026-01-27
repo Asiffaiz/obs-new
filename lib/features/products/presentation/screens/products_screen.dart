@@ -254,11 +254,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   children: [
                     _buildInfoRow('SKU:', product.sku, AppColors.primaryColor),
                     const SizedBox(height: 8),
-                    _buildInfoRow(
-                      'Price:',
-                      _buildPriceWithCurrencySign(product.rate.toString()),
-                      AppColors.primaryColor,
-                    ),
+                    product.rateDeckPricing == 1
+                        ? _buildViewRatedecButton(product)
+                        : _buildInfoRow(
+                          'Price:',
+                          _buildPriceWithCurrencySign(product.rate.toString()),
+                          AppColors.primaryColor,
+                        ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -408,6 +410,67 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 fontSize: isViewSubmissionsBtn ? 14 : 12,
                 color: onPressed != null ? Colors.black : Colors.grey,
                 fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildViewRatedecButton(ProductModel product) {
+    return InkWell(
+      onTap: () {
+        if (product.documentUrl.isNotEmpty) {
+          // Construct full URL if needed
+          String fullUrl = product.documentUrl;
+          if (!fullUrl.startsWith('http://') &&
+              !fullUrl.startsWith('https://')) {
+            // Assuming base URL for documents - adjust as needed
+            fullUrl = fullUrl;
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => CustomPdfViewer(
+                    url: fullUrl,
+                    title:
+                        product.documentTitle.isNotEmpty
+                            ? product.documentTitle
+                            : 'Rate Deck',
+                  ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Rate deck document not available'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.primaryColor),
+          borderRadius: BorderRadius.circular(4),
+          color: AppColors.primaryColor.withOpacity(0.1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon(Icons.description, size: 16, color: AppColors.primaryColor),
+            // const SizedBox(width: 4),
+            Text(
+              'View Ratedec',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.primaryColor,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],

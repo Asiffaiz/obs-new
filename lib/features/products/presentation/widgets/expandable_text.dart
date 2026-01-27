@@ -3,6 +3,7 @@ import 'package:flutter_html/flutter_html.dart';
 
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/utils/validators.dart';
+import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
 import 'package:voicealerts_obs/features/products/domain/models/product_model.dart';
 
 class ExpandableText extends StatefulWidget {
@@ -118,13 +119,15 @@ class _ExpandableTextState extends State<ExpandableText> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 10),
-                  _buildPriceInfoRow(
-                    'Price:',
-                    Validators.buildPriceWithCurrencySign(
-                      widget.product.rate.toString(),
-                    ),
-                    AppColors.primaryColor,
-                  ),
+                  widget.product.rateDeckPricing == 1
+                      ? _buildViewRatedecButton(context)
+                      : _buildPriceInfoRow(
+                          'Price:',
+                          Validators.buildPriceWithCurrencySign(
+                            widget.product.rate.toString(),
+                          ),
+                          AppColors.primaryColor,
+                        ),
                   const Text(
                     'Summary',
                     style: TextStyle(
@@ -411,6 +414,76 @@ class _ExpandableTextState extends State<ExpandableText> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildViewRatedecButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          InkWell(
+            onTap: () {
+              if (widget.product.documentUrl.isNotEmpty) {
+                // Construct full URL if needed
+                String fullUrl = widget.product.documentUrl;
+                if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+                  // Assuming base URL for documents - adjust as needed
+                  fullUrl = 'https://dev-agents.onboardsoft.me/files_data/products/$fullUrl';
+                }
+                
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CustomPdfViewer(
+                      url: fullUrl,
+                      title: widget.product.documentTitle.isNotEmpty 
+                          ? widget.product.documentTitle 
+                          : 'Rate Deck',
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Rate deck document not available'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.primaryColor),
+                borderRadius: BorderRadius.circular(4),
+                color: AppColors.primaryColor.withOpacity(0.1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.description,
+                    size: 16,
+                    color: AppColors.primaryColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'View Ratedec',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
