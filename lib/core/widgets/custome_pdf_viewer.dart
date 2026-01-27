@@ -115,17 +115,25 @@ class _CustomPdfViewerState extends State<CustomPdfViewer> {
       final file = File(filePath);
       
       // Delete existing file if it exists (to avoid 416 Range Not Satisfiable error)
+      // Works on both Android and iOS
       if (await file.exists()) {
-        await file.delete();
+        try {
+          await file.delete();
+        } catch (e) {
+          // File might be locked or in use, try to delete later
+          print('Could not delete existing file: $e');
+        }
       }
       
       // Also check for any existing download tasks with same file name and cancel them
+      // This works on both Android and iOS
       final tasks = await FlutterDownloader.loadTasks();
       if (tasks != null) {
         for (var task in tasks) {
           if (task.status == DownloadTaskStatus.running ||
               task.status == DownloadTaskStatus.paused ||
               task.status == DownloadTaskStatus.failed) {
+            // Match by filename or URL to catch duplicate downloads
             if (task.filename == fileName || task.url == widget.url) {
               try {
                 await FlutterDownloader.remove(
@@ -133,7 +141,8 @@ class _CustomPdfViewerState extends State<CustomPdfViewer> {
                   shouldDeleteContent: true,
                 );
               } catch (e) {
-                // Ignore errors when removing tasks
+                // Ignore errors when removing tasks (might already be removed)
+                print('Could not remove task: $e');
               }
             }
           }
@@ -155,9 +164,9 @@ class _CustomPdfViewerState extends State<CustomPdfViewer> {
       // Sanitize file name
       final sanitizedFileName = _sanitizeFileName(fileName);
       
-      // Request permissions (Android only)
+      // Request permissions (platform-specific)
       if (Platform.isAndroid) {
-        // Request notification permission for download notifications
+        // Android: Request notification permission for download notifications
         await Permission.notification.request();
         
         // For Android 10+ (API 29+), we don't need storage permission for Downloads folder
@@ -170,6 +179,10 @@ class _CustomPdfViewerState extends State<CustomPdfViewer> {
         if (await Permission.manageExternalStorage.isDenied) {
           // Only request if really needed (usually not needed for Downloads folder)
         }
+      } else if (Platform.isIOS) {
+        // iOS: No special permissions needed for downloads to app's Documents directory
+        // Files saved to Documents directory are accessible via Files app
+        // iOS handles permissions automatically for app's sandboxed directories
       }
 
       // Resolve save directory
@@ -194,6 +207,7 @@ class _CustomPdfViewerState extends State<CustomPdfViewer> {
       await _cleanupExistingDownload(savedDir, sanitizedFileName);
 
       // Enqueue download with proper configuration
+      // Note: Some parameters are platform-specific
       final taskId = await FlutterDownloader.enqueue(
         url: url,
         savedDir: savedDir,
@@ -202,9 +216,11 @@ class _CustomPdfViewerState extends State<CustomPdfViewer> {
           // Add headers to prevent resume issues
           'Accept-Encoding': 'identity', // Disable compression
         },
-        showNotification: true, // Android notification
-        openFileFromNotification: true, // Tap to open on Android
-        saveInPublicStorage: true, // Android → public Downloads folder
+        showNotification: true, // Works on both Android and iOS
+        openFileFromNotification: true, // Works on both platforms
+        // iOS: Files are saved to app's Documents directory (accessible via Files app)
+        // Android: Files are saved to public Downloads folder
+        saveInPublicStorage: Platform.isAndroid, // Only for Android
         requiresStorageNotLow: false, // Don't fail if storage is low
       );
 
