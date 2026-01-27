@@ -12,6 +12,13 @@ class ProductModel {
   final String formAccountno;
   final String formLink;
   final int rate;
+  final String serviceType;
+  final String perMinType;
+  final String documentTitle;
+  final String documentUrl;
+  final int comingSoon;
+  final int rateDeckPricing;
+
   final List<MiscellaneousRates> miscellaneousRates;
   final List<OtherRates> otherRates;
 
@@ -29,6 +36,12 @@ class ProductModel {
     required this.formAccountno,
     required this.formLink,
     required this.rate,
+    required this.serviceType,
+    required this.perMinType,
+    required this.documentTitle,
+    required this.documentUrl,
+    required this.comingSoon,
+    required this.rateDeckPricing,
     required this.miscellaneousRates,
     required this.otherRates,
   });
@@ -48,6 +61,12 @@ class ProductModel {
       formAccountno: json['form_accountno'] ?? '',
       formLink: json['form_link'] ?? '',
       rate: json['rate'] ?? 0,
+      serviceType: json['service_type'] ?? '',
+      perMinType: json['per_min_type'] ?? '',
+      documentTitle: json['document_title'] ?? '',
+      documentUrl: json['document_url'] ?? '',
+      comingSoon: json['coming_soon'] ?? 0,
+      rateDeckPricing: json['rate_deck_pricing'] ?? 0,
       miscellaneousRates:
           json['miscellaneous_rates'] != null
               ? (json['miscellaneous_rates'] as List)
@@ -77,6 +96,12 @@ class ProductModel {
       'integration_title': integrationTitle,
       'form_accountno': formAccountno,
       'form_link': formLink,
+      'service_type': serviceType,
+      'per_min_type': perMinType,
+      'document_title': documentTitle,
+      'document_url': documentUrl,
+      'coming_soon': comingSoon,
+      'rate_deck_pricing': rateDeckPricing,
     };
   }
 }
