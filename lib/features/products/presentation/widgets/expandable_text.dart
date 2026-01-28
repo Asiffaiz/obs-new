@@ -328,44 +328,51 @@ class _ExpandableTextState extends State<ExpandableText> {
       return const SizedBox.shrink();
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.agreementCardBorderColor),
-      ),
-      child: Column(
-        children:
-            validRates
-                .map(
-                  (rate) => Column(
-                    children: [
-                      if (rate.miscTitle.isNotEmpty)
-                        _buildInfoRow(
-                          "Title: ",
-                          rate.miscTitle,
-                          AppColors.primaryColor,
-                        ),
-                      if (rate.miscType.isNotEmpty)
-                        _buildInfoRow(
-                          "Rate Type: ",
-                          rate.miscType,
-                          AppColors.primaryColor,
-                        ),
-                      if (rate.miscRate > 0)
-                        _buildInfoRow(
-                          "Rate: ",
-                          Validators.buildPriceWithCurrencySign(
-                            rate.miscRate.toString(),
-                          ),
-                          AppColors.primaryColor,
-                        ),
-                    ],
+    return Column(
+      children: validRates.asMap().entries.map((entry) {
+        final index = entry.key;
+        final rate = entry.value;
+        final isLast = index == validRates.length - 1;
+
+        return Container(
+          margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.cardColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.agreementCardBorderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (rate.miscTitle.isNotEmpty)
+                _buildInfoRow(
+                  "Title: ",
+                  rate.miscTitle,
+                  AppColors.primaryColor,
+                ),
+              if (rate.miscTitle.isNotEmpty && (rate.miscType.isNotEmpty || rate.miscRate > 0))
+                const SizedBox(height: 8),
+              if (rate.miscType.isNotEmpty)
+                _buildInfoRow(
+                  "Rate Type: ",
+                  rate.miscType,
+                  AppColors.primaryColor,
+                ),
+              if (rate.miscType.isNotEmpty && rate.miscRate > 0)
+                const SizedBox(height: 8),
+              if (rate.miscRate > 0)
+                _buildInfoRow(
+                  "Rate: ",
+                  Validators.buildPriceWithCurrencySign(
+                    rate.miscRate.toString(),
                   ),
-                )
-                .toList(),
-      ),
+                  AppColors.primaryColor,
+                ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -379,44 +386,51 @@ class _ExpandableTextState extends State<ExpandableText> {
       return const SizedBox.shrink();
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.agreementCardBorderColor),
-      ),
-      child: Column(
-        children:
-            validRates
-                .map(
-                  (rate) => Column(
-                    children: [
-                      if (rate.genericTitle.isNotEmpty)
-                        _buildInfoRow(
-                          "Title: ",
-                          rate.genericTitle,
-                          AppColors.primaryColor,
-                        ),
-                      if (rate.payType.isNotEmpty)
-                        _buildInfoRow(
-                          "Charge Type: ",
-                          rate.payType,
-                          AppColors.primaryColor,
-                        ),
-                      if (rate.genericRate > 0)
-                        _buildInfoRow(
-                          'Price: ',
-                          Validators.buildPriceWithCurrencySign(
-                            rate.genericRate.toString(),
-                          ),
-                          AppColors.primaryColor,
-                        ),
-                    ],
+    return Column(
+      children: validRates.asMap().entries.map((entry) {
+        final index = entry.key;
+        final rate = entry.value;
+        final isLast = index == validRates.length - 1;
+
+        return Container(
+          margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.cardColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.agreementCardBorderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (rate.genericTitle.isNotEmpty)
+                _buildInfoRow(
+                  "Title: ",
+                  rate.genericTitle,
+                  AppColors.primaryColor,
+                ),
+              if (rate.genericTitle.isNotEmpty && (rate.payType.isNotEmpty || rate.genericRate > 0))
+                const SizedBox(height: 8),
+              if (rate.payType.isNotEmpty)
+                _buildInfoRow(
+                  "Charge Type: ",
+                  rate.payType,
+                  AppColors.primaryColor,
+                ),
+              if (rate.payType.isNotEmpty && rate.genericRate > 0)
+                const SizedBox(height: 8),
+              if (rate.genericRate > 0)
+                _buildInfoRow(
+                  'Price: ',
+                  Validators.buildPriceWithCurrencySign(
+                    rate.genericRate.toString(),
                   ),
-                )
-                .toList(),
-      ),
+                  AppColors.primaryColor,
+                ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
