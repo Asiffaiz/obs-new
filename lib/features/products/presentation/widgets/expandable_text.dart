@@ -8,85 +8,48 @@ import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
 import 'package:voicealerts_obs/features/products/domain/models/product_model.dart';
 import '../../../../config/routes.dart';
 
-class ExpandableText extends StatefulWidget {
+void showProductDetailsModal({
+  required BuildContext context,
+  required String summary,
+  required String description,
+  required ProductModel product,
+}) {
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: _ProductDetailsModalContent(
+          summary: summary,
+          description: description,
+          product: product,
+        ),
+      );
+    },
+  );
+}
+
+class _ProductDetailsModalContent extends StatelessWidget {
   final String summary;
   final String description;
-  final int maxLines;
   final ProductModel product;
 
-  const ExpandableText({
-    super.key,
+  const _ProductDetailsModalContent({
     required this.summary,
     required this.description,
-    this.maxLines = 3,
     required this.product,
   });
 
-  @override
-  State<ExpandableText> createState() => _ExpandableTextState();
-}
-
-class _ExpandableTextState extends State<ExpandableText> {
-  late TextPainter _textPainter;
-  bool _isTextOverflowing = false;
-
   bool get _hasPendingAgreement {
-    return widget.product.agreementAccountno.trim().isNotEmpty &&
-        widget.product.isSigned == false;
+    return product.agreementAccountno.trim().isNotEmpty &&
+        product.isSigned == false;
   }
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkTextOverflow();
-    });
-  }
-
-  void _checkTextOverflow() {
-    final textSpan = TextSpan(
-      text: widget.summary,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w400,
-        color: Colors.black87,
-      ),
-    );
-
-    _textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-      maxLines: widget.maxLines,
-    );
-
-    _textPainter.layout(maxWidth: MediaQuery.of(context).size.width - 64);
-
-    setState(() {
-      _isTextOverflowing = _textPainter.didExceedMaxLines;
-    });
-  }
-
-  void _showFullTextModal() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 24,
-          ),
-          child: _buildModalContent(context),
-        );
-      },
-    );
-  }
-
-  Widget _buildModalContent(BuildContext context) {
+  Widget build(BuildContext context) {
     return Container(
       width: double.maxFinite,
       padding: const EdgeInsets.all(20),
@@ -126,25 +89,22 @@ class _ExpandableTextState extends State<ExpandableText> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 10),
-                  // Show coming soon message if coming_soon == 1
-                  if (widget.product.comingSoon == 1) ...[
+                  if (product.comingSoon == 1) ...[
                     _buildComingSoonMessage(context),
                     const SizedBox(height: 16),
                   ],
-                  // Show agreement pending message if agreement_accountno present and not signed
                   if (_hasPendingAgreement) ...[
                     _buildPendingAgreementMessage(context),
                     const SizedBox(height: 16),
                   ],
-                  // Show price or rate deck button
-                  widget.product.comingSoon == 1
+                  product.comingSoon == 1
                       ? const SizedBox.shrink()
-                      : widget.product.rateDeckPricing == 1
+                      : product.rateDeckPricing == 1
                       ? _buildViewRatedecButton(context)
                       : _buildPriceInfoRow(
                         'Price:',
                         Validators.buildPriceWithCurrencySign(
-                          widget.product.rate.toString(),
+                          product.rate.toString(),
                         ),
                         AppColors.primaryColor,
                       ),
@@ -159,18 +119,13 @@ class _ExpandableTextState extends State<ExpandableText> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    widget.summary,
+                    summary,
                     style: const TextStyle(fontSize: 14, color: Colors.black87),
                   ),
-                  // Only show rates if rateDeckPricing is not enabled
-                  if (widget.product.rateDeckPricing != 1) ...[
+                  if (product.rateDeckPricing != 1) ...[
                     const SizedBox(height: 8),
-                    _buildRates(
-                      widget.product.miscellaneousRates,
-                      widget.product.otherRates,
-                    ),
+                    _buildRates(product.miscellaneousRates, product.otherRates),
                   ],
-
                   const SizedBox(height: 16),
                   const Divider(),
                   const SizedBox(height: 8),
@@ -183,11 +138,7 @@ class _ExpandableTextState extends State<ExpandableText> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Text(
-                  //   widget.description,
-                  //   style: const TextStyle(fontSize: 14, color: Colors.black87),
-                  // ),
-                  Html(data: widget.description),
+                  Html(data: description),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -213,40 +164,6 @@ class _ExpandableTextState extends State<ExpandableText> {
           ),
         ],
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          widget.summary,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-            color: Colors.black87,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        // if (_isTextOverflowing)
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: GestureDetector(
-            onTap: _showFullTextModal,
-            child: Text(
-              'Show more',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryColor,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -453,7 +370,7 @@ class _ExpandableTextState extends State<ExpandableText> {
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -478,35 +395,7 @@ class _ExpandableTextState extends State<ExpandableText> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: valueColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOtherRatesInfoColumn(
-    String label,
-    String value,
-    Color valueColor,
-  ) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -533,12 +422,11 @@ class _ExpandableTextState extends State<ExpandableText> {
         children: [
           InkWell(
             onTap: () {
-              if (widget.product.documentUrl.isNotEmpty) {
+              if (product.documentUrl.isNotEmpty) {
                 // Construct full URL if needed
-                String fullUrl = widget.product.documentUrl;
+                String fullUrl = product.documentUrl;
                 if (!fullUrl.startsWith('http://') &&
                     !fullUrl.startsWith('https://')) {
-                  // Assuming base URL for documents - adjust as needed
                   fullUrl =
                       'https://dev-agents.onboardsoft.me/files_data/products/$fullUrl';
                 }
@@ -550,8 +438,8 @@ class _ExpandableTextState extends State<ExpandableText> {
                         (context) => CustomPdfViewer(
                           url: fullUrl,
                           title:
-                              widget.product.documentTitle.isNotEmpty
-                                  ? widget.product.documentTitle
+                              product.documentTitle.isNotEmpty
+                                  ? product.documentTitle
                                   : 'Rate Deck',
                         ),
                   ),
@@ -645,7 +533,7 @@ class _ExpandableTextState extends State<ExpandableText> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Your agreement (${widget.product.productTitle}) for this service is pending sign. Please sign this agreement to fully access and use this service.',
+                  'Your agreement (${product.productTitle}) for this service is pending sign. Please sign this agreement to fully access and use this service.',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.orange.shade900,
@@ -680,6 +568,101 @@ class _ExpandableTextState extends State<ExpandableText> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class ExpandableText extends StatefulWidget {
+  final String summary;
+  final String description;
+  final int maxLines;
+  final ProductModel product;
+
+  const ExpandableText({
+    super.key,
+    required this.summary,
+    required this.description,
+    this.maxLines = 3,
+    required this.product,
+  });
+
+  @override
+  State<ExpandableText> createState() => _ExpandableTextState();
+}
+
+class _ExpandableTextState extends State<ExpandableText> {
+  late TextPainter _textPainter;
+  // bool _isTextOverflowing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkTextOverflow();
+    });
+  }
+
+  void _checkTextOverflow() {
+    final textSpan = TextSpan(
+      text: widget.summary,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: Colors.black87,
+      ),
+    );
+
+    _textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+      maxLines: widget.maxLines,
+    );
+
+    _textPainter.layout(maxWidth: MediaQuery.of(context).size.width - 64);
+
+    setState(() {});
+  }
+
+  void _showFullTextModal() {
+    showProductDetailsModal(
+      context: context,
+      summary: widget.summary,
+      description: widget.description,
+      product: widget.product,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.summary,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: Colors.black87,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        // if (_isTextOverflowing)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: GestureDetector(
+            onTap: _showFullTextModal,
+            child: Text(
+              'Show more',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryColor,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

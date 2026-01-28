@@ -205,116 +205,131 @@ class _ProductsScreenState extends State<ProductsScreen> {
     // String formattedDate = DateFormat(
     //   'MMMM d yyyy',
     // ).format(product);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppColors.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.agreementCardBorderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            showProductDetailsModal(
+              context: context,
+              summary: product.productSummary,
+              description: product.productDesc,
+              product: product,
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.cardColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.agreementCardBorderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.file_copy, color: Colors.black, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        product.productTitle,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                        softWrap: true,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2, // or more if you want
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.file_copy,
+                            color: Colors.black,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              product.productTitle,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              softWrap: true,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 2, // or more if you want
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildInfoRow(
+                            'SKU:',
+                            product.sku,
+                            AppColors.primaryColor,
+                          ),
+                          const SizedBox(height: 8),
+                          product.comingSoon == 1
+                              ? _buildComingSoonCell()
+                              : product.rateDeckPricing == 1
+                              ? _buildViewRatedecButton(product)
+                              : _buildInfoRow(
+                                'Price:',
+                                _buildPriceWithCurrencySign(
+                                  product.rate.toString(),
+                                ),
+                                AppColors.primaryColor,
+                              ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInfoSummary(
+                        'Summary:',
+                        product.productSummary,
+                        product.productDesc,
+                        product,
+                        AppColors.primaryColor,
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildInfoRow('SKU:', product.sku, AppColors.primaryColor),
-                    const SizedBox(height: 8),
-                    product.comingSoon == 1
-                        ? _buildComingSoonCell()
-                        : product.rateDeckPricing == 1
-                        ? _buildViewRatedecButton(product)
-                        : _buildInfoRow(
-                          'Price:',
-                          _buildPriceWithCurrencySign(product.rate.toString()),
-                          AppColors.primaryColor,
-                        ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildInfoSummary(
-                  'Summary:',
-                  product.productSummary,
-                  product.productDesc,
-                  product,
-                  AppColors.primaryColor,
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _isMarketinglink(product.marketing)
-                        ? _buildActionButton(
-                          icon: Icons.login,
-                          label: 'Product Info',
-                          color: AppColors.agreementCardViewBtnColor,
-                          isViewSubmissionsBtn: false,
-                          onPressed: () => _handleProductInfoPress(product),
-                        )
-                        : const SizedBox.shrink(),
-
-                    // _buildActionButton(
-                    //   icon: Icons.shopping_cart,
-                    //   label: 'Form Order',
-                    //   color: AppColors.agreementCardViewBtnColor,
-                    //   isViewSubmissionsBtn: false,
-                    //   onPressed: () => () {},
-                    // ),
-                    // _buildActionButton(
-                    //   icon: Icons.more_horiz,
-                    //   label: 'Actions',
-                    //   color: AppColors.agreementCardViewBtnColor,
-                    //   isViewSubmissionsBtn: false,
-                    //   onPressed: () => () {},
-                    // ),
-                  ],
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _isMarketinglink(product.marketing)
+                              ? _buildActionButton(
+                                icon: Icons.login,
+                                label: 'Product Info',
+                                color: AppColors.agreementCardViewBtnColor,
+                                isViewSubmissionsBtn: false,
+                                onPressed:
+                                    () => _handleProductInfoPress(product),
+                              )
+                              : const SizedBox.shrink(),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

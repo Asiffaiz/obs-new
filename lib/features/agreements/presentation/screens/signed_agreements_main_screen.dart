@@ -42,7 +42,7 @@ class _SignedAgreementsMainScreenState extends State<SignedAgreementsMainScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Signed Agreements'),
+        title: const Text('Agreements'),
         centerTitle: true,
         // leading: const Padding(
         //   padding: EdgeInsets.only(left: 4), // Adjust for spacing
@@ -88,7 +88,7 @@ class _SignedAgreementsMainScreenState extends State<SignedAgreementsMainScreen>
           ),
           const SizedBox(width: 8),
           const Text(
-            'Signed Agreements',
+            'Agreements',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
         ],
@@ -133,7 +133,7 @@ class _SignedAgreementsMainScreenState extends State<SignedAgreementsMainScreen>
           TabBar(
             controller: _tabController,
             tabs: const [
-              Tab(text: 'Signed Agreements'),
+              Tab(text: 'All Agreements'),
               Tab(text: 'Archived Agreements'),
             ],
             labelColor: Colors.white,
