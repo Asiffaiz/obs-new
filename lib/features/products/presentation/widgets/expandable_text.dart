@@ -240,42 +240,94 @@ class _ExpandableTextState extends State<ExpandableText> {
     );
   }
 
+  /// Check if a miscellaneous rate has valid data
+  bool _hasValidMiscellaneousRate(MiscellaneousRates rate) {
+    return (rate.miscTitle.isNotEmpty ||
+        rate.miscType.isNotEmpty ||
+        rate.miscRate > 0);
+  }
+
+  /// Check if an other rate has valid data
+  bool _hasValidOtherRate(OtherRates rate) {
+    return (rate.genericTitle.isNotEmpty ||
+        rate.genericType.isNotEmpty ||
+        rate.payType.isNotEmpty ||
+        rate.genericRate > 0);
+  }
+
+  /// Check if miscellaneous rates list has any valid rates
+  bool _hasValidMiscellaneousRates(List<MiscellaneousRates> rates) {
+    if (rates.isEmpty) return false;
+    return rates.any((rate) => _hasValidMiscellaneousRate(rate));
+  }
+
+  /// Check if other rates list has any valid rates
+  bool _hasValidOtherRates(List<OtherRates> rates) {
+    if (rates.isEmpty) return false;
+    return rates.any((rate) => _hasValidOtherRate(rate));
+  }
+
   Widget _buildRates(
     List<MiscellaneousRates> miscellaneousRates,
     List<OtherRates> otherRates,
   ) {
+    final hasOtherRates = _hasValidOtherRates(otherRates);
+    final hasMiscRates = _hasValidMiscellaneousRates(miscellaneousRates);
+
+    // If both are empty, don't show anything
+    if (!hasOtherRates && !hasMiscRates) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Other Service Rates',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+        // Only show Other Service Rates section if it has valid data
+        if (hasOtherRates) ...[
+          const Text(
+            'Other Service Rates',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-
-        _buildOtherRates(otherRates),
-        const SizedBox(height: 4),
-        const Divider(),
-        const SizedBox(height: 4),
-        const Text(
-          'Miscellaneous Rates',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+          const SizedBox(height: 8),
+          _buildOtherRates(otherRates),
+        ],
+        // Only show divider if both sections are present
+        if (hasOtherRates && hasMiscRates) ...[
+          const SizedBox(height: 4),
+          const Divider(),
+          const SizedBox(height: 4),
+        ],
+        // Only show Miscellaneous Rates section if it has valid data
+        if (hasMiscRates) ...[
+          const Text(
+            'Miscellaneous Rates',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        _buildMiscellaneousRates(miscellaneousRates),
+          const SizedBox(height: 8),
+          _buildMiscellaneousRates(miscellaneousRates),
+        ],
       ],
     );
   }
 
   Widget _buildMiscellaneousRates(List<MiscellaneousRates> miscellaneousRates) {
+    // Filter out invalid rates (all null/empty)
+    final validRates = miscellaneousRates
+        .where((rate) => _hasValidMiscellaneousRate(rate))
+        .toList();
+
+    if (validRates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -285,27 +337,30 @@ class _ExpandableTextState extends State<ExpandableText> {
       ),
       child: Column(
         children:
-            miscellaneousRates
+            validRates
                 .map(
                   (rate) => Column(
                     children: [
-                      _buildInfoRow(
-                        "Title: ",
-                        rate.miscTitle,
-                        AppColors.primaryColor,
-                      ),
-                      _buildInfoRow(
-                        "Rate Type: ",
-                        rate.miscType,
-                        AppColors.primaryColor,
-                      ),
-                      _buildInfoRow(
-                        "Rate: ",
-                        Validators.buildPriceWithCurrencySign(
-                          rate.miscRate.toString(),
+                      if (rate.miscTitle.isNotEmpty)
+                        _buildInfoRow(
+                          "Title: ",
+                          rate.miscTitle,
+                          AppColors.primaryColor,
                         ),
-                        AppColors.primaryColor,
-                      ),
+                      if (rate.miscType.isNotEmpty)
+                        _buildInfoRow(
+                          "Rate Type: ",
+                          rate.miscType,
+                          AppColors.primaryColor,
+                        ),
+                      if (rate.miscRate > 0)
+                        _buildInfoRow(
+                          "Rate: ",
+                          Validators.buildPriceWithCurrencySign(
+                            rate.miscRate.toString(),
+                          ),
+                          AppColors.primaryColor,
+                        ),
                     ],
                   ),
                 )
@@ -315,6 +370,15 @@ class _ExpandableTextState extends State<ExpandableText> {
   }
 
   Widget _buildOtherRates(List<OtherRates> otherRates) {
+    // Filter out invalid rates (all null/empty)
+    final validRates = otherRates
+        .where((rate) => _hasValidOtherRate(rate))
+        .toList();
+
+    if (validRates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -324,28 +388,30 @@ class _ExpandableTextState extends State<ExpandableText> {
       ),
       child: Column(
         children:
-            otherRates
+            validRates
                 .map(
                   (rate) => Column(
                     children: [
-                      _buildInfoRow(
-                        "Title: ",
-                        rate.genericTitle,
-                        AppColors.primaryColor,
-                      ),
-                      _buildInfoRow(
-                        "Charge Type: ",
-                        rate.payType,
-                        AppColors.primaryColor,
-                      ),
-
-                      _buildInfoRow(
-                        'Price: ',
-                        Validators.buildPriceWithCurrencySign(
-                          rate.genericRate.toString(),
+                      if (rate.genericTitle.isNotEmpty)
+                        _buildInfoRow(
+                          "Title: ",
+                          rate.genericTitle,
+                          AppColors.primaryColor,
                         ),
-                        AppColors.primaryColor,
-                      ),
+                      if (rate.payType.isNotEmpty)
+                        _buildInfoRow(
+                          "Charge Type: ",
+                          rate.payType,
+                          AppColors.primaryColor,
+                        ),
+                      if (rate.genericRate > 0)
+                        _buildInfoRow(
+                          'Price: ',
+                          Validators.buildPriceWithCurrencySign(
+                            rate.genericRate.toString(),
+                          ),
+                          AppColors.primaryColor,
+                        ),
                     ],
                   ),
                 )
