@@ -30,6 +30,11 @@ class _ExpandableTextState extends State<ExpandableText> {
   late TextPainter _textPainter;
   bool _isTextOverflowing = false;
 
+  bool get _hasPendingAgreement {
+    return widget.product.agreementAccountno.trim().isNotEmpty &&
+        widget.product.isSigned == false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -126,18 +131,23 @@ class _ExpandableTextState extends State<ExpandableText> {
                     _buildComingSoonMessage(context),
                     const SizedBox(height: 16),
                   ],
+                  // Show agreement pending message if agreement_accountno present and not signed
+                  if (_hasPendingAgreement) ...[
+                    _buildPendingAgreementMessage(context),
+                    const SizedBox(height: 16),
+                  ],
                   // Show price or rate deck button
                   widget.product.comingSoon == 1
                       ? const SizedBox.shrink()
                       : widget.product.rateDeckPricing == 1
-                          ? _buildViewRatedecButton(context)
-                          : _buildPriceInfoRow(
-                              'Price:',
-                              Validators.buildPriceWithCurrencySign(
-                                widget.product.rate.toString(),
-                              ),
-                              AppColors.primaryColor,
-                            ),
+                      ? _buildViewRatedecButton(context)
+                      : _buildPriceInfoRow(
+                        'Price:',
+                        Validators.buildPriceWithCurrencySign(
+                          widget.product.rate.toString(),
+                        ),
+                        AppColors.primaryColor,
+                      ),
                   const SizedBox(height: 16),
                   const Text(
                     'Summary',
@@ -320,117 +330,121 @@ class _ExpandableTextState extends State<ExpandableText> {
 
   Widget _buildMiscellaneousRates(List<MiscellaneousRates> miscellaneousRates) {
     // Filter out invalid rates (all null/empty)
-    final validRates = miscellaneousRates
-        .where((rate) => _hasValidMiscellaneousRate(rate))
-        .toList();
+    final validRates =
+        miscellaneousRates
+            .where((rate) => _hasValidMiscellaneousRate(rate))
+            .toList();
 
     if (validRates.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return Column(
-      children: validRates.asMap().entries.map((entry) {
-        final index = entry.key;
-        final rate = entry.value;
-        final isLast = index == validRates.length - 1;
+      children:
+          validRates.asMap().entries.map((entry) {
+            final index = entry.key;
+            final rate = entry.value;
+            final isLast = index == validRates.length - 1;
 
-        return Container(
-          margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.cardColor,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.agreementCardBorderColor),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (rate.miscTitle.isNotEmpty)
-                _buildInfoRow(
-                  "Title: ",
-                  rate.miscTitle,
-                  AppColors.primaryColor,
-                ),
-              if (rate.miscTitle.isNotEmpty && (rate.miscType.isNotEmpty || rate.miscRate > 0))
-                const SizedBox(height: 8),
-              if (rate.miscType.isNotEmpty)
-                _buildInfoRow(
-                  "Rate Type: ",
-                  rate.miscType,
-                  AppColors.primaryColor,
-                ),
-              if (rate.miscType.isNotEmpty && rate.miscRate > 0)
-                const SizedBox(height: 8),
-              if (rate.miscRate > 0)
-                _buildInfoRow(
-                  "Rate: ",
-                  Validators.buildPriceWithCurrencySign(
-                    rate.miscRate.toString(),
-                  ),
-                  AppColors.primaryColor,
-                ),
-            ],
-          ),
-        );
-      }).toList(),
+            return Container(
+              margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.cardColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.agreementCardBorderColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (rate.miscTitle.isNotEmpty)
+                    _buildInfoRow(
+                      "Title: ",
+                      rate.miscTitle,
+                      AppColors.primaryColor,
+                    ),
+                  if (rate.miscTitle.isNotEmpty &&
+                      (rate.miscType.isNotEmpty || rate.miscRate > 0))
+                    const SizedBox(height: 8),
+                  if (rate.miscType.isNotEmpty)
+                    _buildInfoRow(
+                      "Rate Type: ",
+                      rate.miscType,
+                      AppColors.primaryColor,
+                    ),
+                  if (rate.miscType.isNotEmpty && rate.miscRate > 0)
+                    const SizedBox(height: 8),
+                  if (rate.miscRate > 0)
+                    _buildInfoRow(
+                      "Rate: ",
+                      Validators.buildPriceWithCurrencySign(
+                        rate.miscRate.toString(),
+                      ),
+                      AppColors.primaryColor,
+                    ),
+                ],
+              ),
+            );
+          }).toList(),
     );
   }
 
   Widget _buildOtherRates(List<OtherRates> otherRates) {
     // Filter out invalid rates (all null/empty)
-    final validRates = otherRates
-        .where((rate) => _hasValidOtherRate(rate))
-        .toList();
+    final validRates =
+        otherRates.where((rate) => _hasValidOtherRate(rate)).toList();
 
     if (validRates.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return Column(
-      children: validRates.asMap().entries.map((entry) {
-        final index = entry.key;
-        final rate = entry.value;
-        final isLast = index == validRates.length - 1;
+      children:
+          validRates.asMap().entries.map((entry) {
+            final index = entry.key;
+            final rate = entry.value;
+            final isLast = index == validRates.length - 1;
 
-        return Container(
-          margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.cardColor,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.agreementCardBorderColor),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (rate.genericTitle.isNotEmpty)
-                _buildInfoRow(
-                  "Title: ",
-                  rate.genericTitle,
-                  AppColors.primaryColor,
-                ),
-              if (rate.genericTitle.isNotEmpty && (rate.payType.isNotEmpty || rate.genericRate > 0))
-                const SizedBox(height: 8),
-              if (rate.payType.isNotEmpty)
-                _buildInfoRow(
-                  "Charge Type: ",
-                  rate.payType,
-                  AppColors.primaryColor,
-                ),
-              if (rate.payType.isNotEmpty && rate.genericRate > 0)
-                const SizedBox(height: 8),
-              if (rate.genericRate > 0)
-                _buildInfoRow(
-                  'Price: ',
-                  Validators.buildPriceWithCurrencySign(
-                    rate.genericRate.toString(),
-                  ),
-                  AppColors.primaryColor,
-                ),
-            ],
-          ),
-        );
-      }).toList(),
+            return Container(
+              margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.cardColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.agreementCardBorderColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (rate.genericTitle.isNotEmpty)
+                    _buildInfoRow(
+                      "Title: ",
+                      rate.genericTitle,
+                      AppColors.primaryColor,
+                    ),
+                  if (rate.genericTitle.isNotEmpty &&
+                      (rate.payType.isNotEmpty || rate.genericRate > 0))
+                    const SizedBox(height: 8),
+                  if (rate.payType.isNotEmpty)
+                    _buildInfoRow(
+                      "Charge Type: ",
+                      rate.payType,
+                      AppColors.primaryColor,
+                    ),
+                  if (rate.payType.isNotEmpty && rate.genericRate > 0)
+                    const SizedBox(height: 8),
+                  if (rate.genericRate > 0)
+                    _buildInfoRow(
+                      'Price: ',
+                      Validators.buildPriceWithCurrencySign(
+                        rate.genericRate.toString(),
+                      ),
+                      AppColors.primaryColor,
+                    ),
+                ],
+              ),
+            );
+          }).toList(),
     );
   }
 
@@ -522,20 +536,24 @@ class _ExpandableTextState extends State<ExpandableText> {
               if (widget.product.documentUrl.isNotEmpty) {
                 // Construct full URL if needed
                 String fullUrl = widget.product.documentUrl;
-                if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+                if (!fullUrl.startsWith('http://') &&
+                    !fullUrl.startsWith('https://')) {
                   // Assuming base URL for documents - adjust as needed
-                  fullUrl = 'https://dev-agents.onboardsoft.me/files_data/products/$fullUrl';
+                  fullUrl =
+                      'https://dev-agents.onboardsoft.me/files_data/products/$fullUrl';
                 }
-                
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CustomPdfViewer(
-                      url: fullUrl,
-                      title: widget.product.documentTitle.isNotEmpty 
-                          ? widget.product.documentTitle 
-                          : 'Rate Deck',
-                    ),
+                    builder:
+                        (context) => CustomPdfViewer(
+                          url: fullUrl,
+                          title:
+                              widget.product.documentTitle.isNotEmpty
+                                  ? widget.product.documentTitle
+                                  : 'Rate Deck',
+                        ),
                   ),
                 );
               } else {
@@ -582,6 +600,35 @@ class _ExpandableTextState extends State<ExpandableText> {
   }
 
   Widget _buildComingSoonMessage(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: Colors.orange.shade200),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.schedule, size: 14, color: Colors.orange.shade700),
+            const SizedBox(width: 4),
+            Text(
+              'Coming Soon',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.orange.shade700,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPendingAgreementMessage(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -594,11 +641,7 @@ class _ExpandableTextState extends State<ExpandableText> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.info_outline,
-                color: Colors.orange.shade700,
-                size: 20,
-              ),
+              Icon(Icons.info_outline, color: Colors.orange.shade700, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -617,7 +660,7 @@ class _ExpandableTextState extends State<ExpandableText> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                // Navigate to agreements screen
+                // Keep current behavior for now; we’ll adjust navigation later
                 Navigator.of(context).pop(); // Close the modal first
                 context.push(AppRoutes.signedAgreements);
               },
@@ -631,10 +674,7 @@ class _ExpandableTextState extends State<ExpandableText> {
               ),
               child: const Text(
                 'Click Here to sign this agreement',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
             ),
           ),

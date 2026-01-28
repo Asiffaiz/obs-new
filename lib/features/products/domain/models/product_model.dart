@@ -18,6 +18,8 @@ class ProductModel {
   final String documentUrl;
   final int comingSoon;
   final int rateDeckPricing;
+  final String agreementAccountno;
+  final bool isSigned;
 
   final List<MiscellaneousRates> miscellaneousRates;
   final List<OtherRates> otherRates;
@@ -42,6 +44,8 @@ class ProductModel {
     required this.documentUrl,
     required this.comingSoon,
     required this.rateDeckPricing,
+    required this.agreementAccountno,
+    required this.isSigned,
     required this.miscellaneousRates,
     required this.otherRates,
   });
@@ -67,6 +71,17 @@ class ProductModel {
       documentUrl: json['document_url'] ?? '',
       comingSoon: json['coming_soon'] ?? 0,
       rateDeckPricing: json['rate_deck_pricing'] ?? 0,
+      agreementAccountno: json['agreement_accountno'] ?? '',
+      // API may send is_signed as '', 'yes', 'no', true/false, 1/0.
+      // Treat anything truthy-ish as signed; otherwise pending.
+      isSigned: (() {
+        final v = json['is_signed'];
+        if (v == null) return false;
+        if (v is bool) return v;
+        if (v is num) return v != 0;
+        final s = v.toString().trim().toLowerCase();
+        return s == 'yes' || s == 'true' || s == '1';
+      })(),
       miscellaneousRates:
           json['miscellaneous_rates'] != null
               ? (json['miscellaneous_rates'] as List)

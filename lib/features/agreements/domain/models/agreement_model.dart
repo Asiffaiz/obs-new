@@ -24,6 +24,7 @@ class AgreementModel extends Equatable {
   final String? signerState;
   final String? signerZip;
   final String? signerCountry;
+  
   final Map<String, dynamic> signatoryDetails;
 
   const AgreementModel({
