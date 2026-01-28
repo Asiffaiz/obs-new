@@ -22,6 +22,36 @@ class RfqService {
   // Keys for shared preferences
   static const String _accountNoKey = 'client_acn__';
   static const String _emailKey = 'client_eml__';
+  static const String _rfqAttachmentBaseUrl =
+      'https://dev-agents.onboardsoft.me/files_data/rfq/';
+
+  /// Normalizes attachment value coming from API/UI.
+  /// - If it's already a full URL, returns just the filename.
+  /// - If it's already a filename, returns it.
+  /// - If empty/null, returns null.
+  String? _normalizeRfqAttachmentToFileName(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+
+    // If backend accidentally stores double-prefixed URLs, taking last segment
+    // still yields the actual filename.
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      try {
+        final uri = Uri.parse(trimmed);
+        final seg = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+        return seg.isEmpty ? null : seg;
+      } catch (_) {
+        // Fallback: take last portion after '/'
+        final seg = trimmed.split('/').last;
+        return seg.isEmpty ? null : seg;
+      }
+    }
+
+    // If it's already a path (not full URL), also reduce to last segment.
+    final seg = trimmed.split('/').last;
+    return seg.isEmpty ? null : seg;
+  }
 
   /// Get user email from shared preferences
   Future<String> getUserEmail() async {
@@ -215,7 +245,9 @@ class RfqService {
           final rfqDetail = rfqDetailsList[0] as Map<String, dynamic>;
           preFilledRequirementDescription =
               rfqDetail['rfq_comments']?.toString();
-          preFilledAttachment = rfqDetail['rfq_attachement']?.toString();
+          preFilledAttachment = _normalizeRfqAttachmentToFileName(
+            rfqDetail['rfq_attachement']?.toString(),
+          );
         }
 
         if (kDebugMode) {
@@ -367,13 +399,16 @@ class RfqService {
       // Handle file attachment - always include file and fileName keys
       // The file is already uploaded via rfq_file_response API, so we only send the filename
       // file is always null (file already uploaded), fileName contains the uploaded filename
+      final normalizedAttachment = _normalizeRfqAttachmentToFileName(
+        attachmentFile,
+      );
       request.fields['file'] =
-          attachmentFile != null && attachmentFile.isNotEmpty
-              ? 'https://dev-agents.onboardsoft.me/files_data/rfq/$attachmentFile'
+          (normalizedAttachment != null && normalizedAttachment.isNotEmpty)
+              ? '$_rfqAttachmentBaseUrl$normalizedAttachment'
               : '';
       request.fields['fileName'] =
-          attachmentFile != null && attachmentFile.isNotEmpty
-              ? attachmentFile
+          (normalizedAttachment != null && normalizedAttachment.isNotEmpty)
+              ? normalizedAttachment
               : '';
 
       if (kDebugMode) {
@@ -483,13 +518,25 @@ class RfqService {
       //     attachmentFile ?? ''; // Filename from uploadRfqFile API or empty
 
       request.fields['file'] =
-          attachmentFile != null && attachmentFile.isNotEmpty
-              ? 'https://dev-agents.onboardsoft.me/files_data/rfq/$attachmentFile'
-              : '';
+          (() {
+            final normalizedAttachment = _normalizeRfqAttachmentToFileName(
+              attachmentFile,
+            );
+            return (normalizedAttachment != null &&
+                    normalizedAttachment.isNotEmpty)
+                ? '$_rfqAttachmentBaseUrl$normalizedAttachment'
+                : '';
+          })();
       request.fields['fileName'] =
-          attachmentFile != null && attachmentFile.isNotEmpty
-              ? attachmentFile
-              : '';
+          (() {
+            final normalizedAttachment = _normalizeRfqAttachmentToFileName(
+              attachmentFile,
+            );
+            return (normalizedAttachment != null &&
+                    normalizedAttachment.isNotEmpty)
+                ? normalizedAttachment
+                : '';
+          })();
 
       if (kDebugMode) {
         print('Submit RFQ Form - Sending FormData');
