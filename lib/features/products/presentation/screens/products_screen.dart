@@ -466,7 +466,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             // Icon(Icons.description, size: 16, color: AppColors.primaryColor),
             // const SizedBox(width: 4),
             Text(
-              'View Ratedec',
+              'Rate Deck',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.primaryColor,
