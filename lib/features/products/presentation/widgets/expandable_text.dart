@@ -141,11 +141,14 @@ class _ExpandableTextState extends State<ExpandableText> {
                     widget.summary,
                     style: const TextStyle(fontSize: 14, color: Colors.black87),
                   ),
-                  const SizedBox(height: 8),
-                  _buildRates(
-                    widget.product.miscellaneousRates,
-                    widget.product.otherRates,
-                  ),
+                  // Only show rates if rateDeckPricing is not enabled
+                  if (widget.product.rateDeckPricing != 1) ...[
+                    const SizedBox(height: 8),
+                    _buildRates(
+                      widget.product.miscellaneousRates,
+                      widget.product.otherRates,
+                    ),
+                  ],
 
                   const SizedBox(height: 16),
                   const Divider(),
