@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/utils/validators.dart';
 import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
 import 'package:voicealerts_obs/features/products/domain/models/product_model.dart';
+import '../../../../config/routes.dart';
 
 class ExpandableText extends StatefulWidget {
   final String summary;
@@ -119,15 +121,24 @@ class _ExpandableTextState extends State<ExpandableText> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 10),
-                  widget.product.rateDeckPricing == 1
-                      ? _buildViewRatedecButton(context)
-                      : _buildPriceInfoRow(
-                          'Price:',
-                          Validators.buildPriceWithCurrencySign(
-                            widget.product.rate.toString(),
-                          ),
-                          AppColors.primaryColor,
-                        ),
+                  // Show coming soon message if coming_soon == 1
+                  if (widget.product.comingSoon == 1) ...[
+                    _buildComingSoonMessage(context),
+                    const SizedBox(height: 16),
+                  ],
+                  // Show price or rate deck button
+                  widget.product.comingSoon == 1
+                      ? const SizedBox.shrink()
+                      : widget.product.rateDeckPricing == 1
+                          ? _buildViewRatedecButton(context)
+                          : _buildPriceInfoRow(
+                              'Price:',
+                              Validators.buildPriceWithCurrencySign(
+                                widget.product.rate.toString(),
+                              ),
+                              AppColors.primaryColor,
+                            ),
+                  const SizedBox(height: 16),
                   const Text(
                     'Summary',
                     style: TextStyle(
@@ -482,6 +493,68 @@ class _ExpandableTextState extends State<ExpandableText> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComingSoonMessage(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: Colors.orange.shade700,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Your agreement (${widget.product.productTitle}) for this service is pending sign. Please sign this agreement to fully access and use this service.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.orange.shade900,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                // Navigate to agreements screen
+                Navigator.of(context).pop(); // Close the modal first
+                context.push(AppRoutes.signedAgreements);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange.shade700,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Click Here to sign this agreement',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),

@@ -254,7 +254,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   children: [
                     _buildInfoRow('SKU:', product.sku, AppColors.primaryColor),
                     const SizedBox(height: 8),
-                    product.rateDeckPricing == 1
+                    product.comingSoon == 1
+                        ? _buildComingSoonCell()
+                        : product.rateDeckPricing == 1
                         ? _buildViewRatedecButton(product)
                         : _buildInfoRow(
                           'Price:',
@@ -475,6 +477,32 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildComingSoonCell() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.schedule, size: 14, color: Colors.orange.shade700),
+          const SizedBox(width: 4),
+          Text(
+            'Coming Soon',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.orange.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
