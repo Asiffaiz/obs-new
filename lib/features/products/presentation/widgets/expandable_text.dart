@@ -48,6 +48,21 @@ class _ProductDetailsModalContent extends StatelessWidget {
         product.isSigned == false;
   }
 
+  /// Check if order buttons should be shown
+  bool get _shouldShowOrderButtons {
+    // Don't show if coming soon
+    if (product.comingSoon == 1) return false;
+    // Don't show if there's a pending agreement
+    if (_hasPendingAgreement) return false;
+    return true;
+  }
+
+  /// Check if form order should be shown (when form_accountno and form_link are present)
+  bool get _shouldShowFormOrder {
+    return product.formAccountno.trim().isNotEmpty &&
+        product.formLink.trim().isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -144,23 +159,9 @@ class _ProductDetailsModalContent extends StatelessWidget {
               ),
             ),
           ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: TextButton.styleFrom(
-                backgroundColor: AppColors.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Close'),
-            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: _buildActionButtons(context),
           ),
         ],
       ),
@@ -569,6 +570,101 @@ class _ProductDetailsModalContent extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    // Don't show order buttons if coming soon or pending agreement
+    if (!_shouldShowOrderButtons) {
+      return Align(
+        alignment: Alignment.bottomRight,
+        child: TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(
+            backgroundColor: AppColors.primaryColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text('Close'),
+        ),
+      );
+    }
+
+    // Show order buttons
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Flexible(
+          child: TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey.shade700,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: Colors.grey.shade300),
+              ),
+            ),
+            child: const Text('Close'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: ElevatedButton(
+            onPressed: () => _handleOrderAction(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              _shouldShowFormOrder ? 'Form Order' : 'Order Now',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleOrderAction(BuildContext context) {
+    if (_shouldShowFormOrder) {
+      // Handle Form Order navigation
+      // TODO: Navigate to form screen with formAccountno and formLink
+      Navigator.of(context).pop(); // Close modal first
+      // Example navigation (adjust based on your routing):
+      // context.push(
+      //   AppRoutes.formScreen,
+      //   extra: {
+      //     'formAccountNo': product.formAccountno,
+      //     'formLink': product.formLink,
+      //   },
+      // );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Form Order: ${product.formAccountno} - ${product.formLink}',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      // Handle Order Now action
+      Navigator.of(context).pop(); // Close modal first
+      // TODO: Implement Order Now navigation/action
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Order Now functionality will be implemented'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 }
 
