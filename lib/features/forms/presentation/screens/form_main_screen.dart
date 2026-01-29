@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:voicealerts_obs/config/routes.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/widgets/dashboard_shimmer.dart';
 import 'package:voicealerts_obs/features/forms/presentation/bloc/forms_bloc.dart';
@@ -64,27 +62,23 @@ class _FormMainScreenState extends State<FormMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<FormsBloc, FormsState>(
-      listener: (context, state) {},
-      builder: (context, state) {
-        if (state is FormsLoading) {
-          return Scaffold(body: SafeArea(child: DashboardShimmer()));
-        } else if (state is FormsLoaded) {
-          return Scaffold(
-            appBar: AppBar(title: Text(state.formsData[0]['form_title'])),
-            body: DynamicFormScreen(
+    return Scaffold(
+      appBar: _buildAppBar(context),
+      body: BlocConsumer<FormsBloc, FormsState>(
+        listener: (context, state) {},
+        builder: (context, state) {
+          if (state is FormsLoading) {
+            return SafeArea(child: DashboardShimmer());
+          } else if (state is FormsLoaded) {
+            return DynamicFormScreen(
               formTitle: state.formsData[0]['form_title'],
               apiJson: state.formsData[0],
               formAccountNo: widget.formAccountNo,
               formToken: widget.formToken,
-
               handleScreenNavigation: handleScreenNavigation,
-            ),
-          );
-        } else {
-          return Scaffold(
-            appBar: AppBar(),
-            body: Center(
+            );
+          } else {
+            return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: retryButton(
@@ -99,11 +93,19 @@ class _FormMainScreenState extends State<FormMainScreen> {
                   text: 'Retry',
                 ),
               ),
-            ),
-          );
-        }
-      },
+            );
+          }
+        },
+      ),
     );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final state = context.watch<FormsBloc>().state;
+    if (state is FormsLoaded) {
+      return AppBar(title: Text(state.formsData[0]['form_title']));
+    }
+    return AppBar();
   }
 
   Widget retryButton({required VoidCallback onPressed, required String text}) {
