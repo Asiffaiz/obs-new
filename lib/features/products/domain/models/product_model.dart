@@ -21,6 +21,21 @@ class ProductModel {
   final String agreementAccountno;
   final bool isSigned;
 
+  /// Parse is_signed value from API
+  /// Returns true only if value is explicitly "Yes" (case-insensitive)
+  /// Returns false for: null, empty string, "No", false, 0
+  static bool parseIsSigned(dynamic value) {
+    if (value == null) return true;
+
+    final str = value.toString().trim().toLowerCase();
+
+    // ONLY explicit "no" means NOT signed
+    if (str == 'no') return false;
+
+    // Everything else is considered signed
+    return true;
+  }
+
   final List<MiscellaneousRates> miscellaneousRates;
   final List<OtherRates> otherRates;
 
@@ -72,16 +87,8 @@ class ProductModel {
       comingSoon: json['coming_soon'] ?? 0,
       rateDeckPricing: json['rate_deck_pricing'] ?? 0,
       agreementAccountno: json['agreement_accountno'] ?? '',
-      // API may send is_signed as '', 'yes', 'no', true/false, 1/0.
-      // Treat anything truthy-ish as signed; otherwise pending.
-      isSigned: (() {
-        final v = json['is_signed'];
-        if (v == null) return false;
-        if (v is bool) return v;
-        if (v is num) return v != 0;
-        final s = v.toString().trim().toLowerCase();
-        return s == 'yes' || s == 'true' || s == '1';
-      })(),
+      // Parse is_signed: empty/null = false, "Yes" = true, "No" = false
+      isSigned: parseIsSigned(json['is_signed']),
       miscellaneousRates:
           json['miscellaneous_rates'] != null
               ? (json['miscellaneous_rates'] as List)

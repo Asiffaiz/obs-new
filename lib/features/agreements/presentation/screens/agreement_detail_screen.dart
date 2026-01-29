@@ -578,6 +578,8 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
   }
 
   Widget _buildSuccessDialogContent(BuildContext context) {
+    final authService = AuthService();
+    final onboardingStatus = authService.getOnboardingStatus();
     return ScaleTransition(
       scale: _scaleAnimation,
       child: Stack(
@@ -610,17 +612,38 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'You have successfully signed all required agreements.',
-                  style: TextStyle(fontSize: 16, color: Colors.black87),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'You can now access all features of the application.',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
-                  textAlign: TextAlign.center,
-                ),
+                onboardingStatus == 'complete'
+                    ? Column(
+                      children: [
+                        const Text(
+                          'You have successfully signed all required agreements.',
+                          style: TextStyle(fontSize: 16, color: Colors.black87),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'You can now access all features of the application.',
+                          style: TextStyle(fontSize: 14, color: Colors.black54),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    )
+                    : Column(
+                      children: [
+                        const Text(
+                          'You have successfully signed all required agreements.',
+                          style: TextStyle(fontSize: 16, color: Colors.black87),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Please complete the onboarding process to access all features of the application.',
+                          style: TextStyle(fontSize: 14, color: Colors.black54),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+
                 const SizedBox(height: 24),
                 // Container(
                 //   padding: const EdgeInsets.all(12),
@@ -668,8 +691,10 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
                       ),
                       elevation: 2,
                     ),
-                    child: const Text(
-                      'Continue to Dashboard',
+                    child: Text(
+                      onboardingStatus == 'complete'
+                          ? 'Continue to Dashboard'
+                          : 'Complete Onboarding',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
