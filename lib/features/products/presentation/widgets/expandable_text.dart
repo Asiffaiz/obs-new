@@ -44,8 +44,7 @@ class _ProductDetailsModalContent extends StatelessWidget {
   });
 
   bool get _hasPendingAgreement {
-    print('product.agreementAccountno: ${product.agreementAccountno}');
-    print('product.isSigned: ${product.isSigned}');
+
     return product.agreementAccountno.trim().isNotEmpty &&
         product.isSigned == false;
   }

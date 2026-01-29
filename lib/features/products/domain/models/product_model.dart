@@ -22,8 +22,7 @@ class ProductModel {
   final bool isSigned;
 
   /// Parse is_signed value from API
-  /// Returns true only if value is explicitly "Yes" (case-insensitive)
-  /// Returns false for: null, empty string, "No", false, 0
+
   static bool parseIsSigned(dynamic value) {
     if (value == null) return true;
 
