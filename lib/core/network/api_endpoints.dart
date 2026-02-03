@@ -68,6 +68,8 @@ class ApiEndpoints {
 
   // Orders endpoints
   static final String listSalesOrders = '$baseUrl/appApis/list_sales_orders';
+  static final String getSalesOrderPaymentCompleteDetails =
+      '$baseUrl/appApis/get_sales_order_payment_complete_details';
 
   // RFQ endpoints
   static final String getRfqInitialDetails =

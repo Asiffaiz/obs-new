@@ -1,9 +1,13 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
+import 'package:voicealerts_obs/features/orders/data/services/sales_orders_service.dart';
+import 'package:voicealerts_obs/features/orders/domain/models/payment_complete_details_model.dart';
 import 'package:voicealerts_obs/features/products/domain/models/product_model.dart';
 
 class CreateOrderScreen extends StatefulWidget {
@@ -18,8 +22,10 @@ class CreateOrderScreen extends StatefulWidget {
 class _CreateOrderScreenState extends State<CreateOrderScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final SalesOrdersService _salesOrdersService = SalesOrdersService();
   Map<String, String> _userData = {};
   bool _isLoading = true;
+  String? _errorMessage;
 
   // Order form data
   int _quantity = 1;
@@ -30,25 +36,28 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   double _tax = 0.0;
   double _grandTotal = 0.0;
 
-  // Mock order data
+  // Order data from API
   String _orderNumber = '';
   String _issueDate = '';
   String _termsOfPayment = 'Net 60';
   String _currency = 'USD';
+  String _contactPerson = '';
+  String _contactEmail = '';
 
   // Form controllers
   final TextEditingController _orderTitleController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
-  // Mock bank account data
+  // Payment details from API
+  PaymentCompleteDetailsModel? _paymentDetails;
   final Map<String, String> _bankAccountData = {
-    'bankName': 'My Bank',
-    'accountHolderName': 'James Smith',
-    'accountNumber': 'XXXXXXXXX',
-    'bankAddress': '123 main street, City, Country',
-    'routingNumber': '(For Certain Countries)',
-    'swiftCode': '(For international transactions)',
-    'iban': '(For international in Europe transactions)',
+    'bankName': '',
+    'accountHolderName': '',
+    'accountNumber': '',
+    'bankAddress': '',
+    'routingNumber': '',
+    'swiftCode': '',
+    'iban': '',
   };
 
   final orderCellColor = HexColor('#F3F3F3');
@@ -57,45 +66,174 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadUserData();
-    _initializeOrderData();
+    _initializeOrder();
   }
 
-  Future<void> _loadUserData() async {
+  Future<void> _initializeOrder() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
     try {
-      final prefs = await SharedPreferences.getInstance();
+      // Load user data
+      await _loadUserData();
+
+      // Generate random order number (7 digits like "3625656")
+      _orderNumber = _generateRandomOrderNumber();
+
+      // Set issue date to today
+      _issueDate = DateFormat('MMMM d, yyyy').format(DateTime.now());
+
+      // Initialize pricing from product
+      _unitPrice = widget.product.rate.toDouble();
+      _calculateTotals();
+
+      // Initialize order title with order number
+      _orderTitleController.text = 'Order - $_orderNumber';
+
+      // Fetch payment details from API
+      if (_userData['accountno']?.isNotEmpty ?? false) {
+        await _fetchPaymentDetails();
+      }
+
       setState(() {
-        _userData = {
-          'comp_name':
-              prefs.getString(SharedPreferenceKeys.companyNameKey) ?? '',
-          'name': prefs.getString(SharedPreferenceKeys.nameKey) ?? '',
-          'email': prefs.getString(SharedPreferenceKeys.emailKey) ?? '',
-          'accountno': prefs.getString(SharedPreferenceKeys.accountNoKey) ?? '',
-        };
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _isLoading = false;
+        _errorMessage = 'Failed to initialize order: ${e.toString()}';
       });
     }
   }
 
-  void _initializeOrderData() {
-    // Generate mock order number
-    _orderNumber = DateTime.now().millisecondsSinceEpoch.toString().substring(
-      5,
-    );
+  String _generateRandomOrderNumber() {
+    // Generate a 7-digit random number
+    final random = Random();
+    return (1000000 + random.nextInt(9000000)).toString();
+  }
 
-    // Set issue date to today
-    _issueDate = DateFormat('MMMM d, yyyy').format(DateTime.now());
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userData = {
+      'comp_name': prefs.getString(SharedPreferenceKeys.companyNameKey) ?? '',
+      'name': prefs.getString(SharedPreferenceKeys.nameKey) ?? '',
+      'email': prefs.getString(SharedPreferenceKeys.emailKey) ?? '',
+      'accountno': prefs.getString(SharedPreferenceKeys.accountNoKey) ?? '',
+    };
+  }
 
-    // Initialize pricing from product
-    _unitPrice = widget.product.rate.toDouble();
-    _calculateTotals();
+  Future<void> _fetchPaymentDetails() async {
+    try {
+      final paymentDetails = await _salesOrdersService
+          .getPaymentCompleteDetails(
+            accountNo: _userData['accountno']!,
+            orderNo: _orderNumber,
+          );
 
-    // Initialize order title with order number
-    _orderTitleController.text = 'Order - $_orderNumber';
+      setState(() {
+        _paymentDetails = paymentDetails;
+
+        // Update payment settings
+        _termsOfPayment = paymentDetails.paymentSettings.paymentTerms;
+        _currency = paymentDetails.paymentSettings.currency;
+        _contactPerson = paymentDetails.paymentSettings.contactPerson;
+        _contactEmail = paymentDetails.paymentSettings.contactEmail;
+
+        // Parse HTML payment details
+        _parsePaymentDetailsHtml(paymentDetails.paymentMethod.paymentDetails);
+      });
+    } catch (e) {
+      // If API fails, use default values
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load payment details: ${e.toString()}'),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  void _parsePaymentDetailsHtml(String htmlContent) {
+    // Parse HTML to extract bank account details
+    // The HTML format is: <p><strong>Label:</strong> Value</p>
+    try {
+      // Extract Bank Name
+      final bankNameMatch = RegExp(
+        r'<strong>Bank Name:</strong>\s*([^<]+)',
+        caseSensitive: false,
+      ).firstMatch(htmlContent);
+      if (bankNameMatch != null) {
+        _bankAccountData['bankName'] = bankNameMatch.group(1)?.trim() ?? '';
+      }
+
+      // Extract Account Holder Name
+      final accountHolderMatch = RegExp(
+        r'<strong>Account Holder Name:</strong>\s*([^<]+)',
+        caseSensitive: false,
+      ).firstMatch(htmlContent);
+      if (accountHolderMatch != null) {
+        _bankAccountData['accountHolderName'] =
+            accountHolderMatch.group(1)?.trim() ?? '';
+      }
+
+      // Extract Account Number
+      final accountNumberMatch = RegExp(
+        r'<strong>Account Number:</strong>\s*([^<]+)',
+        caseSensitive: false,
+      ).firstMatch(htmlContent);
+      if (accountNumberMatch != null) {
+        _bankAccountData['accountNumber'] =
+            accountNumberMatch.group(1)?.trim() ?? '';
+      }
+
+      // Extract Bank Address
+      final bankAddressMatch = RegExp(
+        r'<strong>Bank Address:</strong>\s*([^<]+)',
+        caseSensitive: false,
+      ).firstMatch(htmlContent);
+      if (bankAddressMatch != null) {
+        _bankAccountData['bankAddress'] =
+            bankAddressMatch.group(1)?.trim() ?? '';
+      }
+
+      // Extract Routing Number
+      final routingNumberMatch = RegExp(
+        r'<strong>Routing Number[^<]*</strong>\s*([^<]+)',
+        caseSensitive: false,
+      ).firstMatch(htmlContent);
+      if (routingNumberMatch != null) {
+        _bankAccountData['routingNumber'] =
+            routingNumberMatch.group(1)?.trim() ?? '';
+      }
+
+      // Extract SWIFT Code
+      final swiftCodeMatch = RegExp(
+        r'<strong>SWIFT Code[^<]*</strong>\s*([^<]+)',
+        caseSensitive: false,
+      ).firstMatch(htmlContent);
+      if (swiftCodeMatch != null) {
+        _bankAccountData['swiftCode'] = swiftCodeMatch.group(1)?.trim() ?? '';
+      }
+
+      // Extract IBAN
+      final ibanMatch = RegExp(
+        r'<strong>IBAN[^<]*</strong>\s*([^<]+)',
+        caseSensitive: false,
+      ).firstMatch(htmlContent);
+      if (ibanMatch != null) {
+        _bankAccountData['iban'] = ibanMatch.group(1)?.trim() ?? '';
+      }
+    } catch (e) {
+      // If parsing fails, keep default empty values
+      if (mounted) {
+        debugPrint('Error parsing payment details HTML: $e');
+      }
+    }
   }
 
   void _calculateTotals() {
@@ -117,8 +255,39 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Create Order')),
+        appBar: AppBar(
+          title: const Text('Create Order'),
+          backgroundColor: AppColors.primaryColor,
+        ),
         body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Create Order'),
+          backgroundColor: AppColors.primaryColor,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _initializeOrder,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -217,16 +386,20 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
           const SizedBox(height: 8),
           _buildInfoRow(
             'CONTACT PERSON:',
-            _userData['name']?.isEmpty ?? true
-                ? 'JAMES SMITH'
-                : _userData['name']!.toUpperCase(),
+            _contactPerson.isNotEmpty
+                ? _contactPerson.toUpperCase()
+                : (_userData['name']?.isEmpty ?? true
+                    ? 'JAMES SMITH'
+                    : _userData['name']!.toUpperCase()),
           ),
           const SizedBox(height: 8),
           _buildInfoRow(
             'EMAIL:',
-            _userData['email']?.isEmpty ?? true
-                ? 'info@onboardsoft.com'
-                : _userData['email']!,
+            _contactEmail.isNotEmpty
+                ? _contactEmail
+                : (_userData['email']?.isEmpty ?? true
+                    ? 'info@onboardsoft.com'
+                    : _userData['email']!),
           ),
         ],
       ),
@@ -539,6 +712,27 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Payment Method Title
+          if (_paymentDetails != null) ...[
+            Text(
+              'Payment Method',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: allCellsLabelColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _paymentDetails!.paymentMethod.paymentMethod.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
           // Bank Account Details Title
           Text(
             'Bank Account Details',
@@ -549,29 +743,79 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
             ),
           ),
           const SizedBox(height: 16),
-          // Bank Information
-          _buildBankInfoRow('Bank Name:', _bankAccountData['bankName']!),
-          const SizedBox(height: 12),
-          _buildBankInfoRow(
-            'Account Holder Name:',
-            _bankAccountData['accountHolderName']!,
-          ),
-          const SizedBox(height: 12),
-          _buildBankInfoRow(
-            'Account Number:',
-            _bankAccountData['accountNumber']!,
-          ),
-          const SizedBox(height: 12),
-          _buildBankInfoRow('Bank Address:', _bankAccountData['bankAddress']!),
-          const SizedBox(height: 12),
-          _buildBankInfoRow(
-            'Routing Number:',
-            _bankAccountData['routingNumber']!,
-          ),
-          const SizedBox(height: 12),
-          _buildBankInfoRow('SWIFT CODE:', _bankAccountData['swiftCode']!),
-          const SizedBox(height: 12),
-          _buildBankInfoRow('IBAN:', _bankAccountData['iban']!),
+          // Show parsed bank details or HTML content
+          if (_paymentDetails != null &&
+              _paymentDetails!.paymentMethod.paymentDetails.isNotEmpty) ...[
+            // Show HTML content if available
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Html(
+                data: _paymentDetails!.paymentMethod.paymentDetails,
+                style: {
+                  'p': Style(margin: Margins.zero, padding: HtmlPaddings.zero),
+                  'strong': Style(
+                    fontWeight: FontWeight.bold,
+                    color: allCellsLabelColor,
+                  ),
+                },
+              ),
+            ),
+          ] else ...[
+            // Fallback to parsed data if HTML parsing failed or not available
+            _buildBankInfoRow(
+              'Bank Name:',
+              _bankAccountData['bankName']?.isEmpty ?? true
+                  ? 'N/A'
+                  : _bankAccountData['bankName']!,
+            ),
+            const SizedBox(height: 12),
+            _buildBankInfoRow(
+              'Account Holder Name:',
+              _bankAccountData['accountHolderName']?.isEmpty ?? true
+                  ? 'N/A'
+                  : _bankAccountData['accountHolderName']!,
+            ),
+            const SizedBox(height: 12),
+            _buildBankInfoRow(
+              'Account Number:',
+              _bankAccountData['accountNumber']?.isEmpty ?? true
+                  ? 'N/A'
+                  : _bankAccountData['accountNumber']!,
+            ),
+            const SizedBox(height: 12),
+            _buildBankInfoRow(
+              'Bank Address:',
+              _bankAccountData['bankAddress']?.isEmpty ?? true
+                  ? 'N/A'
+                  : _bankAccountData['bankAddress']!,
+            ),
+            const SizedBox(height: 12),
+            _buildBankInfoRow(
+              'Routing Number:',
+              _bankAccountData['routingNumber']?.isEmpty ?? true
+                  ? 'N/A'
+                  : _bankAccountData['routingNumber']!,
+            ),
+            const SizedBox(height: 12),
+            _buildBankInfoRow(
+              'SWIFT CODE:',
+              _bankAccountData['swiftCode']?.isEmpty ?? true
+                  ? 'N/A'
+                  : _bankAccountData['swiftCode']!,
+            ),
+            const SizedBox(height: 12),
+            _buildBankInfoRow(
+              'IBAN:',
+              _bankAccountData['iban']?.isEmpty ?? true
+                  ? 'N/A'
+                  : _bankAccountData['iban']!,
+            ),
+          ],
         ],
       ),
     );

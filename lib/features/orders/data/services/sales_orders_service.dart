@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/network/api_client.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
+import 'package:voicealerts_obs/features/orders/domain/models/payment_complete_details_model.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/sales_order_model.dart';
 
 class SalesOrdersService {
@@ -42,6 +43,38 @@ class SalesOrdersService {
     } catch (e) {
       throw Exception(
         'An error occurred while fetching sales orders: ${e.toString()}',
+      );
+    }
+  }
+
+  // Fetch payment complete details for an order
+  Future<PaymentCompleteDetailsModel> getPaymentCompleteDetails({
+    required String accountNo,
+    required String orderNo,
+  }) async {
+    try {
+      if (accountNo.isEmpty || orderNo.isEmpty) {
+        throw Exception('Account number and order number are required');
+      }
+
+      final response = await _apiClient.post(
+        ApiEndpoints.getSalesOrderPaymentCompleteDetails,
+        {
+          'accountno': accountNo,
+          'orderno': orderNo,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == 200) {
+        return PaymentCompleteDetailsModel.fromJson(response.data['data'] ?? {});
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Failed to get payment details',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'An error occurred while fetching payment details: ${e.toString()}',
       );
     }
   }
