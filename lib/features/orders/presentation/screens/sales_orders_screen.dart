@@ -1,0 +1,444 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hexcolor/hexcolor.dart';
+import 'package:intl/intl.dart';
+import 'package:voicealerts_obs/core/theme/app_colors.dart';
+import 'package:voicealerts_obs/core/widgets/custom_error_dialog.dart';
+import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
+import 'package:voicealerts_obs/features/dashboard/presentation/widgets/dashboard_shimmer.dart';
+import 'package:voicealerts_obs/features/orders/domain/models/sales_order_model.dart';
+import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_bloc.dart';
+import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_event.dart';
+import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_state.dart';
+
+class SalesOrdersScreen extends StatefulWidget {
+  const SalesOrdersScreen({super.key});
+
+  @override
+  State<SalesOrdersScreen> createState() => _SalesOrdersScreenState();
+}
+
+class _SalesOrdersScreenState extends State<SalesOrdersScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<SalesOrdersBloc>().add(const LoadSalesOrders());
+  }
+
+  final orderCellColor = HexColor('#F3F3F3');
+  final allCellsLabelColor = HexColor('#02274D');
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sales Orders'),
+        backgroundColor: AppColors.primaryColor,
+        foregroundColor: Colors.white,
+      ),
+      body: BlocConsumer<SalesOrdersBloc, SalesOrdersState>(
+        listener: (context, state) {
+          if (state.status == SalesOrdersStatus.error &&
+              state.errorMessage != null) {
+            CustomErrorDialog.show(
+              context: context,
+              onRetry: () {
+                Navigator.pop(context);
+                context.read<SalesOrdersBloc>().add(const LoadSalesOrders());
+              },
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state.status == SalesOrdersStatus.loading) {
+            return const DashboardShimmer();
+          }
+
+          if (state.status == SalesOrdersStatus.error) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Something went wrong please try again',
+                    style: const TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      width: 200,
+                      height: 40,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          context.read<SalesOrdersBloc>().add(
+                            const LoadSalesOrders(),
+                          );
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (state.salesOrders.isEmpty) {
+            return const Center(
+              child: Text(
+                'No sales orders available',
+                style: TextStyle(fontSize: 16),
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<SalesOrdersBloc>().add(const LoadSalesOrders());
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.salesOrders.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildOrderCard(state.salesOrders[index]),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrderCard(SalesOrderModel order) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.agreementCardBorderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => _handleOrderTap(order),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with Order Number and Actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: _buildInfoRow(
+                      'Order #',
+                      order.orderNo,
+                      valueStyle: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => _handleActions(order),
+                    icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Quotation Number Row
+              if (order.quoteAccountNo != null) ...[
+                _buildInfoRow('Quotation #', order.quoteAccountNo!),
+                const SizedBox(height: 12),
+              ],
+              // Date Created Row
+              _buildInfoRow(
+                'Date Created',
+                DateFormat('MMMM d, yyyy').format(order.dateCreated),
+              ),
+              const SizedBox(height: 12),
+              // Attachment Row with Label
+              _buildAttachmentRow(order),
+              const SizedBox(height: 12),
+              // Status Row with Label
+              _buildStatusRow(order),
+              const SizedBox(height: 12),
+              // Payment Status Row with Label
+              _buildPaymentStatusRow(order),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, {TextStyle? valueStyle}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive: Adjust label width based on screen size
+        final labelWidth = constraints.maxWidth < 400 ? 100.0 : 120.0;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: labelWidth,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: allCellsLabelColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                value,
+                style:
+                    valueStyle ??
+                    const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusBadge(String text, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttachmentRow(SalesOrderModel order) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final labelWidth = constraints.maxWidth < 400 ? 100.0 : 120.0;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: labelWidth,
+              child: Text(
+                'Attachment',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: allCellsLabelColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _handleViewAttachment(order),
+                icon: const Icon(Icons.description, size: 16),
+                label: const Text('View Attachment'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black87,
+                  backgroundColor: Colors.grey.shade100,
+                  side: BorderSide(color: Colors.grey.shade300),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusRow(SalesOrderModel order) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final labelWidth = constraints.maxWidth < 400 ? 100.0 : 120.0;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: labelWidth,
+              child: Text(
+                'Status',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: allCellsLabelColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _buildStatusBadge(
+              order.isCompleted ? 'Completed' : 'Pending',
+              order.isCompleted ? Colors.green : Colors.orange,
+              order.isCompleted ? Icons.check : Icons.warning,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPaymentStatusRow(SalesOrderModel order) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final labelWidth = constraints.maxWidth < 400 ? 100.0 : 120.0;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: labelWidth,
+              child: Text(
+                'Payment Status',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: allCellsLabelColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _buildStatusBadge(
+              order.isPaid ? 'Paid' : 'Unpaid',
+              order.isPaid ? Colors.green : Colors.red,
+              order.isPaid ? Icons.check : Icons.warning,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _handleOrderTap(SalesOrderModel order) {
+    _handleViewDetails(order);
+  }
+
+  void _handleViewAttachment(SalesOrderModel order) {
+    if (order.quoteAttachment.isNotEmpty) {
+      // Construct full URL for attachment
+      String fullUrl = order.quoteAttachment;
+      if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+        // Assuming base URL for attachments - adjust as needed
+        fullUrl =
+            'https://dev-agents.onboardsoft.me/files_data/orders/$fullUrl';
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) =>
+                  CustomPdfViewer(url: fullUrl, title: order.quoteTitle),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Attachment not available'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _handleActions(SalesOrderModel order) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.visibility),
+                title: const Text('View Details'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _handleViewDetails(order);
+                },
+              ),
+              // Show Edit Order only if status is pending
+              if (order.isPending)
+                ListTile(
+                  leading: const Icon(Icons.edit),
+                  title: const Text('Edit Order'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _handleEditOrder(order);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleViewDetails(SalesOrderModel order) {
+    // TODO: Navigate to order detail screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('View Details for Order ${order.orderNo}'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _handleEditOrder(SalesOrderModel order) {
+    // TODO: Navigate to edit order screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Edit Order ${order.orderNo}'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+}

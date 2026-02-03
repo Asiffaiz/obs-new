@@ -10,6 +10,7 @@ import 'package:voicealerts_obs/features/forms/presentation/screens/client_assig
 import 'package:voicealerts_obs/features/reports/presentation/screens/reports_screen.dart';
 import 'package:voicealerts_obs/features/rfq/presentation/screens/rfq_submissions_screen.dart';
 import 'package:voicealerts_obs/features/rfq/presentation/screens/rfq_form_screen.dart';
+import 'package:voicealerts_obs/features/orders/presentation/screens/sales_orders_screen.dart';
 import 'package:voicealerts_obs/main.dart';
 
 import '../features/auth/presentation/bloc/auth_bloc.dart';
@@ -61,6 +62,7 @@ class AppRoutes {
   static const String clientAssignedForms = '/client-assigned-forms';
   static const String rfqSubmissions = '/rfq-submissions';
   static const String rfqForm = '/rfq-form';
+  static const String salesOrders = '/sales-orders';
 }
 
 GoRouter createRouter(AuthBloc authBloc) {
@@ -268,6 +270,12 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppRoutes.reports,
         builder: (context, state) => const ReportsScreen(),
+      ),
+
+      // Sales Orders Route
+      GoRoute(
+        path: AppRoutes.salesOrders,
+        builder: (context, state) => const SalesOrdersScreen(),
       ),
 
       // Business Card Form Route

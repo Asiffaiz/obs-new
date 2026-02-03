@@ -26,6 +26,8 @@ import 'package:voicealerts_obs/features/profile/data/repositories/profile_repos
 import 'package:voicealerts_obs/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:voicealerts_obs/features/reports/domain/repositories/reports_repository.dart';
 import 'package:voicealerts_obs/features/reports/presentation/bloc/reports_bloc.dart';
+import 'package:voicealerts_obs/features/orders/domain/repositories/sales_orders_repository.dart';
+import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_bloc.dart';
 
 import 'firebase_options.dart';
 import 'config/dependency_injection.dart';
@@ -163,6 +165,12 @@ class MyApp extends StatelessWidget {
           create:
               (context) => OnboardingAgreementsBloc(
                 repository: GetIt.I<OnboardingAgreementsRepository>(),
+              ),
+        ),
+        BlocProvider<SalesOrdersBloc>(
+          create:
+              (context) => SalesOrdersBloc(
+                salesOrdersRepository: GetIt.I<SalesOrdersRepository>(),
               ),
         ),
       ],

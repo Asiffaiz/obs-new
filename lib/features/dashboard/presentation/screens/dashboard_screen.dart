@@ -299,6 +299,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               builder: (context) => ProductsScreen(isFromBottomNav: false),
             ),
           );
+          return;
+        } else if (item.id == 'orders') {
+          setState(() {
+            _selectedMenuId = 'dashboard';
+            _currentContent = _buildDashboardHomeContent();
+          });
+          context.push(AppRoutes.salesOrders);
+          return;
         }
 
         // Update content based on selected menu item

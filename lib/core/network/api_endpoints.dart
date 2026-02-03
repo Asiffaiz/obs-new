@@ -66,6 +66,9 @@ class ApiEndpoints {
   static final String getClientProducts =
       '$baseUrl/appApis/get_client_products';
 
+  // Orders endpoints
+  static final String listSalesOrders = '$baseUrl/appApis/list_sales_orders';
+
   // RFQ endpoints
   static final String getRfqInitialDetails =
       '$baseUrl/appApis/get_rfq_initial_details';

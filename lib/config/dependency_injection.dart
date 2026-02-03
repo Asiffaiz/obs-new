@@ -30,6 +30,9 @@ import 'package:voicealerts_obs/features/onboarding/domain/repositories/onboardi
 import 'package:voicealerts_obs/features/onboarding/data/services/onboarding_settings_service.dart';
 import 'package:voicealerts_obs/features/onboarding/data/repositories/onboarding_settings_repository_impl.dart';
 import 'package:voicealerts_obs/features/onboarding/domain/repositories/onboarding_settings_repository.dart';
+import 'package:voicealerts_obs/features/orders/data/services/sales_orders_service.dart';
+import 'package:voicealerts_obs/features/orders/data/repositories/sales_orders_repository_impl.dart';
+import 'package:voicealerts_obs/features/orders/domain/repositories/sales_orders_repository.dart';
 import '../features/auth/data/repositories/auth_repository_impl.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
@@ -75,6 +78,9 @@ Future<void> initializeDependencies() async {
 
   // Register OnboardingSettingsService
   getIt.registerLazySingleton(() => OnboardingSettingsService());
+
+  // Register SalesOrdersService
+  getIt.registerLazySingleton(() => SalesOrdersService());
 
   // Register DatabaseHelper
   getIt.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper());
@@ -152,6 +158,12 @@ Future<void> initializeDependencies() async {
 
   getIt.registerLazySingleton<OnboardingSettingsRepository>(
     () => OnboardingSettingsRepositoryImpl(getIt<OnboardingSettingsService>()),
+  );
+
+  getIt.registerLazySingleton<SalesOrdersRepository>(
+    () => SalesOrdersRepositoryImpl(
+      salesOrdersService: getIt<SalesOrdersService>(),
+    ),
   );
 
   // BLoCs
