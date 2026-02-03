@@ -144,10 +144,10 @@ class RfqPayloadBuilder {
     );
 
     // Build services rows
-    final servicesRows = buildServicesRows(
-      selectedProductIds: selectedProductIds,
-      allProducts: allProducts,
-    );
+    // final servicesRows = buildServicesRows(
+    //   selectedProductIds: selectedProductIds,
+    //   allProducts: allProducts,
+    // );
 
     // Build the payload
     final payload = <String, dynamic>{
@@ -159,7 +159,7 @@ class RfqPayloadBuilder {
       'rfq_comments': requirementDescription ?? '',
       'rfq_accountno': rfqAccountNo,
       'rfq_questions_rows': rfqQuestionsRows,
-      'services_rows': servicesRows,
+      // 'services_rows': servicesRows,
     };
 
     return payload;

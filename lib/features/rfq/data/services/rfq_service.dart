@@ -351,6 +351,38 @@ class RfqService {
         throw Exception('No authentication token available');
       }
 
+      ////////////
+      /// Build services_rows from selected products
+      List<Map<String, dynamic>> buildServicesRows({
+        required List<int> selectedProductIds,
+        required List<RfqProduct> allProducts,
+      }) {
+        final servicesRows = <Map<String, dynamic>>[];
+
+        for (final productId in selectedProductIds) {
+          final product = allProducts.firstWhere(
+            (p) => p.id == productId,
+            orElse:
+                () =>
+                    RfqProduct(id: productId, serviceTitle: 'Unknown Product'),
+          );
+
+          servicesRows.add({
+            'service_checked': true,
+            'service_id': product.id,
+            'service_title': product.serviceTitle,
+            'service_price': 0, // Default to 0, API might update this
+            'service_quantity': 1,
+            'service_unit': '',
+            'service_sub_total': 0, // Default to 0, API might update this
+            'service_sku': product.sku ?? '',
+          });
+        }
+
+        return servicesRows;
+      }
+
+      ///////////
       // Fetch all products if not provided (fallback)
       final products =
           allProducts.isNotEmpty ? allProducts : await getRfqProducts();
@@ -377,6 +409,16 @@ class RfqService {
       request.headers['Authorization'] = 'Bearer $token';
       request.headers['Accept'] = 'application/json';
 
+      ///////////
+      /// Add services_rows to the payload
+      ////////////
+      final servicesRows = buildServicesRows(
+        selectedProductIds: selectedProductIds,
+        allProducts: allProducts,
+      );
+
+      payloadData['services_rows'] = servicesRows;
+
       // Add form fields
       request.fields['token'] = NetworkUrls.reactAppApiToken;
       request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
@@ -395,6 +437,19 @@ class RfqService {
       request.fields['services_rows'] = jsonEncode(
         payloadData['services_rows'],
       );
+
+      // request.fields['services_rows'] = jsonEncode([
+      //   {
+      //     'service_checked': true,
+      //     "service_id": 116,
+      //     "service_name": "Channel Partner Portal License (MRC)",
+      //     "quantity": 1,
+      //     "service_unit": "",
+      //     "sku": "00003",
+      //     "dateAdded": "2026-01-28T18:42:36.000Z",
+      //     "dateUpdated": null,
+      //   },
+      // ]);
 
       // Handle file attachment - always include file and fileName keys
       // The file is already uploaded via rfq_file_response API, so we only send the filename
