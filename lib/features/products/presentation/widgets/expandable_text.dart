@@ -639,19 +639,19 @@ class _ProductDetailsModalContent extends StatelessWidget {
     Navigator.of(context).pop(); // Close modal first
     
     if (_shouldShowFormOrder) {
-      // Navigate to Create Order screen for Form Order
+      // Handle Form Order action - different flow (to be implemented)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Form Order functionality will be implemented separately'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      // Navigate to Create Order screen for Order Now
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => CreateOrderScreen(product: product),
-        ),
-      );
-    } else {
-      // Handle Order Now action - different flow (to be implemented)
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Order Now functionality will be implemented separately'),
-          duration: Duration(seconds: 2),
         ),
       );
     }
