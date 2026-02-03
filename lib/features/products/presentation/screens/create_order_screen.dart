@@ -36,6 +36,21 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   String _termsOfPayment = 'Net 60';
   String _currency = 'USD';
 
+  // Form controllers
+  final TextEditingController _orderTitleController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
+
+  // Mock bank account data
+  final Map<String, String> _bankAccountData = {
+    'bankName': 'My Bank',
+    'accountHolderName': 'James Smith',
+    'accountNumber': 'XXXXXXXXX',
+    'bankAddress': '123 main street, City, Country',
+    'routingNumber': '(For Certain Countries)',
+    'swiftCode': '(For international transactions)',
+    'iban': '(For international in Europe transactions)',
+  };
+
   final orderCellColor = HexColor('#F3F3F3');
   final allCellsLabelColor = HexColor('#02274D');
   @override
@@ -78,6 +93,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
     // Initialize pricing from product
     _unitPrice = widget.product.rate.toDouble();
     _calculateTotals();
+
+    // Initialize order title with order number
+    _orderTitleController.text = 'Order - $_orderNumber';
   }
 
   void _calculateTotals() {
@@ -90,6 +108,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _orderTitleController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -244,8 +264,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
 
   Widget _buildTabs() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(24),
@@ -255,7 +274,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
         labelColor: Colors.white,
         unselectedLabelColor: Colors.grey.shade600,
         indicatorColor: Colors.transparent,
+        dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
+        padding: EdgeInsets.zero,
         indicator: BoxDecoration(
           color: Colors.black,
           borderRadius: BorderRadius.circular(24),
@@ -277,7 +298,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   Widget _buildTabContent() {
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.5,
+        maxHeight: MediaQuery.of(context).size.height * 0.35,
       ),
       color: Colors.white,
       child: TabBarView(
@@ -426,26 +447,162 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   }
 
   Widget _buildOtherInfoTab() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text(
-          'Other Information',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Order Title Section
+          Text(
+            'Order Title',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: allCellsLabelColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _orderTitleController,
+            decoration: InputDecoration(
+              hintText: 'Order - $_orderNumber',
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+          // Notes Section
+          Text(
+            'Notes',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: allCellsLabelColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _notesController,
+            maxLines: 6,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              // Dismiss keyboard when done is pressed
+              FocusScope.of(context).unfocus();
+            },
+            decoration: InputDecoration(
+              hintText: 'Enter notes...',
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+              ),
+              contentPadding: const EdgeInsets.all(16),
+            ),
+            style: const TextStyle(fontSize: 14),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildPaymentsTab() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text(
-          'Payment Information',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Bank Account Details Title
+          Text(
+            'Bank Account Details',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: allCellsLabelColor,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Bank Information
+          _buildBankInfoRow('Bank Name:', _bankAccountData['bankName']!),
+          const SizedBox(height: 12),
+          _buildBankInfoRow(
+            'Account Holder Name:',
+            _bankAccountData['accountHolderName']!,
+          ),
+          const SizedBox(height: 12),
+          _buildBankInfoRow(
+            'Account Number:',
+            _bankAccountData['accountNumber']!,
+          ),
+          const SizedBox(height: 12),
+          _buildBankInfoRow('Bank Address:', _bankAccountData['bankAddress']!),
+          const SizedBox(height: 12),
+          _buildBankInfoRow(
+            'Routing Number:',
+            _bankAccountData['routingNumber']!,
+          ),
+          const SizedBox(height: 12),
+          _buildBankInfoRow('SWIFT CODE:', _bankAccountData['swiftCode']!),
+          const SizedBox(height: 12),
+          _buildBankInfoRow('IBAN:', _bankAccountData['iban']!),
+        ],
       ),
+    );
+  }
+
+  Widget _buildBankInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 160,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: allCellsLabelColor,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
