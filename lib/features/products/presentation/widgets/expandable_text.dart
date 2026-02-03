@@ -6,6 +6,7 @@ import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/utils/validators.dart';
 import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
 import 'package:voicealerts_obs/features/products/domain/models/product_model.dart';
+import 'package:voicealerts_obs/features/products/presentation/screens/create_order_screen.dart';
 import '../../../../config/routes.dart';
 
 void showProductDetailsModal({
@@ -635,33 +636,21 @@ class _ProductDetailsModalContent extends StatelessWidget {
   }
 
   void _handleOrderAction(BuildContext context) {
+    Navigator.of(context).pop(); // Close modal first
+    
     if (_shouldShowFormOrder) {
-      // Handle Form Order navigation
-      // TODO: Navigate to form screen with formAccountno and formLink
-      Navigator.of(context).pop(); // Close modal first
-      // Example navigation (adjust based on your routing):
-      // context.push(
-      //   AppRoutes.formScreen,
-      //   extra: {
-      //     'formAccountNo': product.formAccountno,
-      //     'formLink': product.formLink,
-      //   },
-      // );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Form Order: ${product.formAccountno} - ${product.formLink}',
-          ),
-          duration: const Duration(seconds: 2),
+      // Navigate to Create Order screen for Form Order
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CreateOrderScreen(product: product),
         ),
       );
     } else {
-      // Handle Order Now action
-      Navigator.of(context).pop(); // Close modal first
-      // TODO: Implement Order Now navigation/action
+      // Handle Order Now action - different flow (to be implemented)
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Order Now functionality will be implemented'),
+          content: Text('Order Now functionality will be implemented separately'),
           duration: Duration(seconds: 2),
         ),
       );
