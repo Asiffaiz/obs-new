@@ -153,11 +153,68 @@ class _SalesOrdersScreenState extends State<SalesOrdersScreen> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => _handleActions(order),
+                  PopupMenuButton<String>(
                     icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
+                    color: Colors.white,
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(color: Colors.grey.shade200, width: 1),
+                    ),
+                    onSelected: (value) {
+                      if (value == 'view_details') {
+                        _handleViewDetails(order);
+                      } else if (value == 'edit_order') {
+                        _handleEditOrder(order);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        PopupMenuItem<String>(
+                          value: 'view_details',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.visibility,
+                                size: 20,
+                                color: Colors.grey.shade700,
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'View Details',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (order.isPending)
+                          PopupMenuItem<String>(
+                            value: 'edit_order',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.edit,
+                                  size: 20,
+                                  color: Colors.grey.shade700,
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Edit Order',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ];
+                    },
                   ),
                 ],
               ),
@@ -387,39 +444,6 @@ class _SalesOrdersScreenState extends State<SalesOrdersScreen> {
         ),
       );
     }
-  }
-
-  void _handleActions(SalesOrderModel order) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.visibility),
-                title: const Text('View Details'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _handleViewDetails(order);
-                },
-              ),
-              // Show Edit Order only if status is pending
-              if (order.isPending)
-                ListTile(
-                  leading: const Icon(Icons.edit),
-                  title: const Text('Edit Order'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _handleEditOrder(order);
-                  },
-                ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   void _handleViewDetails(SalesOrderModel order) {
