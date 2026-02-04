@@ -1218,23 +1218,47 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirm Order'),
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           content: Text(
             'Are you sure you want to submit this order for ${NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(_grandTotal)}?',
           ),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _submitOrderToApi();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryColor,
-              ),
-              child: const Text('Submit'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    minimumSize: const Size(70, 36),
+                  ),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _submitOrderToApi();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    backgroundColor: AppColors.primaryColor,
+                    minimumSize: const Size(70, 36),
+                  ),
+                  child: const Text('Submit'),
+                ),
+              ],
             ),
           ],
         );
