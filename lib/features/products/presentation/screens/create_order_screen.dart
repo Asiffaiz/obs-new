@@ -1004,14 +1004,119 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   void _handleSaveDraft() {
     if (!_validateOrder()) return;
 
-    // TODO: Implement save as draft API
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Order saved as draft'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
+    _saveOrderAsDraft();
+  }
+
+  Future<void> _saveOrderAsDraft() async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
+
+    try {
+      // Build items_list JSON (same as submit, but can include description)
+      final itemsList = [
+        {
+          'id': 'row-${DateTime.now().millisecondsSinceEpoch}',
+          'data': {
+            'id': widget.product.productId,
+            'sku': widget.product.sku,
+            'name': widget.product.productTitle,
+            'quantity': _quantity,
+            'unit': _quantity.toString(),
+            'price': _unitPrice.toStringAsFixed(4),
+            'total': _subtotal.toStringAsFixed(2),
+            'type': 'service', // Database column only accepts 'service'
+            'description': _notesController.text, // Optional description
+          },
+        },
+      ];
+      final itemsListJson = jsonEncode(itemsList);
+
+      // Get payment details HTML
+      final paymentDetailsHtml =
+          _paymentDetails?.paymentMethod.paymentDetails ?? '';
+
+      // Get validity from payment settings or default
+      final validity = _paymentDetails?.paymentSettings.validity ?? '90';
+
+      // Save order as draft
+      final success = await _salesOrdersService.saveOrderAsDraft(
+        accountNo: _userData['accountno']!,
+        orderNo: _orderNumber,
+        contactEmail:
+            _contactEmail.isNotEmpty
+                ? _contactEmail
+                : (_userData['email']?.isEmpty ?? true
+                    ? 'info@onboardsoft.com'
+                    : _userData['email']!),
+        contactPerson:
+            _contactPerson.isNotEmpty
+                ? _contactPerson
+                : (_userData['name']?.isEmpty ?? true
+                    ? 'JAMES SMITH'
+                    : _userData['name']!),
+        currency: _currency.toLowerCase(),
+        paymentTerms: _termsOfPayment,
+        validity: validity,
+        quoteTitle:
+            _orderTitleController.text.isNotEmpty
+                ? _orderTitleController.text
+                : 'Order - $_orderNumber',
+        quotationNotes: _notesController.text,
+        itemsListJson: itemsListJson,
+        paymentDetails: paymentDetailsHtml,
+        serviceGrandSubTotal: _subtotal,
+        serviceGrandTotal: _grandTotal,
+        discountValue: _discount,
+        discountValueTotal: _discount,
+        discountType: 'amount',
+        discountReason: '',
+        shippingValue: _shipping > 0 ? _shipping.toStringAsFixed(2) : '',
+        shippingValueTotal: _shipping,
+        shippingTitle: '',
+        taxValue: _tax,
+        taxValueTotal: _tax,
+        taxType: 'amount',
+        taxReason: '',
+      );
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      if (success) {
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Order saved as draft successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save order as draft: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
   }
 
   void _handleSubmitOrder() {

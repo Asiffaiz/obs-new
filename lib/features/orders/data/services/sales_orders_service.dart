@@ -29,10 +29,9 @@ class SalesOrdersService {
         throw Exception('Account number not found');
       }
 
-      final response = await _apiClient.post(
-        ApiEndpoints.listSalesOrders,
-        {'accountno': accountNo},
-      );
+      final response = await _apiClient.post(ApiEndpoints.listSalesOrders, {
+        'accountno': accountNo,
+      });
 
       if (response.statusCode == 200 && response.data['status'] == 200) {
         final List<dynamic> ordersData = response.data['data'] ?? [];
@@ -65,14 +64,13 @@ class SalesOrdersService {
 
       final response = await _apiClient.post(
         ApiEndpoints.getSalesOrderPaymentCompleteDetails,
-        {
-          'accountno': accountNo,
-          'orderno': orderNo,
-        },
+        {'accountno': accountNo, 'orderno': orderNo},
       );
 
       if (response.statusCode == 200 && response.data['status'] == 200) {
-        return PaymentCompleteDetailsModel.fromJson(response.data['data'] ?? {});
+        return PaymentCompleteDetailsModel.fromJson(
+          response.data['data'] ?? {},
+        );
       } else {
         throw Exception(
           response.data['message'] ?? 'Failed to get payment details',
@@ -142,14 +140,19 @@ class SalesOrdersService {
       request.fields['quotation_notes'] = quotationNotes;
       request.fields['items_list'] = itemsListJson;
       request.fields['payment_details'] = paymentDetails;
-      request.fields['service_grand_sub_total'] = serviceGrandSubTotal.toStringAsFixed(2);
-      request.fields['service_grand_total'] = serviceGrandTotal.toStringAsFixed(2);
+      request.fields['service_grand_sub_total'] = serviceGrandSubTotal
+          .toStringAsFixed(2);
+      request.fields['service_grand_total'] = serviceGrandTotal.toStringAsFixed(
+        2,
+      );
       request.fields['discount_value'] = discountValue.toStringAsFixed(2);
-      request.fields['discount_value_total'] = discountValueTotal.toStringAsFixed(2);
+      request.fields['discount_value_total'] = discountValueTotal
+          .toStringAsFixed(2);
       request.fields['discount_type'] = discountType;
       request.fields['discount_reason'] = discountReason;
       request.fields['shipping_value'] = shippingValue.toStringAsFixed(2);
-      request.fields['shipping_value_total'] = shippingValueTotal.toStringAsFixed(2);
+      request.fields['shipping_value_total'] = shippingValueTotal
+          .toStringAsFixed(2);
       request.fields['shipping_title'] = shippingTitle;
       request.fields['tax_value'] = taxValue.toStringAsFixed(2);
       request.fields['tax_value_total'] = taxValueTotal.toStringAsFixed(2);
@@ -187,5 +190,116 @@ class SalesOrdersService {
       );
     }
   }
-}
 
+  // Save order as draft as FormData (multipart/form-data)
+  Future<bool> saveOrderAsDraft({
+    required String accountNo,
+    required String orderNo,
+    required String contactEmail,
+    required String contactPerson,
+    required String currency,
+    required String paymentTerms,
+    required String validity,
+    required String quoteTitle,
+    required String quotationNotes,
+    required String itemsListJson,
+    required String paymentDetails,
+    required double serviceGrandSubTotal,
+    required double serviceGrandTotal,
+    double discountValue = 0,
+    double discountValueTotal = 0,
+    String discountType = 'amount',
+    String discountReason = '',
+    String shippingValue = '',
+    double shippingValueTotal = 0,
+    String shippingTitle = '',
+    double taxValue = 0,
+    double taxValueTotal = 0,
+    String taxType = 'amount',
+    String taxReason = '',
+  }) async {
+    try {
+      final token = await _tokenService.getAccessToken();
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiEndpoints.saveOrderAsDraft),
+      );
+
+      // Add headers
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      // Add form fields
+      request.fields['token'] = NetworkUrls.reactAppApiToken;
+      request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
+      request.fields['accountno'] = accountNo;
+      request.fields['client_accountno'] = accountNo; // Same as accountno
+      request.fields['orderno'] = orderNo;
+      request.fields['contact_email'] = contactEmail;
+      request.fields['contact_person'] = contactPerson;
+      request.fields['currency'] = currency.toLowerCase();
+      request.fields['payment_terms'] = paymentTerms;
+      request.fields['validity'] = validity;
+      request.fields['quote_title'] = quoteTitle;
+      request.fields['quotation_notes'] = quotationNotes;
+      request.fields['quote_notes'] = ''; // Can be null/empty
+      request.fields['items_list'] = itemsListJson;
+      request.fields['payment_details'] = paymentDetails;
+      request.fields['service_grand_sub_total'] = serviceGrandSubTotal
+          .toStringAsFixed(2);
+      request.fields['service_grand_total'] = serviceGrandTotal.toStringAsFixed(
+        2,
+      );
+      request.fields['discount_value'] = discountValue.toStringAsFixed(2);
+      request.fields['discount_value_total'] = discountValueTotal
+          .toStringAsFixed(2);
+      request.fields['discount_type'] = discountType;
+      request.fields['discount_reason'] = discountReason;
+      request.fields['shipping_value'] = shippingValue; // Can be empty string
+      request.fields['shipping_value_total'] = shippingValueTotal
+          .toStringAsFixed(2);
+      request.fields['shipping_title'] = shippingTitle;
+      request.fields['tax_value'] = taxValue.toStringAsFixed(2);
+      request.fields['tax_value_total'] = taxValueTotal.toStringAsFixed(2);
+      request.fields['tax_type'] = taxType;
+      request.fields['tax_reason'] = taxReason;
+
+      if (kDebugMode) {
+        print('Save Order as Draft - Sending FormData');
+        print('Fields: ${request.fields}');
+      }
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (kDebugMode) {
+        print('Save Order as Draft Response Status: ${response.statusCode}');
+        print('Save Order as Draft Response Body: ${response.body}');
+      }
+
+      // Parse response
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['status'] == 200) {
+        return true;
+      } else {
+        throw Exception(
+          responseData['message'] ?? 'Failed to save order as draft',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error saving order as draft: $e');
+      }
+      throw Exception(
+        'An error occurred while saving order as draft: ${e.toString()}',
+      );
+    }
+  }
+}
