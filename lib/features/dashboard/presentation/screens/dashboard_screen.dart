@@ -515,31 +515,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
           selectedIndex: _selectedIndex,
           onTabSelected: _handleBottomNavTap,
         ),
+        // TODO: Add floating action button for voice assistant
 
-        floatingActionButton: Container(
-          width: 45,
-          height: 45,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.primaryColor,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 8,
-                offset: Offset(2, 4),
-              ),
-            ],
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.mic, color: Colors.white, size: 30),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => VoiceAssistantApp()),
-              );
-            },
-          ),
-        ),
+        // floatingActionButton: Container(
+        //   width: 45,
+        //   height: 45,
+        //   decoration: BoxDecoration(
+        //     shape: BoxShape.circle,
+        //     color: AppColors.primaryColor,
+        //     boxShadow: [
+        //       BoxShadow(
+        //         color: Colors.black26,
+        //         blurRadius: 8,
+        //         offset: Offset(2, 4),
+        //       ),
+        //     ],
+        //   ),
+        //   child: IconButton(
+        //     icon: const Icon(Icons.mic, color: Colors.white, size: 30),
+        //     onPressed: () {
+        //       Navigator.push(
+        //         context,
+        //         MaterialPageRoute(builder: (context) => VoiceAssistantApp()),
+        //       );
+        //     },
+        //   ),
+        // ),
       ),
     );
   }
