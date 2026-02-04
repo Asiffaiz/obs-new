@@ -40,6 +40,8 @@ class ApiEndpoints {
       '$baseUrl/appApis/send_agreement_to_signee';
   static final String getClientAgreementsListingAll =
       '$baseUrl/appApis/get_client_agreements_listing_all';
+  static final String getUnsignedAgreementForClient =
+      '$baseUrl/appApis/get_unsigned_agreement_for_client';
 
   // Reports endpoints
   static final String getReportsData = '$baseUrl/appApis/get_client_reports';

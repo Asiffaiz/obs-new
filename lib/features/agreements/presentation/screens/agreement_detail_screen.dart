@@ -358,7 +358,8 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
           );
         } else if (widget.comeFrom == 'optional' ||
             widget.comeFrom == 'signed_agreements' ||
-            widget.comeFrom == 'onboarding') {
+            widget.comeFrom == 'onboarding' ||
+            widget.comeFrom == 'product_services') {
           // Send to the bloc
           context.read<AgreementsBloc>().add(
             SaveOptionalSignature(
@@ -876,7 +877,8 @@ class _AgreementDetailScreenState extends State<AgreementDetailScreen>
           _showSentToSigneeSuccessDialog(context);
         } else if (state.status == AgreementsStatus.showNextAgreement) {
           if (widget.comeFrom == 'optional' ||
-              widget.comeFrom == 'signed_agreements') {
+              widget.comeFrom == 'signed_agreements' ||
+              widget.comeFrom == 'product_services') {
             context.pop();
             // context.pop();
             if (widget.onRefreshOptionalAgreements != null) {

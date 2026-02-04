@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:go_router/go_router.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/utils/validators.dart';
 import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
+import 'package:voicealerts_obs/features/agreements/data/services/agreements_service.dart';
+import 'package:voicealerts_obs/features/agreements/presentation/screens/agreement_detail_screen.dart';
 import 'package:voicealerts_obs/features/products/domain/models/product_model.dart';
 import 'package:voicealerts_obs/features/products/presentation/screens/create_order_screen.dart';
-import '../../../../config/routes.dart';
 
 void showProductDetailsModal({
   required BuildContext context,
@@ -33,7 +34,7 @@ void showProductDetailsModal({
   );
 }
 
-class _ProductDetailsModalContent extends StatelessWidget {
+class _ProductDetailsModalContent extends StatefulWidget {
   final String summary;
   final String description;
   final ProductModel product;
@@ -44,16 +45,25 @@ class _ProductDetailsModalContent extends StatelessWidget {
     required this.product,
   });
 
-  bool get _hasPendingAgreement {
+  @override
+  State<_ProductDetailsModalContent> createState() =>
+      _ProductDetailsModalContentState();
+}
 
-    return product.agreementAccountno.trim().isNotEmpty &&
-        product.isSigned == false;
+class _ProductDetailsModalContentState
+    extends State<_ProductDetailsModalContent> {
+  final AgreementService _agreementService = AgreementService();
+  bool _isLoadingAgreement = false;
+
+  bool get _hasPendingAgreement {
+    return widget.product.agreementAccountno.trim().isNotEmpty &&
+        widget.product.isSigned == false;
   }
 
   /// Check if order buttons should be shown
   bool get _shouldShowOrderButtons {
     // Don't show if coming soon
-    if (product.comingSoon == 1) return false;
+    if (widget.product.comingSoon == 1) return false;
     // Don't show if there's a pending agreement
     if (_hasPendingAgreement) return false;
     return true;
@@ -61,8 +71,73 @@ class _ProductDetailsModalContent extends StatelessWidget {
 
   /// Check if form order should be shown (when form_accountno and form_link are present)
   bool get _shouldShowFormOrder {
-    return product.formAccountno.trim().isNotEmpty &&
-        product.formLink.trim().isNotEmpty;
+    return widget.product.formAccountno.trim().isNotEmpty &&
+        widget.product.formLink.trim().isNotEmpty;
+  }
+
+  Future<void> _handleSignAgreement(BuildContext context) async {
+    setState(() {
+      _isLoadingAgreement = true;
+    });
+
+    try {
+      // Get account number from shared preferences
+      final prefs = await SharedPreferences.getInstance();
+      final accountNo =
+          prefs.getString(SharedPreferenceKeys.accountNoKey) ?? '';
+
+      if (accountNo.isEmpty) {
+        throw Exception('Account number not found');
+      }
+
+      // Fetch agreement details
+      final agreement = await _agreementService.getUnsignedAgreementForClient(
+        accountNo: accountNo,
+        agreementAccountNo: widget.product.agreementAccountno,
+      );
+
+      setState(() {
+        _isLoadingAgreement = false;
+      });
+
+      // Close the product details modal
+      if (context.mounted) {
+        Navigator.of(context).pop();
+
+        // Navigate to agreement detail screen
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => AgreementDetailScreen(
+                  agreement: agreement,
+                  isLastAgreement: false,
+                  comeFrom: 'product_services',
+                  onRefreshOptionalAgreements: () {
+                    // Refresh product listing when agreement is signed
+                    // if (context.mounted) {
+                    //   Navigator.of(context).pop(); // Go back to products screen
+                    // }
+                  },
+                ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingAgreement = false;
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load agreement: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -106,7 +181,7 @@ class _ProductDetailsModalContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 10),
-                  if (product.comingSoon == 1) ...[
+                  if (widget.product.comingSoon == 1) ...[
                     _buildComingSoonMessage(context),
                     const SizedBox(height: 16),
                   ],
@@ -114,14 +189,14 @@ class _ProductDetailsModalContent extends StatelessWidget {
                     _buildPendingAgreementMessage(context),
                     const SizedBox(height: 16),
                   ],
-                  product.comingSoon == 1
+                  widget.product.comingSoon == 1
                       ? const SizedBox.shrink()
-                      : product.rateDeckPricing == 1
+                      : widget.product.rateDeckPricing == 1
                       ? _buildViewRatedecButton(context)
                       : _buildPriceInfoRow(
                         'Price:',
                         Validators.buildPriceWithCurrencySign(
-                          product.rate.toString(),
+                          widget.product.rate.toString(),
                         ),
                         AppColors.primaryColor,
                       ),
@@ -136,12 +211,15 @@ class _ProductDetailsModalContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    summary,
+                    widget.summary,
                     style: const TextStyle(fontSize: 14, color: Colors.black87),
                   ),
-                  if (product.rateDeckPricing != 1) ...[
+                  if (widget.product.rateDeckPricing != 1) ...[
                     const SizedBox(height: 8),
-                    _buildRates(product.miscellaneousRates, product.otherRates),
+                    _buildRates(
+                      widget.product.miscellaneousRates,
+                      widget.product.otherRates,
+                    ),
                   ],
                   const SizedBox(height: 16),
                   const Divider(),
@@ -155,7 +233,7 @@ class _ProductDetailsModalContent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Html(data: description),
+                  Html(data: widget.description),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -425,9 +503,9 @@ class _ProductDetailsModalContent extends StatelessWidget {
         children: [
           InkWell(
             onTap: () {
-              if (product.documentUrl.isNotEmpty) {
+              if (widget.product.documentUrl.isNotEmpty) {
                 // Construct full URL if needed
-                String fullUrl = product.documentUrl;
+                String fullUrl = widget.product.documentUrl;
                 if (!fullUrl.startsWith('http://') &&
                     !fullUrl.startsWith('https://')) {
                   fullUrl =
@@ -441,8 +519,8 @@ class _ProductDetailsModalContent extends StatelessWidget {
                         (context) => CustomPdfViewer(
                           url: fullUrl,
                           title:
-                              product.documentTitle.isNotEmpty
-                                  ? product.documentTitle
+                              widget.product.documentTitle.isNotEmpty
+                                  ? widget.product.documentTitle
                                   : 'Rate Deck',
                         ),
                   ),
@@ -536,7 +614,7 @@ class _ProductDetailsModalContent extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Your agreement (${product.productTitle}) for this service is pending sign. Please sign this agreement to fully access and use this service.',
+                  'Your agreement (${widget.product.productTitle}) for this service is pending sign. Please sign this agreement to fully access and use this service.',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.orange.shade900,
@@ -550,11 +628,10 @@ class _ProductDetailsModalContent extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                // Keep current behavior for now; we’ll adjust navigation later
-                Navigator.of(context).pop(); // Close the modal first
-                context.push(AppRoutes.signedAgreements);
-              },
+              onPressed:
+                  _isLoadingAgreement
+                      ? null
+                      : () => _handleSignAgreement(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange.shade700,
                 foregroundColor: Colors.white,
@@ -563,10 +640,25 @@ class _ProductDetailsModalContent extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text(
-                'Click Here to sign this agreement',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
+              child:
+                  _isLoadingAgreement
+                      ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                      : const Text(
+                        'Click Here to sign this agreement',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
             ),
           ),
         ],
@@ -637,12 +729,14 @@ class _ProductDetailsModalContent extends StatelessWidget {
 
   void _handleOrderAction(BuildContext context) {
     Navigator.of(context).pop(); // Close modal first
-    
+
     if (_shouldShowFormOrder) {
       // Handle Form Order action - different flow (to be implemented)
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Form Order functionality will be implemented separately'),
+          content: Text(
+            'Form Order functionality will be implemented separately',
+          ),
           duration: Duration(seconds: 2),
         ),
       );
@@ -651,7 +745,7 @@ class _ProductDetailsModalContent extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CreateOrderScreen(product: product),
+          builder: (context) => CreateOrderScreen(product: widget.product),
         ),
       );
     }

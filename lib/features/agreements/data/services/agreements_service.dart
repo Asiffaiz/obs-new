@@ -61,6 +61,57 @@ class AgreementService {
     return prefs.getString(_emailKey) ?? '';
   }
 
+  // Fetch unsigned agreement for a specific product
+  Future<AgreementModel> getUnsignedAgreementForClient({
+    required String accountNo,
+    required String agreementAccountNo,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.getUnsignedAgreementForClient,
+        {
+          'accountno': accountNo,
+          'agreement_accountno': agreementAccountNo,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == 200) {
+        final List<dynamic> agreementsData = response.data['data'] ?? [];
+        
+        if (agreementsData.isEmpty) {
+          throw Exception('No agreement found');
+        }
+
+        // Get first agreement from the array
+        final agreementJson = agreementsData[0];
+        
+        // Map to AgreementModel
+        return AgreementModel(
+          id: agreementJson['agreement_id'] ?? 0,
+          agreementAccountNo: agreementJson['agreement_accountno'] ?? '',
+          title: agreementJson['agreement_title'] ?? '',
+          description: agreementJson['agreement_instruction'] ?? '',
+          type: agreementJson['agreement_type'] ?? 'esign',
+          status: AgreementStatus.pending,
+          isMandatory: (agreementJson['ismandatory'] ?? 0) == 1,
+          content: agreementJson['agreement_content'] ?? '',
+          signatoryDetails: {
+            'canvas_id': agreementJson['canvas_id'] ?? '',
+            'client_agreement_type': agreementJson['client_agreement_type'] ?? '',
+          },
+        );
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Failed to get agreement details',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'An error occurred while fetching agreement details: ${e.toString()}',
+      );
+    }
+  }
+
   // Fetch mandatory agreements from API
   Future<List<AgreementModel>> getMandatoryAgreements() async {
     try {
