@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -1033,16 +1034,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // TODO: Implement submit order API
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Order submitted successfully'),
-                    backgroundColor: Colors.green,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-                // Optionally navigate back
-                // Navigator.of(context).pop();
+                _submitOrderToApi();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryColor,
@@ -1053,5 +1045,125 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
         );
       },
     );
+  }
+
+  Future<void> _submitOrderToApi() async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // Build items_list JSON
+      final itemsList = [
+        {
+          'id': 'row-${DateTime.now().millisecondsSinceEpoch}',
+          'data': {
+            'id': widget.product.productId,
+            'sku': widget.product.sku,
+            'name': widget.product.productTitle,
+            'quantity': _quantity,
+            'unit': _quantity.toString(),
+            'price': _unitPrice.toStringAsFixed(4),
+            'total': _subtotal.toStringAsFixed(2),
+            'type':
+                widget.product.serviceType.isNotEmpty
+                    ? widget.product.serviceType.toLowerCase()
+                    : 'service',
+          },
+        },
+      ];
+      final itemsListJson = jsonEncode(itemsList);
+
+      // Get payment details HTML
+      final paymentDetailsHtml =
+          _paymentDetails?.paymentMethod.paymentDetails ?? '';
+
+      // Get validity from payment settings or default
+      final validity = _paymentDetails?.paymentSettings.validity ?? '90';
+
+      // Submit order
+      final success = await _salesOrdersService.submitOrder(
+        accountNo: _userData['accountno']!,
+        orderNo: _orderNumber,
+        contactEmail:
+            _contactEmail.isNotEmpty
+                ? _contactEmail
+                : (_userData['email']?.isEmpty ?? true
+                    ? 'info@onboardsoft.com'
+                    : _userData['email']!),
+        contactPerson:
+            _contactPerson.isNotEmpty
+                ? _contactPerson
+                : (_userData['name']?.isEmpty ?? true
+                    ? 'JAMES SMITH'
+                    : _userData['name']!),
+        currency: _currency.toLowerCase(),
+        paymentTerms: _termsOfPayment,
+        validity: validity,
+        quoteTitle:
+            _orderTitleController.text.isNotEmpty
+                ? _orderTitleController.text
+                : 'Order - $_orderNumber',
+        quotationNotes: _notesController.text,
+        itemsListJson: itemsListJson,
+        paymentDetails: paymentDetailsHtml,
+        serviceGrandSubTotal: _subtotal,
+        serviceGrandTotal: _grandTotal,
+        discountValue: _discount,
+        discountValueTotal: _discount,
+        discountType: 'amount',
+        discountReason: '',
+        shippingValue: _shipping,
+        shippingValueTotal: _shipping,
+        shippingTitle: '',
+        taxValue: _tax,
+        taxValueTotal: _tax,
+        taxType: 'amount',
+        taxReason: '',
+      );
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      if (success) {
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Order submitted successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          // Navigate back after a short delay
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit order: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
   }
 }

@@ -1,12 +1,18 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voicealerts_obs/core/constants/network_urls.dart';
 import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/network/api_client.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
+import 'package:voicealerts_obs/core/services/token_service.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/payment_complete_details_model.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/sales_order_model.dart';
 
 class SalesOrdersService {
   final ApiClient _apiClient = ApiClient();
+  final TokenService _tokenService = TokenService();
 
   // Get account number from shared preferences
   Future<String> getAccountNo() async {
@@ -75,6 +81,109 @@ class SalesOrdersService {
     } catch (e) {
       throw Exception(
         'An error occurred while fetching payment details: ${e.toString()}',
+      );
+    }
+  }
+
+  // Submit order as FormData (multipart/form-data)
+  Future<bool> submitOrder({
+    required String accountNo,
+    required String orderNo,
+    required String contactEmail,
+    required String contactPerson,
+    required String currency,
+    required String paymentTerms,
+    required String validity,
+    required String quoteTitle,
+    required String quotationNotes,
+    required String itemsListJson,
+    required String paymentDetails,
+    required double serviceGrandSubTotal,
+    required double serviceGrandTotal,
+    double discountValue = 0,
+    double discountValueTotal = 0,
+    String discountType = 'amount',
+    String discountReason = '',
+    double shippingValue = 0,
+    double shippingValueTotal = 0,
+    String shippingTitle = '',
+    double taxValue = 0,
+    double taxValueTotal = 0,
+    String taxType = 'amount',
+    String taxReason = '',
+  }) async {
+    try {
+      final token = await _tokenService.getAccessToken();
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiEndpoints.saveOrderAndSend),
+      );
+
+      // Add headers
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      // Add form fields
+      request.fields['token'] = NetworkUrls.reactAppApiToken;
+      request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
+      request.fields['accountno'] = accountNo;
+      request.fields['orderno'] = orderNo;
+      request.fields['contact_email'] = contactEmail;
+      request.fields['contact_person'] = contactPerson;
+      request.fields['currency'] = currency.toLowerCase();
+      request.fields['payment_terms'] = paymentTerms;
+      request.fields['validity'] = validity;
+      request.fields['quote_title'] = quoteTitle;
+      request.fields['quotation_notes'] = quotationNotes;
+      request.fields['items_list'] = itemsListJson;
+      request.fields['payment_details'] = paymentDetails;
+      request.fields['service_grand_sub_total'] = serviceGrandSubTotal.toStringAsFixed(2);
+      request.fields['service_grand_total'] = serviceGrandTotal.toStringAsFixed(2);
+      request.fields['discount_value'] = discountValue.toStringAsFixed(2);
+      request.fields['discount_value_total'] = discountValueTotal.toStringAsFixed(2);
+      request.fields['discount_type'] = discountType;
+      request.fields['discount_reason'] = discountReason;
+      request.fields['shipping_value'] = shippingValue.toStringAsFixed(2);
+      request.fields['shipping_value_total'] = shippingValueTotal.toStringAsFixed(2);
+      request.fields['shipping_title'] = shippingTitle;
+      request.fields['tax_value'] = taxValue.toStringAsFixed(2);
+      request.fields['tax_value_total'] = taxValueTotal.toStringAsFixed(2);
+      request.fields['tax_type'] = taxType;
+      request.fields['tax_reason'] = taxReason;
+
+      if (kDebugMode) {
+        print('Submit Order - Sending FormData');
+        print('Fields: ${request.fields}');
+      }
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (kDebugMode) {
+        print('Submit Order Response Status: ${response.statusCode}');
+        print('Submit Order Response Body: ${response.body}');
+      }
+
+      // Parse response
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['status'] == 200) {
+        return true;
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to submit order');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error submitting order: $e');
+      }
+      throw Exception(
+        'An error occurred while submitting order: ${e.toString()}',
       );
     }
   }
