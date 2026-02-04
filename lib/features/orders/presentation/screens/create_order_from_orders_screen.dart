@@ -230,8 +230,12 @@ class _CreateOrderFromOrdersScreenState
         _contactPerson = paymentDetails.paymentSettings.contactPerson;
         _contactEmail = paymentDetails.paymentSettings.contactEmail;
 
-        // Parse HTML payment details
-        _parsePaymentDetailsHtml(paymentDetails.paymentMethod.paymentDetails);
+        // Parse HTML payment details from first payment method
+        if (paymentDetails.paymentMethods.isNotEmpty) {
+          _parsePaymentDetailsHtml(
+            paymentDetails.paymentMethods[0].paymentDetails,
+          );
+        }
       });
     } catch (e) {
       // If API fails, use default values
@@ -981,64 +985,67 @@ class _CreateOrderFromOrdersScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Payment Method Title
-            if (_paymentDetails != null) ...[
-              Text(
-                'Payment Method',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: allCellsLabelColor,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _paymentDetails!.paymentMethod.paymentMethod.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-            // Bank Account Details Title
-            Text(
-              'Bank Account Details',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: allCellsLabelColor,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Show payment details HTML if available
+            // Payment Methods
             if (_paymentDetails != null &&
-                _paymentDetails!.paymentMethod.paymentDetails.isNotEmpty) ...[
-              // Show HTML content
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade200),
+                _paymentDetails!.paymentMethods.isNotEmpty) ...[
+              // Iterate through all payment methods
+              for (
+                int i = 0;
+                i < _paymentDetails!.paymentMethods.length;
+                i++
+              ) ...[
+                if (i > 0) const SizedBox(height: 24),
+                // Payment Method Title
+                Text(
+                  _paymentDetails!.paymentMethods.length > 1
+                      ? 'Payment Method ${i + 1}'
+                      : 'Payment Method',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: allCellsLabelColor,
+                  ),
                 ),
-                child: Html(
-                  data: _paymentDetails!.paymentMethod.paymentDetails,
-                  shrinkWrap: true,
-                  style: {
-                    'p': Style(
-                      margin: Margins.only(bottom: 8),
-                      padding: HtmlPaddings.zero,
-                    ),
-                    'strong': Style(
-                      fontWeight: FontWeight.bold,
-                      color: allCellsLabelColor,
-                    ),
-                  },
+                const SizedBox(height: 8),
+                Text(
+                  _paymentDetails!.paymentMethods[i].paymentMethod
+                      .toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 16),
+                // Bank Account Details
+                if (_paymentDetails!
+                    .paymentMethods[i]
+                    .paymentDetails
+                    .isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Html(
+                      data: _paymentDetails!.paymentMethods[i].paymentDetails,
+                      shrinkWrap: true,
+                      style: {
+                        'p': Style(
+                          margin: Margins.only(bottom: 8),
+                          padding: HtmlPaddings.zero,
+                        ),
+                        'strong': Style(
+                          fontWeight: FontWeight.bold,
+                          color: allCellsLabelColor,
+                        ),
+                      },
+                    ),
+                  ),
+              ],
             ] else if (_selectedProducts.isEmpty) ...[
               // Show message if product not selected
               Container(
@@ -1299,9 +1306,11 @@ class _CreateOrderFromOrdersScreenState
           }).toList();
       final itemsListJson = jsonEncode(itemsList);
 
-      // Get payment details HTML
+      // Get payment details HTML from first payment method
       final paymentDetailsHtml =
-          _paymentDetails?.paymentMethod.paymentDetails ?? '';
+          _paymentDetails != null && _paymentDetails!.paymentMethods.isNotEmpty
+              ? _paymentDetails!.paymentMethods[0].paymentDetails
+              : '';
 
       // Get validity from payment settings or default
       final validity = _paymentDetails?.paymentSettings.validity ?? '90';
@@ -1471,9 +1480,11 @@ class _CreateOrderFromOrdersScreenState
           }).toList();
       final itemsListJson = jsonEncode(itemsList);
 
-      // Get payment details HTML
+      // Get payment details HTML from first payment method
       final paymentDetailsHtml =
-          _paymentDetails?.paymentMethod.paymentDetails ?? '';
+          _paymentDetails != null && _paymentDetails!.paymentMethods.isNotEmpty
+              ? _paymentDetails!.paymentMethods[0].paymentDetails
+              : '';
 
       // Get validity from payment settings or default
       final validity = _paymentDetails?.paymentSettings.validity ?? '90';
