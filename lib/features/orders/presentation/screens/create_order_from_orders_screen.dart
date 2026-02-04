@@ -580,14 +580,13 @@ class _CreateOrderFromOrdersScreenState
   }
 
   Widget _buildOrderLinesTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Product Selection Section
-          Container(
+    return Column(
+      children: [
+        // Sticky Product Selection Section
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(16),
+          child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -685,52 +684,57 @@ class _CreateOrderFromOrdersScreenState
               ],
             ),
           ),
-          // User-friendly message when no product is selected
-          if (_selectedProducts.isEmpty) ...[
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.blue.shade700,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Please select a product from the dropdown above to add it to your order. You can add multiple products.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.blue.shade900,
-                        height: 1.4,
+        ),
+        // Scrollable Products List
+        Expanded(
+          child:
+              _selectedProducts.isEmpty
+                  ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.blue.shade700,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Please select a product from the dropdown above to add it to your order. You can add multiple products.',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.blue.shade900,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
+                  )
+                  : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _selectedProducts.length,
+                    itemBuilder: (context, index) {
+                      final item = _selectedProducts[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildProductCard(item, index),
+                      );
+                    },
                   ),
-                ],
-              ),
-            ),
-          ],
-          // Show all selected products
-          if (_selectedProducts.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            ..._selectedProducts.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _buildProductCard(item, index),
-              );
-            }),
-          ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -869,220 +873,229 @@ class _CreateOrderFromOrdersScreenState
   }
 
   Widget _buildOtherInfoTab() {
-    return SingleChildScrollView(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Order Title Section
-          Text(
-            'Order Title',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: allCellsLabelColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _orderTitleController,
-            decoration: InputDecoration(
-              hintText: 'Order - $_orderNumber',
-              hintStyle: TextStyle(color: Colors.grey.shade400),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Order Title Section
+            Text(
+              'Order Title',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: allCellsLabelColor,
               ),
             ),
-            style: const TextStyle(fontSize: 14),
-          ),
-          const SizedBox(height: 24),
-          // Notes Section
-          Text(
-            'Notes',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: allCellsLabelColor,
+            const SizedBox(height: 8),
+            TextField(
+              controller: _orderTitleController,
+              decoration: InputDecoration(
+                hintText: 'Order - $_orderNumber',
+                hintStyle: TextStyle(color: Colors.grey.shade400),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColors.primaryColor,
+                    width: 2,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              style: const TextStyle(fontSize: 14),
             ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _notesController,
-            maxLines: 6,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) {
-              // Dismiss keyboard when done is pressed
-              FocusScope.of(context).unfocus();
-            },
-            decoration: InputDecoration(
-              hintText: 'Enter notes...',
-              hintStyle: TextStyle(color: Colors.grey.shade400),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+            const SizedBox(height: 24),
+            // Notes Section
+            Text(
+              'Notes',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: allCellsLabelColor,
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
-              ),
-              contentPadding: const EdgeInsets.all(16),
             ),
-            style: const TextStyle(fontSize: 14),
-          ),
-        ],
-      ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _notesController,
+              maxLines: 6,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                // Dismiss keyboard when done is pressed
+                FocusScope.of(context).unfocus();
+              },
+              decoration: InputDecoration(
+                hintText: 'Enter notes...',
+                hintStyle: TextStyle(color: Colors.grey.shade400),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColors.primaryColor,
+                    width: 2,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.all(16),
+              ),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildPaymentsTab() {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
+    return ListView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Payment Method Title
-          if (_paymentDetails != null) ...[
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Payment Method Title
+            if (_paymentDetails != null) ...[
+              Text(
+                'Payment Method',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: allCellsLabelColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _paymentDetails!.paymentMethod.paymentMethod.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+            // Bank Account Details Title
             Text(
-              'Payment Method',
+              'Bank Account Details',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: allCellsLabelColor,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              _paymentDetails!.paymentMethod.paymentMethod.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+            const SizedBox(height: 16),
+            // Show payment details HTML if available
+            if (_paymentDetails != null &&
+                _paymentDetails!.paymentMethod.paymentDetails.isNotEmpty) ...[
+              // Show HTML content
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Html(
+                  data: _paymentDetails!.paymentMethod.paymentDetails,
+                  shrinkWrap: true,
+                  style: {
+                    'p': Style(
+                      margin: Margins.only(bottom: 8),
+                      padding: HtmlPaddings.zero,
+                    ),
+                    'strong': Style(
+                      fontWeight: FontWeight.bold,
+                      color: allCellsLabelColor,
+                    ),
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-          ],
-          // Bank Account Details Title
-          Text(
-            'Bank Account Details',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: allCellsLabelColor,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Show payment details HTML if available
-          if (_paymentDetails != null &&
-              _paymentDetails!.paymentMethod.paymentDetails.isNotEmpty) ...[
-            // Show HTML content
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Html(
-                data: _paymentDetails!.paymentMethod.paymentDetails,
-                shrinkWrap: true,
-                style: {
-                  'p': Style(
-                    margin: Margins.only(bottom: 8),
-                    padding: HtmlPaddings.zero,
-                  ),
-                  'strong': Style(
-                    fontWeight: FontWeight.bold,
-                    color: allCellsLabelColor,
-                  ),
-                },
-              ),
-            ),
-          ] else if (_selectedProducts.isEmpty) ...[
-            // Show message if product not selected
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.orange.shade700,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Please select a product first to load payment details.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.orange.shade900,
-                        height: 1.4,
+            ] else if (_selectedProducts.isEmpty) ...[
+              // Show message if product not selected
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.orange.shade700,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Please select a product first to load payment details.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.orange.shade900,
+                          height: 1.4,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ] else ...[
-            // Show message if payment details not loaded
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.grey.shade700,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Payment details are being loaded. Please wait...',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade900,
-                        height: 1.4,
+            ] else ...[
+              // Show message if payment details not loaded
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.grey.shade700,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Payment details are being loaded. Please wait...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade900,
+                          height: 1.4,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 
