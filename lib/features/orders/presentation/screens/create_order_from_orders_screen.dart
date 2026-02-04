@@ -42,8 +42,8 @@ class _CreateOrderFromOrdersScreenState
 
   // Product selection
   List<ProductModel> _products = [];
-  ProductModel? _selectedProductForDropdown; // For dropdown selection
   bool _isLoadingProducts = false;
+  int _dropdownKey = 0; // Key to force dropdown rebuild
 
   // Selected products with quantities
   final List<_OrderProductItem> _selectedProducts = [];
@@ -149,16 +149,15 @@ class _CreateOrderFromOrdersScreenState
     }
   }
 
-  void _onProductSelected(ProductModel? product) {
+  void _onProductSelectedForAdd(ProductModel? product) {
     if (product == null) return;
 
     setState(() {
       // Add product to selected list
       _selectedProducts.add(_OrderProductItem(product: product, quantity: 1));
 
-      // Reset dropdown selection to null to avoid value mismatch
-      // This ensures the dropdown value is not in the filtered items list
-      _selectedProductForDropdown = null;
+      // Increment key to force dropdown rebuild with null value
+      _dropdownKey++;
 
       // Calculate totals
       _calculateTotals();
@@ -637,63 +636,50 @@ class _CreateOrderFromOrdersScreenState
                     ),
                   )
                 else
-                  Builder(
-                    builder: (context) {
-                      final availableProducts = _getAvailableProducts();
-                      // Ensure the selected value exists in available products
-                      // Check by productId since ProductModel objects are compared by reference
-                      ProductModel? validValue;
-                      if (_selectedProductForDropdown != null) {
-                        final exists = availableProducts.any(
-                          (p) =>
-                              p.productId ==
-                              _selectedProductForDropdown!.productId,
-                        );
-                        validValue =
-                            exists ? _selectedProductForDropdown : null;
-                      } else {
-                        validValue = null;
-                      }
-
-                      return DropdownButtonFormField<ProductModel>(
-                        value: validValue,
-                        decoration: InputDecoration(
-                          hintText: 'Select a product',
-                          hintStyle: TextStyle(color: Colors.grey.shade400),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: AppColors.primaryColor,
-                              width: 2,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
+                  DropdownButtonFormField<ProductModel>(
+                    key: ValueKey<int>(_dropdownKey),
+                    value: null,
+                    decoration: InputDecoration(
+                      hintText: 'Select a product *',
+                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: AppColors.primaryColor,
+                          width: 2,
                         ),
-                        items:
-                            availableProducts.map((ProductModel product) {
-                              return DropdownMenuItem<ProductModel>(
-                                value: product,
-                                child: Text(
-                                  product.productTitle,
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged: _onProductSelected,
-                      );
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    items:
+                        _getAvailableProducts().map((ProductModel product) {
+                          return DropdownMenuItem<ProductModel>(
+                            value: product,
+                            child: Text(
+                              product.productTitle,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: _onProductSelectedForAdd,
+                    validator: (value) {
+                      if (_getAvailableProducts().isNotEmpty && value == null) {
+                        return 'Please select a product';
+                      }
+                      return null;
                     },
                   ),
               ],
