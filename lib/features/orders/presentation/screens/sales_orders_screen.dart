@@ -6,10 +6,12 @@ import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/core/widgets/custom_error_dialog.dart';
 import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/widgets/dashboard_shimmer.dart';
+import 'package:voicealerts_obs/features/orders/data/services/sales_orders_service.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/sales_order_model.dart';
 import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_bloc.dart';
 import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_event.dart';
 import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_state.dart';
+import 'package:voicealerts_obs/features/products/presentation/screens/create_order_screen.dart';
 
 class SalesOrdersScreen extends StatefulWidget {
   const SalesOrdersScreen({super.key});
@@ -19,6 +21,8 @@ class SalesOrdersScreen extends StatefulWidget {
 }
 
 class _SalesOrdersScreenState extends State<SalesOrdersScreen> {
+  final SalesOrdersService _salesOrdersService = SalesOrdersService();
+
   @override
   void initState() {
     super.initState();
@@ -456,13 +460,57 @@ class _SalesOrdersScreenState extends State<SalesOrdersScreen> {
     );
   }
 
-  void _handleEditOrder(SalesOrderModel order) {
-    // TODO: Navigate to edit order screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Edit Order ${order.orderNo}'),
-        duration: const Duration(seconds: 1),
-      ),
+  Future<void> _handleEditOrder(SalesOrderModel order) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
+
+    try {
+      // Get account number
+      final accountNo = await _salesOrdersService.getAccountNo();
+      if (accountNo.isEmpty) {
+        throw Exception('Account number not found');
+      }
+
+      // Fetch order details
+      final orderDetails = await _salesOrdersService.getSingleSalesOrder(
+        accountNo: accountNo,
+        orderNo: order.orderNo,
+      );
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Navigate to CreateOrderScreen in edit mode
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CreateOrderScreen(orderDetails: orderDetails),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load order details: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
   }
 }

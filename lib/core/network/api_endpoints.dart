@@ -72,6 +72,7 @@ class ApiEndpoints {
       '$baseUrl/appApis/get_sales_order_payment_complete_details';
   static final String saveOrderAndSend = '$baseUrl/appApis/save_order_and_send';
   static final String saveOrderAsDraft = '$baseUrl/appApis/save_order_as_draft';
+  static final String getSingleSalesOrder = '$baseUrl/appApis/get_single_sales_order';
 
   // RFQ endpoints
   static final String getRfqInitialDetails =

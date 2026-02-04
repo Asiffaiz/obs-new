@@ -8,13 +8,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/orders/data/services/sales_orders_service.dart';
+import 'package:voicealerts_obs/features/orders/domain/models/order_details_model.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/payment_complete_details_model.dart';
 import 'package:voicealerts_obs/features/products/domain/models/product_model.dart';
 
 class CreateOrderScreen extends StatefulWidget {
-  final ProductModel product;
+  final ProductModel? product; // Optional for edit mode
+  final OrderDetailsModel? orderDetails; // For edit mode
 
-  const CreateOrderScreen({super.key, required this.product});
+  const CreateOrderScreen({super.key, this.product, this.orderDetails})
+    : assert(
+        product != null || orderDetails != null,
+        'Either product or orderDetails must be provided',
+      );
 
   @override
   State<CreateOrderScreen> createState() => _CreateOrderScreenState();
@@ -80,22 +86,31 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
       // Load user data
       await _loadUserData();
 
-      // Generate random order number (7 digits like "3625656")
-      _orderNumber = _generateRandomOrderNumber();
+      // Check if we're in edit mode
+      if (widget.orderDetails != null) {
+        // Edit mode: populate from existing order
+        await _populateFromOrderDetails(widget.orderDetails!);
+      } else {
+        // Create mode: generate new order
+        // Generate random order number (7 digits like "3625656")
+        _orderNumber = _generateRandomOrderNumber();
 
-      // Set issue date to today
-      _issueDate = DateFormat('MMMM d, yyyy').format(DateTime.now());
+        // Set issue date to today
+        _issueDate = DateFormat('MMMM d, yyyy').format(DateTime.now());
 
-      // Initialize pricing from product
-      _unitPrice = widget.product.rate.toDouble();
-      _calculateTotals();
+        // Initialize pricing from product
+        if (widget.product != null) {
+          _unitPrice = widget.product!.rate.toDouble();
+          _calculateTotals();
+        }
 
-      // Initialize order title with order number
-      _orderTitleController.text = 'Order - $_orderNumber';
+        // Initialize order title with order number
+        _orderTitleController.text = 'Order - $_orderNumber';
 
-      // Fetch payment details from API
-      if (_userData['accountno']?.isNotEmpty ?? false) {
-        await _fetchPaymentDetails();
+        // Fetch payment details from API
+        if (_userData['accountno']?.isNotEmpty ?? false) {
+          await _fetchPaymentDetails();
+        }
       }
 
       setState(() {
@@ -106,6 +121,42 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
         _isLoading = false;
         _errorMessage = 'Failed to initialize order: ${e.toString()}';
       });
+    }
+  }
+
+  Future<void> _populateFromOrderDetails(OrderDetailsModel orderDetails) async {
+    // Set order number (existing order)
+    _orderNumber = orderDetails.orderNo;
+
+    // Set issue date
+    _issueDate = DateFormat('MMMM d, yyyy').format(orderDetails.dateCreated);
+
+    // Populate order title
+    _orderTitleController.text = orderDetails.quoteTitle;
+
+    // Populate from first service (assuming single product for now)
+    if (orderDetails.quoteServices.isNotEmpty) {
+      final service = orderDetails.quoteServices[0];
+      _quantity = service.quantity;
+      _unitPrice = service.servicePrice;
+      // Get notes from service description field
+      _notesController.text = service.description;
+      _calculateTotals();
+    } else {
+      // Fallback to quote_notes if no services
+      _notesController.text = orderDetails.quoteNotes;
+    }
+
+    // Fetch payment details from API (this will populate payment settings and payment method)
+    // This is the same API used when creating a new order
+    if (_userData['accountno']?.isNotEmpty ?? false) {
+      await _fetchPaymentDetails();
+    } else {
+      // If account number not available, use values from order details as fallback
+      _termsOfPayment = orderDetails.paymentTerms;
+      _currency = orderDetails.currency.toUpperCase();
+      _contactPerson = orderDetails.contactPerson;
+      _contactEmail = orderDetails.contactEmail;
     }
   }
 
@@ -257,7 +308,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Create Order'),
+          title: Text(
+            widget.orderDetails != null ? 'Edit Order' : 'Create Order',
+          ),
           backgroundColor: AppColors.primaryColor,
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -299,9 +352,12 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Create Order',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        title: Text(
+          widget.orderDetails != null ? 'Edit Order' : 'Create Order',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         backgroundColor: AppColors.primaryColor,
         elevation: 0,
@@ -502,6 +558,23 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   }
 
   Widget _buildProductInfoCard() {
+    // Get product info from product or orderDetails
+    final productName =
+        widget.product?.productTitle ??
+        (widget.orderDetails?.quoteServices.isNotEmpty ?? false
+            ? widget.orderDetails!.quoteServices[0].serviceName
+            : '');
+    final productId =
+        widget.product?.productId ??
+        (widget.orderDetails?.quoteServices.isNotEmpty ?? false
+            ? widget.orderDetails!.quoteServices[0].serviceId
+            : 0);
+    final sku =
+        widget.product?.sku ??
+        (widget.orderDetails?.quoteServices.isNotEmpty ?? false
+            ? widget.orderDetails!.quoteServices[0].sku
+            : '');
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -512,11 +585,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildProductInfoRow('PRODUCT NAME:', widget.product.productTitle),
+          _buildProductInfoRow('PRODUCT NAME:', productName),
           const SizedBox(height: 8),
-          _buildProductInfoRow('ITEM ID:', widget.product.productId.toString()),
+          _buildProductInfoRow('ITEM ID:', productId.toString()),
           const SizedBox(height: 8),
-          _buildProductInfoRow('SKU:', widget.product.sku),
+          _buildProductInfoRow('SKU:', sku),
           const SizedBox(height: 8),
           _buildProductInfoRow('QTY:', _quantity.toString()),
           const SizedBox(height: 8),
@@ -1017,13 +1090,30 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
 
     try {
       // Build items_list JSON (same as submit, but can include description)
+      // Get product info from product or orderDetails
+      final productId =
+          widget.product?.productId ??
+          (widget.orderDetails?.quoteServices.isNotEmpty ?? false
+              ? widget.orderDetails!.quoteServices[0].serviceId
+              : 0);
+      final sku =
+          widget.product?.sku ??
+          (widget.orderDetails?.quoteServices.isNotEmpty ?? false
+              ? widget.orderDetails!.quoteServices[0].sku
+              : '');
+      final productName =
+          widget.product?.productTitle ??
+          (widget.orderDetails?.quoteServices.isNotEmpty ?? false
+              ? widget.orderDetails!.quoteServices[0].serviceName
+              : '');
+
       final itemsList = [
         {
           'id': 'row-${DateTime.now().millisecondsSinceEpoch}',
           'data': {
-            'id': widget.product.productId,
-            'sku': widget.product.sku,
-            'name': widget.product.productTitle,
+            'id': productId,
+            'sku': sku,
+            'name': productName,
             'quantity': _quantity,
             'unit': _quantity.toString(),
             'price': _unitPrice.toStringAsFixed(4),
@@ -1162,22 +1252,35 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
 
     try {
       // Build items_list JSON
+      // Get product info from product or orderDetails
+      final productId =
+          widget.product?.productId ??
+          (widget.orderDetails?.quoteServices.isNotEmpty ?? false
+              ? widget.orderDetails!.quoteServices[0].serviceId
+              : 0);
+      final sku =
+          widget.product?.sku ??
+          (widget.orderDetails?.quoteServices.isNotEmpty ?? false
+              ? widget.orderDetails!.quoteServices[0].sku
+              : '');
+      final productName =
+          widget.product?.productTitle ??
+          (widget.orderDetails?.quoteServices.isNotEmpty ?? false
+              ? widget.orderDetails!.quoteServices[0].serviceName
+              : '');
+
       final itemsList = [
         {
           'id': 'row-${DateTime.now().millisecondsSinceEpoch}',
           'data': {
-            'id': widget.product.productId,
-            'sku': widget.product.sku,
-            'name': widget.product.productTitle,
+            'id': productId,
+            'sku': sku,
+            'name': productName,
             'quantity': _quantity,
             'unit': _quantity.toString(),
             'price': _unitPrice.toStringAsFixed(4),
             'total': _subtotal.toStringAsFixed(2),
-            'type': 'service',
-            // 'type':
-            //     widget.product.serviceType.isNotEmpty
-            //         ? widget.product.serviceType.toLowerCase()
-            //         : 'service',
+            'type': 'service', // Database column only accepts 'service'
           },
         },
       ];

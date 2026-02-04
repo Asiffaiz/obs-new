@@ -7,6 +7,7 @@ import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/network/api_client.dart';
 import 'package:voicealerts_obs/core/network/api_endpoints.dart';
 import 'package:voicealerts_obs/core/services/token_service.dart';
+import 'package:voicealerts_obs/features/orders/domain/models/order_details_model.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/payment_complete_details_model.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/sales_order_model.dart';
 
@@ -299,6 +300,39 @@ class SalesOrdersService {
       }
       throw Exception(
         'An error occurred while saving order as draft: ${e.toString()}',
+      );
+    }
+  }
+
+  // Get single sales order details
+  Future<OrderDetailsModel> getSingleSalesOrder({
+    required String accountNo,
+    required String orderNo,
+  }) async {
+    try {
+      if (accountNo.isEmpty || orderNo.isEmpty) {
+        throw Exception('Account number and order number are required');
+      }
+
+      final response = await _apiClient.post(ApiEndpoints.getSingleSalesOrder, {
+        'accountno': accountNo,
+        'orderno': orderNo,
+      });
+
+      if (response.statusCode == 200 && response.data['status'] == 200) {
+        final List<dynamic> data = response.data['data'] ?? [];
+        if (data.isEmpty) {
+          throw Exception('Order not found');
+        }
+        return OrderDetailsModel.fromJson(data[0]);
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Failed to get order details',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'An error occurred while fetching order details: ${e.toString()}',
       );
     }
   }
