@@ -12,6 +12,16 @@ import 'package:voicealerts_obs/features/orders/domain/models/payment_complete_d
 import 'package:voicealerts_obs/features/products/data/services/product_service.dart';
 import 'package:voicealerts_obs/features/products/domain/models/product_model.dart';
 
+// Helper class to hold selected product with quantity
+class _OrderProductItem {
+  final ProductModel product;
+  int quantity;
+
+  _OrderProductItem({required this.product, this.quantity = 1});
+
+  double get total => product.rate.toDouble() * quantity;
+}
+
 class CreateOrderFromOrdersScreen extends StatefulWidget {
   const CreateOrderFromOrdersScreen({super.key});
 
@@ -32,16 +42,17 @@ class _CreateOrderFromOrdersScreenState
 
   // Product selection
   List<ProductModel> _products = [];
-  ProductModel? _selectedProduct;
+  ProductModel? _selectedProductForDropdown; // For dropdown selection
   bool _isLoadingProducts = false;
 
+  // Selected products with quantities
+  final List<_OrderProductItem> _selectedProducts = [];
+
   // Order form data
-  int _quantity = 1;
-  double _unitPrice = 0.0;
-  double _subtotal = 0.0;
   double _discount = 0.0;
   double _shipping = 0.0;
   double _tax = 0.0;
+  double _subtotal = 0.0;
   double _grandTotal = 0.0;
 
   // Order data from API
@@ -139,23 +150,52 @@ class _CreateOrderFromOrdersScreenState
   }
 
   void _onProductSelected(ProductModel? product) {
-    setState(() {
-      _selectedProduct = product;
-      if (product != null) {
-        _unitPrice = product.rate.toDouble();
-        _quantity = 1;
-        _calculateTotals();
+    if (product == null) return;
 
-        // Fetch payment details from API when product is selected
-        if (_userData['accountno']?.isNotEmpty ?? false) {
+    setState(() {
+      // Add product to selected list
+      _selectedProducts.add(_OrderProductItem(product: product, quantity: 1));
+
+      // Reset dropdown selection to null to avoid value mismatch
+      // This ensures the dropdown value is not in the filtered items list
+      _selectedProductForDropdown = null;
+
+      // Calculate totals
+      _calculateTotals();
+
+      // Fetch payment details from API when first product is added
+      if (_selectedProducts.length == 1) {
+        final accountNo = _userData['accountno'];
+        if (accountNo != null && accountNo.isNotEmpty) {
           _fetchPaymentDetails();
         }
-      } else {
-        _unitPrice = 0.0;
-        _quantity = 1;
-        _calculateTotals();
       }
     });
+  }
+
+  void _removeProduct(int index) {
+    setState(() {
+      _selectedProducts.removeAt(index);
+      _calculateTotals();
+    });
+  }
+
+  void _updateProductQuantity(int index, int quantity) {
+    if (quantity < 1) return;
+
+    setState(() {
+      _selectedProducts[index].quantity = quantity;
+      _calculateTotals();
+    });
+  }
+
+  List<ProductModel> _getAvailableProducts() {
+    // Return products that are not already selected
+    final selectedProductIds =
+        _selectedProducts.map((item) => item.product.productId).toSet();
+    return _products
+        .where((product) => !selectedProductIds.contains(product.productId))
+        .toList();
   }
 
   String _generateRandomOrderNumber() {
@@ -288,7 +328,11 @@ class _CreateOrderFromOrdersScreenState
 
   void _calculateTotals() {
     setState(() {
-      _subtotal = _quantity * _unitPrice;
+      // Calculate subtotal from all selected products
+      _subtotal = _selectedProducts.fold<double>(
+        0.0,
+        (sum, item) => sum + item.total,
+      );
       _grandTotal = _subtotal - _discount + _shipping + _tax;
     });
   }
@@ -565,51 +609,98 @@ class _CreateOrderFromOrdersScreenState
                 const SizedBox(height: 12),
                 if (_isLoadingProducts)
                   const Center(child: CircularProgressIndicator())
-                else
-                  DropdownButtonFormField<ProductModel>(
-                    value: _selectedProduct,
-                    decoration: InputDecoration(
-                      hintText: 'Select a product',
-                      hintStyle: TextStyle(color: Colors.grey.shade400),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: AppColors.primaryColor,
-                          width: 2,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
+                else if (_getAvailableProducts().isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
-                    items:
-                        _products.map((ProductModel product) {
-                          return DropdownMenuItem<ProductModel>(
-                            value: product,
-                            child: Text(
-                              product.productTitle,
-                              style: const TextStyle(fontSize: 14),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.green.shade700,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'All products have been added',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Builder(
+                    builder: (context) {
+                      final availableProducts = _getAvailableProducts();
+                      // Ensure the selected value exists in available products
+                      // Check by productId since ProductModel objects are compared by reference
+                      ProductModel? validValue;
+                      if (_selectedProductForDropdown != null) {
+                        final exists = availableProducts.any(
+                          (p) =>
+                              p.productId ==
+                              _selectedProductForDropdown!.productId,
+                        );
+                        validValue =
+                            exists ? _selectedProductForDropdown : null;
+                      } else {
+                        validValue = null;
+                      }
+
+                      return DropdownButtonFormField<ProductModel>(
+                        value: validValue,
+                        decoration: InputDecoration(
+                          hintText: 'Select a product',
+                          hintStyle: TextStyle(color: Colors.grey.shade400),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: AppColors.primaryColor,
+                              width: 2,
                             ),
-                          );
-                        }).toList(),
-                    onChanged: _onProductSelected,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        items:
+                            availableProducts.map((ProductModel product) {
+                              return DropdownMenuItem<ProductModel>(
+                                value: product,
+                                child: Text(
+                                  product.productTitle,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: _onProductSelected,
+                      );
+                    },
                   ),
               ],
             ),
           ),
           // User-friendly message when no product is selected
-          if (_selectedProduct == null) ...[
+          if (_selectedProducts.isEmpty) ...[
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(20),
@@ -628,7 +719,7 @@ class _CreateOrderFromOrdersScreenState
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Please select a product from the dropdown above to continue with your order.',
+                      'Please select a product from the dropdown above to add it to your order. You can add multiple products.',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.blue.shade900,
@@ -640,21 +731,24 @@ class _CreateOrderFromOrdersScreenState
               ),
             ),
           ],
-          // Product info and quantity input when product is selected
-          if (_selectedProduct != null) ...[
+          // Show all selected products
+          if (_selectedProducts.isNotEmpty) ...[
             const SizedBox(height: 16),
-            _buildProductInfoCard(),
-            const SizedBox(height: 16),
-            _buildQuantityInput(),
+            ..._selectedProducts.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildProductCard(item, index),
+              );
+            }),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildProductInfoCard() {
-    if (_selectedProduct == null) return const SizedBox.shrink();
-
+  Widget _buildProductCard(_OrderProductItem item, int index) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -665,25 +759,86 @@ class _CreateOrderFromOrdersScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildProductInfoRow('PRODUCT NAME:', _selectedProduct!.productTitle),
+          // Header with product name and remove button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  item.product.productTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                onPressed: () => _removeProduct(index),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildProductInfoRow('ITEM ID:', item.product.productId.toString()),
           const SizedBox(height: 8),
-          _buildProductInfoRow(
-            'ITEM ID:',
-            _selectedProduct!.productId.toString(),
+          _buildProductInfoRow('SKU:', item.product.sku),
+          const SizedBox(height: 8),
+          // Quantity controls
+          Row(
+            children: [
+              const Text(
+                'Quantity:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(width: 16),
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                onPressed: () {
+                  if (item.quantity > 1) {
+                    _updateProductQuantity(index, item.quantity - 1);
+                  }
+                },
+              ),
+              Container(
+                width: 60,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  item.quantity.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: () {
+                  _updateProductQuantity(index, item.quantity + 1);
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 8),
-          _buildProductInfoRow('SKU:', _selectedProduct!.sku),
-          const SizedBox(height: 8),
-          _buildProductInfoRow('QTY:', _quantity.toString()),
-          const SizedBox(height: 8),
-          _buildProductInfoRow('UNIT:', _quantity.toString()),
+          _buildProductInfoRow('UNIT:', item.quantity.toString()),
           const SizedBox(height: 8),
           _buildProductInfoRow(
             'PRICE (\$):',
             NumberFormat.currency(
               symbol: '\$',
               decimalDigits: 2,
-            ).format(_unitPrice),
+            ).format(item.product.rate.toDouble()),
           ),
           const SizedBox(height: 8),
           _buildProductInfoRow(
@@ -691,7 +846,7 @@ class _CreateOrderFromOrdersScreenState
             NumberFormat.currency(
               symbol: '\$',
               decimalDigits: 2,
-            ).format(_subtotal),
+            ).format(item.total),
           ),
         ],
       ),
@@ -722,55 +877,6 @@ class _CreateOrderFromOrdersScreenState
               color: Colors.black87,
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuantityInput() {
-    return Row(
-      children: [
-        const Text(
-          'Quantity:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(width: 16),
-        IconButton(
-          icon: const Icon(Icons.remove_circle_outline),
-          onPressed: () {
-            if (_quantity > 1) {
-              setState(() {
-                _quantity--;
-                _calculateTotals();
-              });
-            }
-          },
-        ),
-        Container(
-          width: 60,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            _quantity.toString(),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.add_circle_outline),
-          onPressed: () {
-            setState(() {
-              _quantity++;
-              _calculateTotals();
-            });
-          },
         ),
       ],
     );
@@ -928,7 +1034,7 @@ class _CreateOrderFromOrdersScreenState
                 },
               ),
             ),
-          ] else if (_selectedProduct == null) ...[
+          ] else if (_selectedProducts.isEmpty) ...[
             // Show message if product not selected
             Container(
               padding: const EdgeInsets.all(20),
@@ -1070,7 +1176,7 @@ class _CreateOrderFromOrdersScreenState
           Expanded(
             child: ElevatedButton(
               onPressed:
-                  _selectedProduct == null ? null : () => _handleSaveDraft(),
+                  _selectedProducts.isEmpty ? null : () => _handleSaveDraft(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
@@ -1089,7 +1195,7 @@ class _CreateOrderFromOrdersScreenState
           Expanded(
             child: ElevatedButton(
               onPressed:
-                  _selectedProduct == null ? null : () => _handleSubmitOrder(),
+                  _selectedProducts.isEmpty ? null : () => _handleSubmitOrder(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryColor,
                 foregroundColor: Colors.white,
@@ -1110,10 +1216,10 @@ class _CreateOrderFromOrdersScreenState
   }
 
   bool _validateOrder() {
-    if (_selectedProduct == null) {
+    if (_selectedProducts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a product'),
+          content: Text('Please add at least one product to the order'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 2),
         ),
@@ -1121,26 +1227,18 @@ class _CreateOrderFromOrdersScreenState
       return false;
     }
 
-    if (_quantity < 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Quantity must be at least 1'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return false;
-    }
-
-    if (_unitPrice <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid product price'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return false;
+    // Validate all products have valid quantities
+    for (var item in _selectedProducts) {
+      if (item.quantity < 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('All products must have a quantity of at least 1'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return false;
+      }
     }
 
     if (_userData['email']?.isEmpty ?? true) {
@@ -1164,7 +1262,7 @@ class _CreateOrderFromOrdersScreenState
   }
 
   Future<void> _saveOrderAsDraft() async {
-    if (_selectedProduct == null) return;
+    if (_selectedProducts.isEmpty) return;
 
     // Show loading indicator
     showDialog(
@@ -1174,23 +1272,25 @@ class _CreateOrderFromOrdersScreenState
     );
 
     try {
-      // Build items_list JSON
-      final itemsList = [
-        {
-          'id': 'row-${DateTime.now().millisecondsSinceEpoch}',
-          'data': {
-            'id': _selectedProduct!.productId,
-            'sku': _selectedProduct!.sku,
-            'name': _selectedProduct!.productTitle,
-            'quantity': _quantity,
-            'unit': _quantity.toString(),
-            'price': _unitPrice.toStringAsFixed(4),
-            'total': _subtotal.toStringAsFixed(2),
-            'type': 'service',
-            'description': _notesController.text,
-          },
-        },
-      ];
+      // Build items_list JSON from all selected products
+      final itemsList =
+          _selectedProducts.map((item) {
+            return {
+              'id':
+                  'row-${DateTime.now().millisecondsSinceEpoch}-${item.product.productId}',
+              'data': {
+                'id': item.product.productId,
+                'sku': item.product.sku,
+                'name': item.product.productTitle,
+                'quantity': item.quantity,
+                'unit': item.quantity.toString(),
+                'price': item.product.rate.toStringAsFixed(4),
+                'total': item.total.toStringAsFixed(2),
+                'type': 'service',
+                'description': _notesController.text,
+              },
+            };
+          }).toList();
       final itemsListJson = jsonEncode(itemsList);
 
       // Get payment details HTML
@@ -1311,7 +1411,7 @@ class _CreateOrderFromOrdersScreenState
   }
 
   Future<void> _submitOrderToApi() async {
-    if (_selectedProduct == null) return;
+    if (_selectedProducts.isEmpty) return;
 
     // Show loading indicator
     showDialog(
@@ -1321,22 +1421,24 @@ class _CreateOrderFromOrdersScreenState
     );
 
     try {
-      // Build items_list JSON
-      final itemsList = [
-        {
-          'id': 'row-${DateTime.now().millisecondsSinceEpoch}',
-          'data': {
-            'id': _selectedProduct!.productId,
-            'sku': _selectedProduct!.sku,
-            'name': _selectedProduct!.productTitle,
-            'quantity': _quantity,
-            'unit': _quantity.toString(),
-            'price': _unitPrice.toStringAsFixed(4),
-            'total': _subtotal.toStringAsFixed(2),
-            'type': 'service',
-          },
-        },
-      ];
+      // Build items_list JSON from all selected products
+      final itemsList =
+          _selectedProducts.map((item) {
+            return {
+              'id':
+                  'row-${DateTime.now().millisecondsSinceEpoch}-${item.product.productId}',
+              'data': {
+                'id': item.product.productId,
+                'sku': item.product.sku,
+                'name': item.product.productTitle,
+                'quantity': item.quantity,
+                'unit': item.quantity.toString(),
+                'price': item.product.rate.toStringAsFixed(4),
+                'total': item.total.toStringAsFixed(2),
+                'type': 'service',
+              },
+            };
+          }).toList();
       final itemsListJson = jsonEncode(itemsList);
 
       // Get payment details HTML
