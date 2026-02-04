@@ -740,7 +740,7 @@ class _CreateOrderFromOrdersScreenState
 
   Widget _buildProductCard(_OrderProductItem item, int index) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
@@ -757,86 +757,93 @@ class _CreateOrderFromOrdersScreenState
                 child: Text(
                   item.product.productTitle,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                  size: 20,
+                ),
                 onPressed: () => _removeProduct(index),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _buildProductInfoRow('ITEM ID:', item.product.productId.toString()),
           const SizedBox(height: 8),
           _buildProductInfoRow('SKU:', item.product.sku),
-          const SizedBox(height: 8),
-          // Quantity controls
-          Row(
-            children: [
-              const Text(
-                'Quantity:',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(width: 16),
-              IconButton(
-                icon: const Icon(Icons.remove_circle_outline),
-                onPressed: () {
-                  if (item.quantity > 1) {
-                    _updateProductQuantity(index, item.quantity - 1);
-                  }
-                },
-              ),
-              Container(
-                width: 60,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  item.quantity.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline),
-                onPressed: () {
-                  _updateProductQuantity(index, item.quantity + 1);
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildProductInfoRow('UNIT:', item.quantity.toString()),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           _buildProductInfoRow(
-            'PRICE (\$):',
+            'PRICE:',
             NumberFormat.currency(
               symbol: '\$',
               decimalDigits: 2,
             ).format(item.product.rate.toDouble()),
           ),
           const SizedBox(height: 8),
-          _buildProductInfoRow(
-            'TOTAL (\$):',
-            NumberFormat.currency(
-              symbol: '\$',
-              decimalDigits: 2,
-            ).format(item.total),
+          // Quantity controls aligned to right
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total: ${NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(item.total)}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryColor,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline, size: 22),
+                    onPressed: () {
+                      if (item.quantity > 1) {
+                        _updateProductQuantity(index, item.quantity - 1);
+                      }
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                  ),
+                  Container(
+                    width: 50,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      item.quantity.toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline, size: 22),
+                    onPressed: () {
+                      _updateProductQuantity(index, item.quantity + 1);
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
