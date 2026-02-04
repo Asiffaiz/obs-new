@@ -11,6 +11,7 @@ import 'package:voicealerts_obs/features/orders/domain/models/sales_order_model.
 import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_bloc.dart';
 import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_event.dart';
 import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_state.dart';
+import 'package:voicealerts_obs/features/orders/presentation/screens/create_order_from_orders_screen.dart';
 import 'package:voicealerts_obs/features/products/presentation/screens/create_order_screen.dart';
 
 class SalesOrdersScreen extends StatefulWidget {
@@ -38,6 +39,18 @@ class _SalesOrdersScreenState extends State<SalesOrdersScreen> {
         title: const Text('Sales Orders'),
         backgroundColor: AppColors.primaryColor,
         foregroundColor: Colors.white,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CreateOrderFromOrdersScreen(),
+            ),
+          );
+        },
+        backgroundColor: AppColors.primaryColor,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       body: BlocConsumer<SalesOrdersBloc, SalesOrdersState>(
         listener: (context, state) {
