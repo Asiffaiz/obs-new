@@ -1068,10 +1068,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
             'unit': _quantity.toString(),
             'price': _unitPrice.toStringAsFixed(4),
             'total': _subtotal.toStringAsFixed(2),
-            'type':
-                widget.product.serviceType.isNotEmpty
-                    ? widget.product.serviceType.toLowerCase()
-                    : 'service',
+            'type': 'service',
+            // 'type':
+            //     widget.product.serviceType.isNotEmpty
+            //         ? widget.product.serviceType.toLowerCase()
+            //         : 'service',
           },
         },
       ];
