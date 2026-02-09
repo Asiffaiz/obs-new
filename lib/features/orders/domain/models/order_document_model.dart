@@ -21,12 +21,14 @@ class OrderDocumentModel {
     return OrderDocumentModel(
       id: json['id'] ?? 0,
       orderNo: json['orderno'] ?? '',
-      documentName: json['document_name'] ?? '',
-      documentPath: json['document_path'] ?? '',
-      dateUploaded: json['date_uploaded'] != null
-          ? DateTime.parse(json['date_uploaded'])
-          : DateTime.now(),
-      uploadedBy: json['uploaded_by'] ?? '',
+      documentName: json['document_title'] ?? json['document_name'] ?? '',
+      documentPath: json['document_attachement'] ?? json['document_path'] ?? '',
+      dateUploaded: json['dateCreated'] != null
+          ? DateTime.parse(json['dateCreated'])
+          : (json['date_uploaded'] != null
+              ? DateTime.parse(json['date_uploaded'])
+              : DateTime.now()),
+      uploadedBy: json['added_by'] ?? json['uploaded_by'] ?? '',
       documentType: json['document_type'],
     );
   }

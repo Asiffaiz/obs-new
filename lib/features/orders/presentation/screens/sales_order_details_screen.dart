@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
+import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
 import 'package:voicealerts_obs/features/orders/data/services/sales_orders_service.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/sales_order_model.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/sales_order_view_details_model.dart';
@@ -775,7 +776,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
               child: SizedBox(
                 height: 40,
                 child: ElevatedButton.icon(
-                  onPressed: _pickAndUploadFile,
+                  onPressed: _showUploadDocumentDialog,
                   icon: const Icon(Icons.upload_file, size: 18),
                   label: const Text('Upload'),
                   style: ElevatedButton.styleFrom(
@@ -796,15 +797,15 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         ),
         const SizedBox(height: 16),
 
-        // Main Order PDF
-        if (orderDetails.quoteAttachment.isNotEmpty) ...[
-          _buildDocumentCard(
-            title: 'Order PDF',
-            filename: orderDetails.quoteAttachment,
-            date: DateFormat('MMM d, yyyy').format(orderDetails.dateCreated),
-          ),
-          const SizedBox(height: 12),
-        ],
+        // // Main Order PDF
+        // if (orderDetails.quoteAttachment.isNotEmpty) ...[
+        //   _buildDocumentCard(
+        //     title: 'Order PDF',
+        //     filename:'https://dev-agents.onboardsoft.me/files_data/orders/${orderDetails.quoteAttachment}',
+        //     date: DateFormat('MMM d, yyyy').format(orderDetails.dateCreated),
+        //   ),
+        //   const SizedBox(height: 12),
+        // ],
 
         // Additional Uploaded Documents
         if (documents.isNotEmpty) ...[
@@ -926,9 +927,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
 
           // View Button
           IconButton(
-            onPressed: () {
-              // TODO: View document
-            },
+            onPressed: () => _viewDocument(filename, title),
             icon: Icon(
               Icons.visibility_outlined,
               color: Colors.grey.shade600,
@@ -937,6 +936,104 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
             padding: const EdgeInsets.all(8),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _viewDocument(String documentUrl, String title) async {
+    if (documentUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Document not available'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Build full URL if needed
+    String fullUrl = documentUrl;
+    if (!documentUrl.startsWith('http://') &&
+        !documentUrl.startsWith('https://')) {
+      // If it's a relative path, build the full URL
+      fullUrl = 'https://dev-agents.onboardsoft.me/$documentUrl';
+    }
+
+    // Get file extension
+    final String extension = fullUrl.toLowerCase().split('.').last;
+
+    // Check if it's a PDF
+    if (extension.contains('pdf')) {
+      // Navigate to PDF viewer
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CustomPdfViewer(url: fullUrl, title: title),
+        ),
+      );
+    } else if (extension.contains('jpg') ||
+        extension.contains('jpeg') ||
+        extension.contains('png') ||
+        extension.contains('gif') ||
+        extension.contains('webp')) {
+      // For images, show in a full screen viewer
+      _showImageViewer(fullUrl, title);
+    } else {
+      // For other file types, show a message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cannot preview $extension files. Download to view.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
+  void _showImageViewer(String imageUrl, String title) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => Scaffold(
+              appBar: AppBar(
+                title: Text(title),
+                backgroundColor: AppColors.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              body: Center(
+                child: InteractiveViewer(
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error, size: 64, color: Colors.red),
+                            const SizedBox(height: 16),
+                            const Text('Failed to load image'),
+                          ],
+                        ),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value:
+                              loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
       ),
     );
   }
