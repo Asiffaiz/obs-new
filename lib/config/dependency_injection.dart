@@ -112,7 +112,7 @@ Future<void> initializeDependencies() async {
     getIt.registerLazySingleton(
       () => GoogleSignIn(
         serverClientId:
-            '616659347689-h18jsfil8hjifee02djfsv8ce8d60514.apps.googleusercontent.com',
+            '616659347689-13anaghd6tem0433gbtcftqglmfgjfb7.apps.googleusercontent.com',
       ),
     );
 

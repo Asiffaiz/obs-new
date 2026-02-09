@@ -12,10 +12,7 @@ import 'package:voicealerts_obs/features/orders/domain/models/sales_order_view_d
 class SalesOrderDetailsScreen extends StatefulWidget {
   final SalesOrderModel order;
 
-  const SalesOrderDetailsScreen({
-    super.key,
-    required this.order,
-  });
+  const SalesOrderDetailsScreen({super.key, required this.order});
 
   @override
   State<SalesOrderDetailsScreen> createState() =>
@@ -26,7 +23,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final SalesOrdersService _salesOrdersService = SalesOrdersService();
-  
+
   bool _isLoading = true;
   String? _errorMessage;
   SalesOrderViewDetailsModel? _viewDetails;
@@ -49,7 +46,8 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final accountNo = prefs.getString(SharedPreferenceKeys.accountNoKey) ?? '';
+      final accountNo =
+          prefs.getString(SharedPreferenceKeys.accountNoKey) ?? '';
 
       if (accountNo.isEmpty) {
         throw Exception('Account number not found');
@@ -101,45 +99,35 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
-              ),
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
               const Text(
                 'Failed to load order details',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'Something went wrong. Please try again.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _fetchOrderDetails,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+              SizedBox(
+                width: 120,
+                child: ElevatedButton(
+                  onPressed: _fetchOrderDetails,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  child: const Text('Retry'),
                 ),
               ),
             ],
@@ -155,9 +143,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
           backgroundColor: AppColors.primaryColor,
           foregroundColor: Colors.white,
         ),
-        body: const Center(
-          child: Text('No order details available'),
-        ),
+        body: const Center(child: Text('No order details available')),
       );
     }
 
@@ -170,10 +156,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         ),
         title: const Text(
           'Order Details',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: AppColors.primaryColor,
         elevation: 0,
@@ -201,7 +184,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
   Widget _buildOrderDetailsSection() {
     final orderDetails = _viewDetails!.orderDetails;
     final paymentSettings = _viewDetails!.paymentDetails.paymentSettings;
-    
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -240,15 +223,9 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
           const SizedBox(height: 8),
           _buildInfoRow('COMPANY:', orderDetails.clientAccountNo),
           const SizedBox(height: 8),
-          _buildInfoRow(
-            'TERMS OF PAYMENT:',
-            paymentSettings.paymentTerms,
-          ),
+          _buildInfoRow('TERMS OF PAYMENT:', paymentSettings.paymentTerms),
           const SizedBox(height: 8),
-          _buildInfoRow(
-            'CURRENCY:',
-            paymentSettings.currency.toUpperCase(),
-          ),
+          _buildInfoRow('CURRENCY:', paymentSettings.currency.toUpperCase()),
           const SizedBox(height: 8),
           _buildInfoRow(
             'CONTACT PERSON:',
@@ -348,7 +325,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
 
   Widget _buildOrderSummaryTab() {
     final orderDetails = _viewDetails!.orderDetails;
-    
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -457,10 +434,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
             ),
             child: Text(
               orderDetails.quoteNotes,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
           ),
           const SizedBox(height: 24),
@@ -485,10 +459,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSummaryRow(
-                'Subtotal:',
-                _calculateSubtotal(),
-              ),
+              _buildSummaryRow('Subtotal:', _calculateSubtotal()),
               const SizedBox(height: 8),
               _buildSummaryRow('Est. discount:', 0.0),
               const SizedBox(height: 8),
@@ -570,7 +541,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
 
   Widget _buildPaymentsTab() {
     final paymentMethods = _viewDetails!.paymentDetails.paymentMethods;
-    
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -628,10 +599,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
           Center(
             child: Text(
               'No payment methods available',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             ),
           ),
         ],
@@ -639,10 +607,9 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
     );
   }
 
-
   Widget _buildPaymentLogsTab() {
     final hasPaymentLogs = _viewDetails!.hasPaymentLogs;
-    
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -659,20 +626,13 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.receipt_long,
-                size: 64,
-                color: Colors.grey.shade400,
-              ),
+              Icon(Icons.receipt_long, size: 64, color: Colors.grey.shade400),
               const SizedBox(height: 16),
               Text(
                 hasPaymentLogs
                     ? 'Payment logs feature coming soon'
                     : 'No payment logs available',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -683,7 +643,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
 
   Widget _buildCommentsTab() {
     final comments = _viewDetails!.comments;
-    
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -713,10 +673,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'No comments yet',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -776,20 +733,14 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
               ),
               Text(
                 DateFormat('MMM d, yyyy').format(comment.dateAdded),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             comment.conversation,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 13, color: Colors.black87),
           ),
         ],
       ),
@@ -799,7 +750,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
   Widget _buildOrderDocumentsTab() {
     final orderDetails = _viewDetails!.orderDetails;
     final documents = _viewDetails!.documents;
-    
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -851,11 +802,15 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
 
         // Additional Uploaded Documents
         if (documents.isNotEmpty) ...[
-          ...documents.map((doc) => _buildDocumentCard(
-                doc.documentName,
-                doc.documentPath,
-                DateFormat('MMMM d, yyyy').format(doc.dateUploaded),
-              )).toList(),
+          ...documents
+              .map(
+                (doc) => _buildDocumentCard(
+                  doc.documentName,
+                  doc.documentPath,
+                  DateFormat('MMMM d, yyyy').format(doc.dateUploaded),
+                ),
+              )
+              .toList(),
         ],
 
         // Empty state
@@ -873,10 +828,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'No documents uploaded yet',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -932,10 +884,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
                 const SizedBox(height: 4),
                 Text(
                   'Uploaded on $date',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -1003,4 +952,3 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
     );
   }
 }
-
