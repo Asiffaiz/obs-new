@@ -37,7 +37,9 @@ class OrderCommentModel {
       adminAccountNo: json['admin_accountno'],
       fromAgent: json['from_agent'],
       agentAccountNo: json['agent_accountno'],
-      dateAdded: DateTime.parse(json['dateAdded']),
+      dateAdded: json['dateAdded'] != null
+          ? DateTime.parse(json['dateAdded'])
+          : DateTime.now(),
       fromClient: json['from_client'],
       clientAccountNo: json['client_accountno'],
       conversation: json['conversation'] ?? '',

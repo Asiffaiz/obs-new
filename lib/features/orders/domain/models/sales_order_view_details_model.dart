@@ -40,14 +40,34 @@ class SalesOrderViewDetailsModel {
     final commentsData = json['get_sales_order_comments'] ?? {};
     final commentsList = commentsData['clients'] as List? ?? [];
     final comments = commentsList
-        .map((comment) => OrderCommentModel.fromJson(comment))
+        .where((comment) => comment != null)
+        .map((comment) {
+          try {
+            return OrderCommentModel.fromJson(comment as Map<String, dynamic>);
+          } catch (e) {
+            print('Error parsing comment: $e');
+            return null;
+          }
+        })
+        .where((comment) => comment != null)
+        .cast<OrderCommentModel>()
         .toList();
 
     // Parse documents
     final documentsData = json['get_sales_order_documents'] ?? {};
     final documentsList = documentsData['data'] as List? ?? [];
     final documents = documentsList
-        .map((doc) => OrderDocumentModel.fromJson(doc))
+        .where((doc) => doc != null)
+        .map((doc) {
+          try {
+            return OrderDocumentModel.fromJson(doc as Map<String, dynamic>);
+          } catch (e) {
+            print('Error parsing document: $e');
+            return null;
+          }
+        })
+        .where((doc) => doc != null)
+        .cast<OrderDocumentModel>()
         .toList();
 
     // Check if payment logs exist

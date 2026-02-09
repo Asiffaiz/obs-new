@@ -23,7 +23,9 @@ class OrderDocumentModel {
       orderNo: json['orderno'] ?? '',
       documentName: json['document_name'] ?? '',
       documentPath: json['document_path'] ?? '',
-      dateUploaded: DateTime.parse(json['date_uploaded']),
+      dateUploaded: json['date_uploaded'] != null
+          ? DateTime.parse(json['date_uploaded'])
+          : DateTime.now(),
       uploadedBy: json['uploaded_by'] ?? '',
       documentType: json['document_type'],
     );
