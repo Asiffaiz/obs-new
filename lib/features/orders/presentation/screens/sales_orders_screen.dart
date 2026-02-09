@@ -12,6 +12,7 @@ import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_b
 import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_event.dart';
 import 'package:voicealerts_obs/features/orders/presentation/bloc/sales_orders_state.dart';
 import 'package:voicealerts_obs/features/orders/presentation/screens/create_order_from_orders_screen.dart';
+import 'package:voicealerts_obs/features/orders/presentation/screens/sales_order_details_screen.dart';
 import 'package:voicealerts_obs/features/products/presentation/screens/create_order_screen.dart';
 
 class SalesOrdersScreen extends StatefulWidget {
@@ -463,14 +464,60 @@ class _SalesOrdersScreenState extends State<SalesOrdersScreen> {
     }
   }
 
-  void _handleViewDetails(SalesOrderModel order) {
-    // TODO: Navigate to order detail screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('View Details for Order ${order.orderNo}'),
-        duration: const Duration(seconds: 1),
-      ),
+  Future<void> _handleViewDetails(SalesOrderModel order) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
+
+    try {
+      // Get account number
+      final accountNo = await _salesOrdersService.getAccountNo();
+      if (accountNo.isEmpty) {
+        throw Exception('Account number not found');
+      }
+
+      // Fetch order details
+      final orderDetails = await _salesOrdersService.getSingleSalesOrder(
+        accountNo: accountNo,
+        orderNo: order.orderNo,
+      );
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Navigate to SalesOrderDetailsScreen
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) =>
+                    SalesOrderDetailsScreen(orderDetails: orderDetails),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load order details: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _handleEditOrder(SalesOrderModel order) async {
