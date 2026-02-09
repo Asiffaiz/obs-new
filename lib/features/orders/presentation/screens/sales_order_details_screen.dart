@@ -102,24 +102,45 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red,
+              ),
               const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  _errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16),
+              const Text(
+                'Failed to load order details',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Something went wrong. Please try again.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: _fetchOrderDetails,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Retry'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryColor,
                   foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: const Text('Retry'),
               ),
             ],
           ),
@@ -785,14 +806,17 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Order Documents',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: allCellsLabelColor,
+            Expanded(
+              child: Text(
+                'Order Documents',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: allCellsLabelColor,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
               onPressed: () {
                 // TODO: Upload document functionality
@@ -836,7 +860,8 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
 
         // Empty state
         if (orderDetails.quoteAttachment.isEmpty && documents.isEmpty)
-          Center(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
