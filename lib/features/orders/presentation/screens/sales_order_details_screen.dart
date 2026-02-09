@@ -3,6 +3,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
 import 'package:voicealerts_obs/features/orders/data/services/sales_orders_service.dart';
@@ -57,16 +58,19 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         accountNo: accountNo,
         orderNo: widget.order.orderNo,
       );
-
-      setState(() {
-        _viewDetails = details;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _viewDetails = details;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
+      }
     }
   }
 
@@ -754,36 +758,37 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Header with Upload Button
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
               child: Text(
                 'Order Documents',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: allCellsLabelColor,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Upload document functionality
-                _showUploadDocumentDialog();
-              },
-              icon: const Icon(Icons.upload_file, size: 18),
-              label: const Text('Upload'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            Expanded(
+              child: SizedBox(
+                height: 40,
+                child: ElevatedButton.icon(
+                  onPressed: _pickAndUploadFile,
+                  icon: const Icon(Icons.upload_file, size: 18),
+                  label: const Text('Upload'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -794,84 +799,111 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         // Main Order PDF
         if (orderDetails.quoteAttachment.isNotEmpty) ...[
           _buildDocumentCard(
-            'Order PDF',
-            orderDetails.quoteAttachment,
-            DateFormat('MMMM d, yyyy').format(orderDetails.dateCreated),
+            title: 'Order PDF',
+            filename: orderDetails.quoteAttachment,
+            date: DateFormat('MMM d, yyyy').format(orderDetails.dateCreated),
           ),
+          const SizedBox(height: 12),
         ],
 
         // Additional Uploaded Documents
         if (documents.isNotEmpty) ...[
-          ...documents
-              .map(
-                (doc) => _buildDocumentCard(
-                  doc.documentName,
-                  doc.documentPath,
-                  DateFormat('MMMM d, yyyy').format(doc.dateUploaded),
-                ),
-              )
-              .toList(),
+          ...documents.map(
+            (doc) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildDocumentCard(
+                title: doc.documentName,
+                filename: doc.documentPath,
+                date: DateFormat('MMM d, yyyy').format(doc.dateUploaded),
+              ),
+            ),
+          ),
         ],
 
         // Empty state
         if (orderDetails.quoteAttachment.isEmpty && documents.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.description_outlined,
-                  size: 64,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No documents uploaded yet',
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                ),
-              ],
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 60),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.description_outlined,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No documents available',
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
             ),
           ),
       ],
     );
   }
 
-  Widget _buildDocumentCard(String title, String filename, String date) {
+  Widget _buildDocumentCard({
+    required String title,
+    required String filename,
+    required String date,
+  }) {
+    // Determine file type and icon from filename/URL
+    final String extension = filename.toLowerCase().split('.').last;
+    IconData fileIcon;
+    Color iconColor;
+
+    if (extension.contains('pdf')) {
+      fileIcon = Icons.picture_as_pdf;
+      iconColor = Colors.red;
+    } else if (extension.contains('jpg') ||
+        extension.contains('jpeg') ||
+        extension.contains('png') ||
+        extension.contains('gif') ||
+        extension.contains('webp')) {
+      fileIcon = Icons.image;
+      iconColor = Colors.blue;
+    } else if (extension.contains('doc') || extension.contains('docx')) {
+      fileIcon = Icons.description;
+      iconColor = Colors.blue.shade700;
+    } else if (extension.contains('xls') || extension.contains('xlsx')) {
+      fileIcon = Icons.table_chart;
+      iconColor = Colors.green.shade700;
+    } else if (extension.contains('zip') || extension.contains('rar')) {
+      fileIcon = Icons.folder_zip;
+      iconColor = Colors.orange;
+    } else {
+      fileIcon = Icons.insert_drive_file;
+      iconColor = Colors.grey.shade700;
+    }
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: Row(
         children: [
+          // File Icon
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
             ),
-            child: Icon(
-              Icons.picture_as_pdf,
-              color: AppColors.primaryColor,
-              size: 32,
-            ),
+            child: Icon(fileIcon, color: iconColor, size: 24),
           ),
           const SizedBox(width: 12),
+
+          // Document Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   title,
@@ -880,33 +912,36 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Uploaded on $date',
+                  date,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
             ),
           ),
+
+          // View Button
           IconButton(
-            icon: const Icon(Icons.download, color: Colors.grey),
-            onPressed: () {
-              // TODO: Download document
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.visibility, color: Colors.grey),
             onPressed: () {
               // TODO: View document
             },
+            icon: Icon(
+              Icons.visibility_outlined,
+              color: Colors.grey.shade600,
+              size: 20,
+            ),
+            padding: const EdgeInsets.all(8),
           ),
         ],
       ),
     );
   }
 
-  void _showUploadDocumentDialog() {
+  Future<void> _showUploadDocumentDialog() async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -916,27 +951,15 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  // TODO: Implement camera functionality
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  // TODO: Implement gallery functionality
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.insert_drive_file),
+                leading: Icon(
+                  Icons.insert_drive_file,
+                  color: AppColors.primaryColor,
+                ),
                 title: const Text('Choose File'),
-                onTap: () {
+                subtitle: const Text('PDF, Images, Documents'),
+                onTap: () async {
                   Navigator.of(context).pop();
-                  // TODO: Implement file picker functionality
+                  await _pickAndUploadFile();
                 },
               ),
             ],
@@ -950,5 +973,78 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         );
       },
     );
+  }
+
+  Future<void> _pickAndUploadFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: [
+          'pdf',
+          'jpg',
+          'jpeg',
+          'png',
+          'doc',
+          'docx',
+          'xls',
+          'xlsx',
+          'zip',
+        ],
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final file = result.files.single;
+
+        // Show loading indicator
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (context) => const Center(child: CircularProgressIndicator()),
+        );
+
+        // TODO: Upload file to server
+        // Example:
+        // await _salesOrdersService.uploadDocument(
+        //   orderNo: widget.order.orderNo,
+        //   file: file,
+        // );
+
+        // Simulate upload delay
+        await Future.delayed(const Duration(seconds: 2));
+
+        // Close loading
+        if (!mounted) return;
+        Navigator.of(context).pop();
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${file.name} uploaded successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Refresh the order details
+        await _fetchOrderDetails();
+      }
+    } catch (e) {
+      // Close loading if open
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading file: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

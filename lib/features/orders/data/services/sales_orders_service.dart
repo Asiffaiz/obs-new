@@ -353,7 +353,6 @@ class SalesOrdersService {
         {'accountno': accountNo, 'orderno': orderNo},
       );
 
-      print(response);
       if (response.statusCode == 200 && response.data['status'] == 200) {
         return SalesOrderViewDetailsModel.fromJson(response.data['data'] ?? {});
       } else {
