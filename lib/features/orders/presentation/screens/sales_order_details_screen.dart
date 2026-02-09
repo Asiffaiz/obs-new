@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voicealerts_obs/core/constants/shared_prefence_keys.dart';
 import 'package:voicealerts_obs/core/theme/app_colors.dart';
-import 'package:voicealerts_obs/features/orders/domain/models/order_details_model.dart';
+import 'package:voicealerts_obs/features/orders/data/services/sales_orders_service.dart';
+import 'package:voicealerts_obs/features/orders/domain/models/sales_order_model.dart';
+import 'package:voicealerts_obs/features/orders/domain/models/sales_order_view_details_model.dart';
 
 class SalesOrderDetailsScreen extends StatefulWidget {
-  final OrderDetailsModel orderDetails;
+  final SalesOrderModel order;
 
   const SalesOrderDetailsScreen({
     super.key,
-    required this.orderDetails,
+    required this.order,
   });
 
   @override
@@ -20,7 +25,11 @@ class SalesOrderDetailsScreen extends StatefulWidget {
 class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _isLoading = false;
+  final SalesOrdersService _salesOrdersService = SalesOrdersService();
+  
+  bool _isLoading = true;
+  String? _errorMessage;
+  SalesOrderViewDetailsModel? _viewDetails;
 
   final orderCellColor = HexColor('#F3F3F3');
   final allCellsLabelColor = HexColor('#02274D');
@@ -29,6 +38,38 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _fetchOrderDetails();
+  }
+
+  Future<void> _fetchOrderDetails() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accountNo = prefs.getString(SharedPreferenceKeys.accountNoKey) ?? '';
+
+      if (accountNo.isEmpty) {
+        throw Exception('Account number not found');
+      }
+
+      final details = await _salesOrdersService.getSalesOrderViewDetails(
+        accountNo: accountNo,
+        orderNo: widget.order.orderNo,
+      );
+
+      setState(() {
+        _viewDetails = details;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
+    }
   }
 
   @override
@@ -44,8 +85,58 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         appBar: AppBar(
           title: const Text('Order Details'),
           backgroundColor: AppColors.primaryColor,
+          foregroundColor: Colors.white,
         ),
         body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Order Details'),
+          backgroundColor: AppColors.primaryColor,
+          foregroundColor: Colors.white,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _fetchOrderDetails,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_viewDetails == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Order Details'),
+          backgroundColor: AppColors.primaryColor,
+          foregroundColor: Colors.white,
+        ),
+        body: const Center(
+          child: Text('No order details available'),
+        ),
       );
     }
 
@@ -87,6 +178,9 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
   }
 
   Widget _buildOrderDetailsSection() {
+    final orderDetails = _viewDetails!.orderDetails;
+    final paymentSettings = _viewDetails!.paymentDetails.paymentSettings;
+    
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -114,33 +208,33 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
             ),
           ),
           const SizedBox(height: 16),
-          _buildInfoRow('ORDER NUMBER:', widget.orderDetails.orderNo),
+          _buildInfoRow('ORDER NUMBER:', orderDetails.orderNo),
           const SizedBox(height: 8),
           _buildInfoRow(
             'ISSUE DATE:',
-            DateFormat('MMMM d, yyyy').format(widget.orderDetails.dateCreated),
+            DateFormat('MMMM d, yyyy').format(orderDetails.dateCreated),
           ),
           const SizedBox(height: 8),
           _buildInfoRow('FROM:', 'OnBoardSoft LLC'),
           const SizedBox(height: 8),
-          _buildInfoRow('COMPANY:', widget.orderDetails.clientAccountNo),
+          _buildInfoRow('COMPANY:', orderDetails.clientAccountNo),
           const SizedBox(height: 8),
           _buildInfoRow(
             'TERMS OF PAYMENT:',
-            widget.orderDetails.paymentTerms,
+            paymentSettings.paymentTerms,
           ),
           const SizedBox(height: 8),
           _buildInfoRow(
             'CURRENCY:',
-            widget.orderDetails.currency.toUpperCase(),
+            paymentSettings.currency.toUpperCase(),
           ),
           const SizedBox(height: 8),
           _buildInfoRow(
             'CONTACT PERSON:',
-            widget.orderDetails.contactPerson.toUpperCase(),
+            paymentSettings.contactPerson.toUpperCase(),
           ),
           const SizedBox(height: 8),
-          _buildInfoRow('EMAIL:', widget.orderDetails.contactEmail),
+          _buildInfoRow('EMAIL:', paymentSettings.contactEmail),
         ],
       ),
     );
@@ -232,6 +326,8 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
   }
 
   Widget _buildOrderSummaryTab() {
+    final orderDetails = _viewDetails!.orderDetails;
+    
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -253,7 +349,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
             border: Border.all(color: Colors.grey.shade200),
           ),
           child: Text(
-            widget.orderDetails.quoteTitle,
+            orderDetails.quoteTitle,
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -275,7 +371,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         const SizedBox(height: 12),
 
         // List all services
-        ...widget.orderDetails.quoteServices.map((service) {
+        ...orderDetails.quoteServices.map((service) {
           final subtotal = service.quantity * service.servicePrice;
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -321,7 +417,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         const SizedBox(height: 24),
 
         // Order Notes
-        if (widget.orderDetails.quoteNotes.isNotEmpty) ...[
+        if (orderDetails.quoteNotes.isNotEmpty) ...[
           Text(
             'Notes',
             style: TextStyle(
@@ -339,7 +435,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
               border: Border.all(color: Colors.grey.shade200),
             ),
             child: Text(
-              widget.orderDetails.quoteNotes,
+              orderDetails.quoteNotes,
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.black87,
@@ -421,7 +517,7 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
   }
 
   double _calculateSubtotal() {
-    return widget.orderDetails.quoteServices.fold(
+    return _viewDetails!.orderDetails.quoteServices.fold(
       0.0,
       (sum, service) => sum + (service.quantity * service.servicePrice),
     );
@@ -452,93 +548,80 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
   }
 
   Widget _buildPaymentsTab() {
+    final paymentMethods = _viewDetails!.paymentDetails.paymentMethods;
+    
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Payment Method
-        Text(
-          'Payment Method',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: allCellsLabelColor,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'BANK',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Bank Account Details (Placeholder - will be populated from API)
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildBankInfoRow('Bank Name:', 'MyBank'),
-              const SizedBox(height: 12),
-              _buildBankInfoRow('Account Holder Name:', 'John Doe'),
-              const SizedBox(height: 12),
-              _buildBankInfoRow('Account Number:', 'XXXXXXXXX'),
-              const SizedBox(height: 12),
-              _buildBankInfoRow(
-                'Bank Address:',
-                '123 Main Street, City, Country',
+        // Payment Methods
+        if (paymentMethods.isNotEmpty) ...[
+          // Iterate through all payment methods
+          for (int i = 0; i < paymentMethods.length; i++) ...[
+            if (i > 0) const SizedBox(height: 24),
+            // Payment Method Title
+            Text(
+              paymentMethods.length > 1
+                  ? 'Payment Method ${i + 1}'
+                  : 'Payment Method',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: allCellsLabelColor,
               ),
-              const SizedBox(height: 12),
-              _buildBankInfoRow('Routing Number:', 'N/A'),
-              const SizedBox(height: 12),
-              _buildBankInfoRow('SWIFT CODE:', 'N/A'),
-              const SizedBox(height: 12),
-              _buildBankInfoRow('IBAN:', 'N/A'),
-            ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              paymentMethods[i].paymentMethod.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Bank Account Details from HTML
+            if (paymentMethods[i].paymentDetails.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Html(
+                  data: paymentMethods[i].paymentDetails,
+                  style: {
+                    'p': Style(
+                      margin: Margins.zero,
+                      padding: HtmlPaddings.zero,
+                    ),
+                    'strong': Style(
+                      fontWeight: FontWeight.bold,
+                      color: allCellsLabelColor,
+                    ),
+                  },
+                ),
+              ),
+          ],
+        ] else ...[
+          Center(
+            child: Text(
+              'No payment methods available',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 
-  Widget _buildBankInfoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 160,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: allCellsLabelColor,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: Colors.black87,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildPaymentLogsTab() {
+    final hasPaymentLogs = _viewDetails!.hasPaymentLogs;
+    
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -562,7 +645,9 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
               ),
               const SizedBox(height: 16),
               Text(
-                'No payment logs available',
+                hasPaymentLogs
+                    ? 'Payment logs feature coming soon'
+                    : 'No payment logs available',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey.shade600,
@@ -576,6 +661,8 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
   }
 
   Widget _buildCommentsTab() {
+    final comments = _viewDetails!.comments;
+    
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -589,96 +676,109 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         ),
         const SizedBox(height: 16),
 
-        // Add Comment Section
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Add a comment...',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.primaryColor,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.all(12),
+        // Comments List
+        if (comments.isNotEmpty) ...[
+          ...comments.map((comment) => _buildCommentCard(comment)).toList(),
+        ] else ...[
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.comment_outlined,
+                  size: 64,
+                  color: Colors.grey.shade400,
                 ),
-                style: const TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Add comment functionality
-                  },
-                  icon: const Icon(Icons.send, size: 16),
-                  label: const Text('Post Comment'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                const SizedBox(height: 16),
+                Text(
+                  'No comments yet',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 24),
+        ],
+      ],
+    );
+  }
 
-        // Comments List (Placeholder)
-        Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildCommentCard(comment) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Icon(
-                Icons.comment_outlined,
-                size: 64,
-                color: Colors.grey.shade400,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  comment.fromType,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  comment.fromName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
               Text(
-                'No comments yet',
+                DateFormat('MMM d, yyyy').format(comment.dateAdded),
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 11,
                   color: Colors.grey.shade600,
                 ),
               ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            comment.conversation,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildOrderDocumentsTab() {
+    final orderDetails = _viewDetails!.orderDetails;
+    final documents = _viewDetails!.documents;
+    
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -716,14 +816,26 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         ),
         const SizedBox(height: 16),
 
-        // Uploaded Documents List (Placeholder)
-        if (widget.orderDetails.quoteAttachment.isNotEmpty)
+        // Main Order PDF
+        if (orderDetails.quoteAttachment.isNotEmpty) ...[
           _buildDocumentCard(
             'Order PDF',
-            widget.orderDetails.quoteAttachment,
-            DateFormat('MMMM d, yyyy').format(widget.orderDetails.dateCreated),
-          )
-        else
+            orderDetails.quoteAttachment,
+            DateFormat('MMMM d, yyyy').format(orderDetails.dateCreated),
+          ),
+        ],
+
+        // Additional Uploaded Documents
+        if (documents.isNotEmpty) ...[
+          ...documents.map((doc) => _buildDocumentCard(
+                doc.documentName,
+                doc.documentPath,
+                DateFormat('MMMM d, yyyy').format(doc.dateUploaded),
+              )).toList(),
+        ],
+
+        // Empty state
+        if (orderDetails.quoteAttachment.isEmpty && documents.isEmpty)
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

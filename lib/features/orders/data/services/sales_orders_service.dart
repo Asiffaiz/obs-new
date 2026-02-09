@@ -10,6 +10,7 @@ import 'package:voicealerts_obs/core/services/token_service.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/order_details_model.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/payment_complete_details_model.dart';
 import 'package:voicealerts_obs/features/orders/domain/models/sales_order_model.dart';
+import 'package:voicealerts_obs/features/orders/domain/models/sales_order_view_details_model.dart';
 
 class SalesOrdersService {
   final ApiClient _apiClient = ApiClient();
@@ -333,6 +334,35 @@ class SalesOrdersService {
     } catch (e) {
       throw Exception(
         'An error occurred while fetching order details: ${e.toString()}',
+      );
+    }
+  }
+
+  // Get comprehensive sales order view details
+  Future<SalesOrderViewDetailsModel> getSalesOrderViewDetails({
+    required String accountNo,
+    required String orderNo,
+  }) async {
+    try {
+      if (accountNo.isEmpty || orderNo.isEmpty) {
+        throw Exception('Account number and order number are required');
+      }
+
+      final response = await _apiClient.post(
+        ApiEndpoints.getSalesOrderViewDetails,
+        {'accountno': accountNo, 'orderno': orderNo},
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == 200) {
+        return SalesOrderViewDetailsModel.fromJson(response.data['data'] ?? {});
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Failed to get order view details',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'An error occurred while fetching order view details: ${e.toString()}',
       );
     }
   }

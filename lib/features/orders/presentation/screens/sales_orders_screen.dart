@@ -464,60 +464,14 @@ class _SalesOrdersScreenState extends State<SalesOrdersScreen> {
     }
   }
 
-  Future<void> _handleViewDetails(SalesOrderModel order) async {
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+  void _handleViewDetails(SalesOrderModel order) {
+    // Navigate to SalesOrderDetailsScreen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SalesOrderDetailsScreen(order: order),
+      ),
     );
-
-    try {
-      // Get account number
-      final accountNo = await _salesOrdersService.getAccountNo();
-      if (accountNo.isEmpty) {
-        throw Exception('Account number not found');
-      }
-
-      // Fetch order details
-      final orderDetails = await _salesOrdersService.getSingleSalesOrder(
-        accountNo: accountNo,
-        orderNo: order.orderNo,
-      );
-
-      // Close loading dialog
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-
-      // Navigate to SalesOrderDetailsScreen
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) =>
-                    SalesOrderDetailsScreen(orderDetails: orderDetails),
-          ),
-        );
-      }
-    } catch (e) {
-      // Close loading dialog
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-
-      // Show error message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load order details: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    }
   }
 
   Future<void> _handleEditOrder(SalesOrderModel order) async {
