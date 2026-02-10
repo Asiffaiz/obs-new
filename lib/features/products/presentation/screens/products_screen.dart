@@ -6,6 +6,7 @@ import 'package:voicealerts_obs/core/widgets/custom_error_dialog.dart';
 import 'package:voicealerts_obs/core/widgets/custome_pdf_viewer.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/widgets/common_webview.dart';
 import 'package:voicealerts_obs/features/dashboard/presentation/widgets/dashboard_shimmer.dart';
+import 'package:voicealerts_obs/features/forms/presentation/screens/form_main_screen.dart';
 import 'package:voicealerts_obs/features/products/domain/models/product_model.dart';
 import 'package:voicealerts_obs/features/products/presentation/bloc/product_bloc.dart';
 import 'package:voicealerts_obs/features/products/presentation/bloc/product_event.dart';
@@ -68,13 +69,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
   /// Handle order action (Form Order or Order Now)
   void _handleOrderAction(ProductModel product) {
     if (_shouldShowFormOrder(product)) {
-      // Handle Form Order action
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Form Order functionality will be implemented separately',
-          ),
-          duration: Duration(seconds: 2),
+      // Handle Form Order - Navigate to FormMainScreen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => FormMainScreen(
+                formAccountNo: product.formAccountno,
+                formToken: product.formLink,
+                isFrom: 'product_service',
+              ),
         ),
       );
     } else {
