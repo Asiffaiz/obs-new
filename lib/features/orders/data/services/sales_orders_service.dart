@@ -455,4 +455,73 @@ class SalesOrdersService {
       );
     }
   }
+
+  // Delete order document
+  Future<Map<String, dynamic>> deleteOrderDocument({
+    required String orderNo,
+    required int documentId,
+  }) async {
+    try {
+      final accountNo = await getAccountNo();
+
+      if (accountNo.isEmpty) {
+        throw Exception('Account number not found');
+      }
+
+      // Get authentication token
+      final token = await _tokenService.getAccessToken();
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiEndpoints.deleteSalesOrderDocuments),
+      );
+
+      // Add headers
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      // Add form fields
+      request.fields['token'] = NetworkUrls.reactAppApiToken;
+      request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
+      request.fields['accountno'] = accountNo;
+      request.fields['orderno'] = orderNo;
+      request.fields['document_id'] = documentId.toString();
+
+      if (kDebugMode) {
+        print('Delete Order Document - Sending FormData');
+        print('Fields: ${request.fields}');
+      }
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (kDebugMode) {
+        print('Delete Document Response Status: ${response.statusCode}');
+        print('Delete Document Response Body: ${response.body}');
+      }
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['status'] == 200) {
+        return {
+          'success': true,
+          'message': responseData['message'] ?? 'Document deleted successfully',
+        };
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to delete document');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error deleting document: $e');
+      }
+      throw Exception(
+        'An error occurred while deleting document: ${e.toString()}',
+      );
+    }
+  }
 }
