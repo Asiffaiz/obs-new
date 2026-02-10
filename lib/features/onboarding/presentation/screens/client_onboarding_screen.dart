@@ -212,11 +212,21 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
       if (mounted) {
         setState(() {
           _onboardingSettings = response.steps;
-          _stepNames = _onboardingSettings.keys.toList();
-          _totalSteps = response.totalSteps;
+
+          // Filter out steps where enable == 0 (isEnabled == 0)
+          _stepNames =
+              _onboardingSettings.keys.where((stepName) {
+                final config = _onboardingSettings[stepName];
+                final isEnabled = (config['enable'] as int? ?? 1) == 1;
+                return isEnabled;
+              }).toList();
+
+          _totalSteps =
+              _stepNames
+                  .length; // Update total steps to only count enabled steps
 
           if (kDebugMode) {
-            print('Loaded ${_stepNames.length} steps: $_stepNames');
+            print('Loaded ${_stepNames.length} enabled steps: $_stepNames');
             print('Onboarding settings: $_onboardingSettings');
           }
 
@@ -227,7 +237,7 @@ class _ClientOnboardingScreenState extends State<ClientOnboardingScreen> {
             }
           });
 
-          // Set completion based on isFilled from API
+          // Set completion based on isFilled from API (only for enabled steps)
           _stepCompleted = List.generate(_stepNames.length, (index) {
             final stepName = _stepNames[index];
             final stepConfig = _onboardingSettings[stepName];
