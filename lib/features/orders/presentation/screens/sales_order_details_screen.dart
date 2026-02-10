@@ -807,7 +807,6 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         //   const SizedBox(height: 12),
         // ],
 
-
         // Additional Uploaded Documents
         if (documents.isNotEmpty) ...[
           ...documents.map(
@@ -1093,6 +1092,17 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
 
       if (result != null && result.files.single.path != null) {
         final file = result.files.single;
+        final filePath = file.path!;
+        final fileName = file.name;
+
+        // Show document title input dialog
+        if (!mounted) return;
+        final documentTitle = await _showDocumentTitleDialog(fileName);
+
+        if (documentTitle == null || documentTitle.isEmpty) {
+          // User cancelled or didn't enter a title
+          return;
+        }
 
         // Show loading indicator
         if (!mounted) return;
@@ -1103,27 +1113,29 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
               (context) => const Center(child: CircularProgressIndicator()),
         );
 
-        // TODO: Upload file to server
-        // Example:
-        // await _salesOrdersService.uploadDocument(
-        //   orderNo: widget.order.orderNo,
-        //   file: file,
-        // );
-
-        // Simulate upload delay
-        await Future.delayed(const Duration(seconds: 2));
+        // Upload file to server
+        final response = await _salesOrdersService.uploadOrderDocument(
+          orderNo: widget.order.orderNo,
+          filePath: filePath,
+          fileName: fileName,
+          documentTitle: documentTitle,
+        );
 
         // Close loading
         if (!mounted) return;
         Navigator.of(context).pop();
 
         // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${file.name} uploaded successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response['message'] ?? 'Document uploaded successfully',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
 
         // Refresh the order details
         await _fetchOrderDetails();
@@ -1144,5 +1156,44 @@ class _SalesOrderDetailsScreenState extends State<SalesOrderDetailsScreen>
         );
       }
     }
+  }
+
+  Future<String?> _showDocumentTitleDialog(String defaultFileName) async {
+    final TextEditingController controller = TextEditingController(
+      text: defaultFileName.split('.').first, // Remove extension
+    );
+
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Document Title'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Enter document title',
+              border: OutlineInputBorder(),
+            ),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(controller.text.trim());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Upload'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

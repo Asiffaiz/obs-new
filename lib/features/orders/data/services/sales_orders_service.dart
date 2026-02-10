@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -363,6 +364,94 @@ class SalesOrdersService {
     } catch (e) {
       throw Exception(
         'An error occurred while fetching order view details: ${e.toString()}',
+      );
+    }
+  }
+
+  // Upload order document as FormData (multipart/form-data)
+  Future<Map<String, dynamic>> uploadOrderDocument({
+    required String orderNo,
+    required String filePath,
+    required String fileName,
+    required String documentTitle,
+  }) async {
+    try {
+      final accountNo = await getAccountNo();
+
+      if (accountNo.isEmpty) {
+        throw Exception('Account number not found');
+      }
+
+      // Get authentication token
+      final token = await _tokenService.getAccessToken();
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiEndpoints.uploadOrderDocument),
+      );
+
+      // Add headers
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      // Add form fields
+      request.fields['api_accountno'] = NetworkUrls.reactAppApiACCOUNTNO;
+      request.fields['accountno'] = accountNo;
+      request.fields['orderno'] = orderNo;
+      request.fields['fileName'] = fileName;
+      request.fields['document_title'] = documentTitle;
+      request.fields['added_by'] = 'client';
+
+      // Add file
+      final file = File(filePath);
+      if (!await file.exists()) {
+        throw Exception('File not found: $filePath');
+      }
+
+      final multipartFile = await http.MultipartFile.fromPath(
+        'file',
+        filePath,
+        filename: fileName,
+      );
+      request.files.add(multipartFile);
+
+      if (kDebugMode) {
+        print('Upload Order Document - Sending FormData');
+        print('Fields: ${request.fields}');
+        print('File: $fileName (${file.lengthSync()} bytes)');
+      }
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (kDebugMode) {
+        print('Upload Document Response Status: ${response.statusCode}');
+        print('Upload Document Response Body: ${response.body}');
+      }
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['status'] == 200) {
+        return {
+          'success': true,
+          'message':
+              responseData['message'] ?? 'Document uploaded successfully',
+          'data': responseData['data'],
+        };
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to upload document');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error uploading document: $e');
+      }
+      throw Exception(
+        'An error occurred while uploading document: ${e.toString()}',
       );
     }
   }

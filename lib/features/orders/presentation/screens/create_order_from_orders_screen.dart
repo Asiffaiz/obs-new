@@ -1497,13 +1497,13 @@ class _CreateOrderFromOrdersScreenState
             _contactEmail.isNotEmpty
                 ? _contactEmail
                 : (_userData['email']?.isEmpty ?? true
-                    ? 'info@onboardsoft.com'
+                    ? ''
                     : _userData['email']!),
         contactPerson:
             _contactPerson.isNotEmpty
                 ? _contactPerson
                 : (_userData['name']?.isEmpty ?? true
-                    ? 'JAMES SMITH'
+                    ? ''
                     : _userData['name']!),
         currency: _currency.toLowerCase(),
         paymentTerms: _termsOfPayment,
