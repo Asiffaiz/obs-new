@@ -10,6 +10,7 @@ import 'package:voicealerts_obs/features/products/domain/models/product_model.da
 import 'package:voicealerts_obs/features/products/presentation/bloc/product_bloc.dart';
 import 'package:voicealerts_obs/features/products/presentation/bloc/product_event.dart';
 import 'package:voicealerts_obs/features/products/presentation/bloc/product_state.dart';
+import 'package:voicealerts_obs/features/products/presentation/screens/create_order_screen.dart';
 import 'package:voicealerts_obs/features/products/presentation/widgets/expandable_text.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -41,6 +42,50 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final url = parts[1].trim();
 
     return type.isNotEmpty && url.isNotEmpty;
+  }
+
+  /// Check if product has a pending agreement
+  bool _hasPendingAgreement(ProductModel product) {
+    return product.agreementAccountno.trim().isNotEmpty &&
+        product.isSigned == false;
+  }
+
+  /// Check if order buttons should be shown
+  bool _shouldShowOrderButtons(ProductModel product) {
+    // Don't show if coming soon
+    if (product.comingSoon == 1) return false;
+    // Don't show if there's a pending agreement
+    if (_hasPendingAgreement(product)) return false;
+    return true;
+  }
+
+  /// Check if form order should be shown (when form_accountno and form_link are present)
+  bool _shouldShowFormOrder(ProductModel product) {
+    return product.formAccountno.trim().isNotEmpty &&
+        product.formLink.trim().isNotEmpty;
+  }
+
+  /// Handle order action (Form Order or Order Now)
+  void _handleOrderAction(ProductModel product) {
+    if (_shouldShowFormOrder(product)) {
+      // Handle Form Order action
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Form Order functionality will be implemented separately',
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      // Navigate to Create Order screen for Order Now
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CreateOrderScreen(product: product),
+        ),
+      );
+    }
   }
 
   // Parse marketing field to extract link type and URL
@@ -299,33 +344,47 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ],
                   ),
                 ),
-                const Divider(height: 1),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _isMarketinglink(product.marketing)
-                              ? _buildActionButton(
-                                icon: Icons.login,
-                                label: 'Product Info',
-                                color: AppColors.agreementCardViewBtnColor,
-                                isViewSubmissionsBtn: false,
-                                onPressed:
-                                    () => _handleProductInfoPress(product),
-                              )
-                              : const SizedBox.shrink(),
+                if (_isMarketinglink(product.marketing) ||
+                    _shouldShowOrderButtons(product)) ...[
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // Product Info button (if marketing link exists)
+                        if (_isMarketinglink(product.marketing)) ...[
+                          _buildActionButton(
+                            icon: Icons.login,
+                            label: 'Product Info',
+                            color: AppColors.agreementCardViewBtnColor,
+                            isViewSubmissionsBtn: false,
+                            onPressed: () => _handleProductInfoPress(product),
+                          ),
+                          const SizedBox(width: 12),
                         ],
-                      ),
-                    ],
+
+                        // Order button (Form Order or Order Now)
+                        if (_shouldShowOrderButtons(product))
+                          _buildLargeActionButton(
+                            icon:
+                                _shouldShowFormOrder(product)
+                                    ? Icons.article_outlined
+                                    : Icons.shopping_cart_outlined,
+                            label:
+                                _shouldShowFormOrder(product)
+                                    ? 'Form Order'
+                                    : 'Order Now',
+                            color: AppColors.primaryColor,
+                            onPressed: () => _handleOrderAction(product),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -431,6 +490,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLargeActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        elevation: 0,
+        minimumSize: const Size(0, 36),
+        maximumSize: const Size(double.infinity, 36),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
