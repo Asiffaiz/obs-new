@@ -519,6 +519,39 @@ class RfqService {
         throw Exception('No authentication token available');
       }
 
+      ////////////
+      /// Build services_rows from selected products
+      List<Map<String, dynamic>> buildServicesRows({
+        required List<int> selectedProductIds,
+        required List<RfqProduct> allProducts,
+      }) {
+        final servicesRows = <Map<String, dynamic>>[];
+
+        for (final productId in selectedProductIds) {
+          final product = allProducts.firstWhere(
+            (p) => p.id == productId,
+            orElse:
+                () =>
+                    RfqProduct(id: productId, serviceTitle: 'Unknown Product'),
+          );
+
+          servicesRows.add({
+            'service_checked': true,
+            'service_id': product.id,
+            'service_title': product.serviceTitle,
+            'service_price': 0, // Default to 0, API might update this
+            'service_quantity': 1,
+            'service_unit': '',
+            'service_sub_total': 0, // Default to 0, API might update this
+            'service_sku': product.sku ?? '',
+          });
+        }
+
+        return servicesRows;
+      }
+
+      ///////////
+
       // Fetch all products if not provided (fallback)
       final products =
           allProducts.isNotEmpty ? allProducts : await getRfqProducts();
@@ -544,6 +577,13 @@ class RfqService {
       // Add headers
       request.headers['Authorization'] = 'Bearer $token';
       request.headers['Accept'] = 'application/json';
+
+      final servicesRows = buildServicesRows(
+        selectedProductIds: selectedProductIds,
+        allProducts: allProducts,
+      );
+
+      payloadData['services_rows'] = servicesRows;
 
       // Add form fields
       request.fields['token'] = NetworkUrls.reactAppApiToken;
