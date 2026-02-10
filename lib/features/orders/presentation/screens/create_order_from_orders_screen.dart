@@ -652,6 +652,7 @@ class _CreateOrderFromOrdersScreenState
                   DropdownButtonFormField<ProductModel>(
                     key: ValueKey<int>(_dropdownKey),
                     value: null,
+                    isExpanded: true, // Allow dropdown to use full width
                     decoration: InputDecoration(
                       hintText: 'Select a product *',
                       hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -684,6 +685,8 @@ class _CreateOrderFromOrdersScreenState
                             child: Text(
                               product.productTitle,
                               style: const TextStyle(fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           );
                         }).toList(),
