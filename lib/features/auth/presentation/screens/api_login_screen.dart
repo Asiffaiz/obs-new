@@ -10,6 +10,7 @@ import '../../../../core/widgets/password_text_field.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../bloc/user_cubit.dart';
 
 class ApiLoginScreen extends StatefulWidget {
   const ApiLoginScreen({super.key});
@@ -58,12 +59,17 @@ class _ApiLoginScreenState extends State<ApiLoginScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state.status == AuthStatus.authenticated) {
+          // Load user data into UserCubit after successful login
+          context.read<UserCubit>().loadUser();
           context.go(AppRoutes.home);
         } else if (state.status == AuthStatus.apiAuthenticated) {
           setState(() {
             _successMessage = "Login successful. Redirecting to dashboard...";
             _isLoading = false;
           });
+
+          // Load user data into UserCubit after successful login
+          context.read<UserCubit>().loadUser();
 
           // Navigate to dashboard after a short delay
           Future.delayed(const Duration(seconds: 1), () {

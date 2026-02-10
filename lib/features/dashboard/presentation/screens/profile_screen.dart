@@ -262,6 +262,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Clear user data from SharedPreferences and sign out from both Firebase and API
                   final authBloc = context.read<AuthBloc>();
 
+                  // Clear UserCubit state
+                  context.read<UserCubit>().clearUser();
+
                   // First handle API logout to clear SharedPreferences
                   authBloc.add(const ApiLogoutRequested());
 

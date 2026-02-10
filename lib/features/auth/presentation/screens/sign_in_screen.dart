@@ -16,6 +16,7 @@ import '../../data/services/auth_service.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../bloc/user_cubit.dart';
 import '../widgets/social_auth_buttons.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -105,6 +106,9 @@ class _SignInScreenState extends State<SignInScreen> {
             _successMessage = "Login successful. Redirecting to dashboard...";
             _isLoading = false;
           });
+
+          // Load user data into UserCubit after successful login
+          context.read<UserCubit>().loadUser();
 
           // Navigate to dashboard after a short delay
           Future.delayed(const Duration(seconds: 1), () async {

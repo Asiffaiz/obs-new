@@ -12,6 +12,7 @@ import '../../../../core/widgets/responsive_padding.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../bloc/user_cubit.dart';
 
 class RegisterVerificationScreen extends StatefulWidget {
   final String email;
@@ -176,6 +177,8 @@ class _RegisterVerificationScreenState
           context.go(AppRoutes.unsignedAgreements);
         } else if (state.status == AuthStatus.authenticated ||
             state.status == AuthStatus.apiAuthenticated) {
+          // Load user data into UserCubit after successful registration
+          context.read<UserCubit>().loadUser();
           // print('authenticated');
           context.go(AppRoutes.home);
           // print('authenticated');

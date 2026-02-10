@@ -22,4 +22,9 @@ class UserCubit extends Cubit<UserState> {
   void updateName(String newName) {
     emit(state.copyWith(name: newName));
   }
+
+  // Clear user state on logout
+  void clearUser() {
+    emit(const UserState(name: ''));
+  }
 }
