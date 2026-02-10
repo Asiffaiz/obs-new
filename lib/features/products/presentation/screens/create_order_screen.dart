@@ -73,6 +73,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) {
+        setState(() {}); // Rebuild when tab changes
+      }
+    });
     _initializeOrder();
   }
 
@@ -530,24 +535,28 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   }
 
   Widget _buildTabContent() {
+    // Use IndexedStack to show only the current tab and size to its content
+    // This allows dynamic height based on the content of each tab
     return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.35,
-      ),
       color: Colors.white,
-      child: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildOrderLinesTab(),
-          _buildOtherInfoTab(),
-          _buildPaymentsTab(),
-        ],
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: IndexedStack(
+          index: _tabController.index,
+          sizing: StackFit.loose, // Size to the current child
+          children: [
+            _buildOrderLinesTab(),
+            _buildOtherInfoTab(),
+            _buildPaymentsTab(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildOrderLinesTab() {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,10 +707,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   }
 
   Widget _buildOtherInfoTab() {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Order Title Section
           Text(
@@ -785,10 +795,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen>
   }
 
   Widget _buildPaymentsTab() {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Payment Methods
           if (_paymentDetails != null &&
