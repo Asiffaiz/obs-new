@@ -1205,18 +1205,15 @@ class _InputField extends StatelessWidget {
       }
     }
 
-    // inputFormat constraints
+    // inputFormat constraints - only apply number_only format
     final fmt = (question.inputFormat ?? '').toLowerCase();
     if (fmt == 'number_only' &&
         v.isNotEmpty &&
         !RegExp(r'^\d+\$').hasMatch(v)) {
       return 'Numbers only';
     }
-    if (fmt == 'alphanumeric' &&
-        v.isNotEmpty &&
-        !RegExp(r'^[a-zA-Z0-9 _-]+\$').hasMatch(v)) {
-      return 'Only letters, numbers, space, _ and -';
-    }
+
+    // Removed alphanumeric validation - only check if value exists when required
 
     // maxLength
     final ml = int.tryParse((question.maxLength ?? '').toString());
