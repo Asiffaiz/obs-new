@@ -86,6 +86,11 @@ class _CreateOrderFromOrdersScreenState
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) {
+        setState(() {}); // Rebuild when tab changes
+      }
+    });
     _initializeOrder();
   }
 
@@ -567,24 +572,29 @@ class _CreateOrderFromOrdersScreenState
   }
 
   Widget _buildTabContent() {
+    // Use IndexedStack to show only the current tab and size to its content
+    // This allows dynamic height based on the content of each tab
     return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.35,
-      ),
       color: Colors.white,
-      child: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildOrderLinesTab(),
-          _buildOtherInfoTab(),
-          _buildPaymentsTab(),
-        ],
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: IndexedStack(
+          index: _tabController.index,
+          sizing: StackFit.loose, // Size to the current child
+          children: [
+            _buildOrderLinesTab(),
+            _buildOtherInfoTab(),
+            _buildPaymentsTab(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildOrderLinesTab() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Sticky Product Selection Section
         Container(
@@ -689,55 +699,47 @@ class _CreateOrderFromOrdersScreenState
             ),
           ),
         ),
-        // Scrollable Products List
-        Expanded(
-          child:
-              _selectedProducts.isEmpty
-                  ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Colors.blue.shade700,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Please select a product from the dropdown above to add it to your order. You can add multiple products.',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.blue.shade900,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+        // Products List with fixed height for scrolling
+        if (_selectedProducts.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.blue.shade700,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Please select a product from the dropdown above to add it to your order. You can add multiple products.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.blue.shade900,
+                        height: 1.4,
                       ),
                     ),
-                  )
-                  : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _selectedProducts.length,
-                    itemBuilder: (context, index) {
-                      final item = _selectedProducts[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildProductCard(item, index),
-                      );
-                    },
                   ),
-        ),
+                ],
+              ),
+            ),
+          )
+        else
+          ...List.generate(_selectedProducts.length, (index) {
+            final item = _selectedProducts[index];
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: _buildProductCard(item, index),
+            );
+          }),
       ],
     );
   }
@@ -884,232 +886,220 @@ class _CreateOrderFromOrdersScreenState
   }
 
   Widget _buildOtherInfoTab() {
-    return ListView(
+    return Padding(
       padding: const EdgeInsets.all(16),
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Order Title Section
-            Text(
-              'Order Title',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: allCellsLabelColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Order Title Section
+          Text(
+            'Order Title',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: allCellsLabelColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _orderTitleController,
+            decoration: InputDecoration(
+              hintText: 'Order - $_orderNumber',
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
               ),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _orderTitleController,
-              decoration: InputDecoration(
-                hintText: 'Order - $_orderNumber',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: AppColors.primaryColor,
-                    width: 2,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              style: const TextStyle(fontSize: 14),
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+          // Notes Section
+          Text(
+            'Notes',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: allCellsLabelColor,
             ),
-            const SizedBox(height: 24),
-            // Notes Section
-            Text(
-              'Notes',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: allCellsLabelColor,
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _notesController,
+            maxLines: 6,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              // Dismiss keyboard when done is pressed
+              FocusScope.of(context).unfocus();
+            },
+            decoration: InputDecoration(
+              hintText: 'Enter notes...',
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _notesController,
-              maxLines: 6,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) {
-                // Dismiss keyboard when done is pressed
-                FocusScope.of(context).unfocus();
-              },
-              decoration: InputDecoration(
-                hintText: 'Enter notes...',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: AppColors.primaryColor,
-                    width: 2,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.all(16),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-              style: const TextStyle(fontSize: 14),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+              ),
+              contentPadding: const EdgeInsets.all(16),
             ),
-          ],
-        ),
-      ],
+            style: const TextStyle(fontSize: 14),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildPaymentsTab() {
-    return ListView(
+    return Padding(
       padding: const EdgeInsets.all(16),
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Payment Methods
-            if (_paymentDetails != null &&
-                _paymentDetails!.paymentMethods.isNotEmpty) ...[
-              // Iterate through all payment methods
-              for (
-                int i = 0;
-                i < _paymentDetails!.paymentMethods.length;
-                i++
-              ) ...[
-                if (i > 0) const SizedBox(height: 24),
-                // Payment Method Title
-                Text(
-                  _paymentDetails!.paymentMethods.length > 1
-                      ? 'Payment Method ${i + 1}'
-                      : 'Payment Method',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: allCellsLabelColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _paymentDetails!.paymentMethods[i].paymentMethod
-                      .toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Bank Account Details
-                if (_paymentDetails!
-                    .paymentMethods[i]
-                    .paymentDetails
-                    .isNotEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Html(
-                      data: _paymentDetails!.paymentMethods[i].paymentDetails,
-                      shrinkWrap: true,
-                      style: {
-                        'p': Style(
-                          margin: Margins.only(bottom: 8),
-                          padding: HtmlPaddings.zero,
-                        ),
-                        'strong': Style(
-                          fontWeight: FontWeight.bold,
-                          color: allCellsLabelColor,
-                        ),
-                      },
-                    ),
-                  ),
-              ],
-            ] else if (_selectedProducts.isEmpty) ...[
-              // Show message if product not selected
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.orange.shade700,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Please select a product first to load payment details.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.orange.shade900,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Payment Methods
+          if (_paymentDetails != null &&
+              _paymentDetails!.paymentMethods.isNotEmpty) ...[
+            // Iterate through all payment methods
+            for (
+              int i = 0;
+              i < _paymentDetails!.paymentMethods.length;
+              i++
+            ) ...[
+              if (i > 0) const SizedBox(height: 24),
+              // Payment Method Title
+              Text(
+                _paymentDetails!.paymentMethods.length > 1
+                    ? 'Payment Method ${i + 1}'
+                    : 'Payment Method',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: allCellsLabelColor,
                 ),
               ),
-            ] else ...[
-              // Show message if payment details not loaded
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.grey.shade700,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Payment details are being loaded. Please wait...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade900,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 8),
+              Text(
+                _paymentDetails!.paymentMethods[i].paymentMethod.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
                 ),
               ),
+              const SizedBox(height: 16),
+              // Bank Account Details
+              if (_paymentDetails!.paymentMethods[i].paymentDetails.isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Html(
+                    data: _paymentDetails!.paymentMethods[i].paymentDetails,
+                    shrinkWrap: true,
+                    style: {
+                      'p': Style(
+                        margin: Margins.only(bottom: 8),
+                        padding: HtmlPaddings.zero,
+                      ),
+                      'strong': Style(
+                        fontWeight: FontWeight.bold,
+                        color: allCellsLabelColor,
+                      ),
+                    },
+                  ),
+                ),
             ],
+          ] else if (_selectedProducts.isEmpty) ...[
+            // Show message if product not selected
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.orange.shade700,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Please select a product first to load payment details.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.orange.shade900,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            // Show message if payment details not loaded
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.grey.shade700,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Payment details are being loaded. Please wait...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade900,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 
