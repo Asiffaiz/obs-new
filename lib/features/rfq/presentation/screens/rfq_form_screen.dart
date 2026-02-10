@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -12,20 +14,14 @@ class RfqFormScreen extends StatelessWidget {
   final VoidCallback? onNavigateBack;
   final String? rfqAccountNo; // Optional: for edit mode
 
-  const RfqFormScreen({
-    super.key,
-    this.onNavigateBack,
-    this.rfqAccountNo,
-  });
+  const RfqFormScreen({super.key, this.onNavigateBack, this.rfqAccountNo});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) {
         final bloc = RfqBloc(
-          rfqRepository: RfqRepositoryImpl(
-            rfqService: RfqService(),
-          ),
+          rfqRepository: RfqRepositoryImpl(rfqService: RfqService()),
         );
         // Load form data based on mode
         if (rfqAccountNo != null && rfqAccountNo!.isNotEmpty) {
@@ -54,7 +50,12 @@ class _RfqFormScreenContent extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+          icon: Icon(
+            Platform.isIOS
+                ? Icons.arrow_back_ios_new_rounded
+                : Icons.arrow_back,
+            color: Colors.black87,
+          ),
           onPressed: () {
             if (onNavigateBack != null) {
               onNavigateBack!();
@@ -65,7 +66,9 @@ class _RfqFormScreenContent extends StatelessWidget {
         ),
         title: BlocBuilder<RfqBloc, RfqState>(
           builder: (context, state) {
-            final title = state.formDefinition?.settings?.title ?? 'Request for Quotation';
+            final title =
+                state.formDefinition?.settings?.title ??
+                'Request for Quotation';
             return Text(
               title,
               style: const TextStyle(
@@ -82,10 +85,13 @@ class _RfqFormScreenContent extends StatelessWidget {
           BlocBuilder<RfqBloc, RfqState>(
             builder: (context, state) {
               if (state.formDefinition == null) return const SizedBox();
-              
+
               return Container(
                 margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -114,23 +120,19 @@ class _RfqFormScreenContent extends StatelessWidget {
                 children: [
                   // RFQ Header with description
                   _RfqHeader(settings: state.formDefinition!.settings!),
-                  
+
                   // Divider
                   Divider(height: 1, color: Colors.grey.shade200),
-                  
+
                   // Form content
                   Expanded(
-                    child: RfqStepperForm(
-                      onSubmitSuccess: onNavigateBack,
-                    ),
+                    child: RfqStepperForm(onSubmitSuccess: onNavigateBack),
                   ),
                 ],
               );
             }
 
-            return RfqStepperForm(
-              onSubmitSuccess: onNavigateBack,
-            );
+            return RfqStepperForm(onSubmitSuccess: onNavigateBack);
           },
         ),
       ),
@@ -183,21 +185,16 @@ class _RfqHeader extends StatelessWidget {
 class RfqFormWidget extends StatelessWidget {
   final VoidCallback? onSubmitSuccess;
 
-  const RfqFormWidget({
-    super.key,
-    this.onSubmitSuccess,
-  });
+  const RfqFormWidget({super.key, this.onSubmitSuccess});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => RfqBloc(
-        rfqRepository: RfqRepositoryImpl(
-          rfqService: RfqService(),
-        ),
-      )..add(const LoadRfqFormData()),
+      create:
+          (context) => RfqBloc(
+            rfqRepository: RfqRepositoryImpl(rfqService: RfqService()),
+          )..add(const LoadRfqFormData()),
       child: RfqStepperForm(onSubmitSuccess: onSubmitSuccess),
     );
   }
 }
-

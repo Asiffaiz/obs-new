@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -45,7 +47,12 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+          icon: Icon(
+            Platform.isIOS
+                ? Icons.arrow_back_ios_new_rounded
+                : Icons.arrow_back,
+            color: Colors.black87,
+          ),
           onPressed: () {
             if (onNavigateBack != null) {
               onNavigateBack!();
