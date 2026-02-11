@@ -46,7 +46,7 @@ class _RfqFormScreenContent extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.primaryColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -54,7 +54,7 @@ class _RfqFormScreenContent extends StatelessWidget {
             Platform.isIOS
                 ? Icons.arrow_back_ios_new_rounded
                 : Icons.arrow_back,
-            color: Colors.black87,
+            color: Colors.white,
           ),
           onPressed: () {
             if (onNavigateBack != null) {
@@ -72,7 +72,7 @@ class _RfqFormScreenContent extends StatelessWidget {
             return Text(
               title,
               style: const TextStyle(
-                color: Colors.black87,
+                color: Colors.white,
                 fontWeight: FontWeight.w600,
                 fontSize: 18,
               ),
@@ -93,13 +93,13 @@ class _RfqFormScreenContent extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryColor.withOpacity(0.1),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '${state.currentStep + 1}/${state.totalSteps}',
-                  style: TextStyle(
-                    color: AppColors.primaryColor,
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),

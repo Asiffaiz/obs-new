@@ -43,7 +43,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.primaryColor,
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
@@ -51,7 +51,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
             Platform.isIOS
                 ? Icons.arrow_back_ios_new_rounded
                 : Icons.arrow_back,
-            color: Colors.black87,
+            color: Colors.white,
           ),
           onPressed: () {
             if (onNavigateBack != null) {
@@ -64,7 +64,7 @@ class _RfqSubmissionsScreenContent extends StatelessWidget {
         title: const Text(
           'Request for Quotation',
           style: TextStyle(
-            color: Colors.black87,
+            color: Colors.white,
             fontWeight: FontWeight.w600,
             fontSize: 18,
           ),
