@@ -127,6 +127,17 @@ class ApiMenuItemModel {
         url: NetworkUrls.webBaseUrl + '/pages/need-help',
       );
     }
+
+    // Handle Quotations as native screen (RFQ module)
+    if (alt == "Quotations") {
+      return MenuItemModel(
+        id: 'quotations',
+        title: alt,
+        icon: icon,
+        url: null, // Native screen, no URL
+      );
+    }
+
     // For regular menu items
     return MenuItemModel(
       id: id,

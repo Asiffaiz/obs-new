@@ -307,6 +307,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           });
           context.push(AppRoutes.salesOrders);
           return;
+        } else if (item.id == 'quotations') {
+          setState(() {
+            _selectedMenuId = 'dashboard';
+            _currentContent = _buildDashboardHomeContent();
+          });
+          context.push(AppRoutes.rfqSubmissions);
+          return;
         }
 
         // Update content based on selected menu item
